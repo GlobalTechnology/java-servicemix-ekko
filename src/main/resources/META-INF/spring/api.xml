@@ -14,10 +14,11 @@
   <bean id="api.base" abstract="true" />
 
   <bean id="api.auth" parent="api.base" class="org.ccci.gto.servicemix.cas.jaxrs.api.AuthenticationApi">
-    <property name="serviceUri" value="${ekko.service.uri:}" />
+    <property name="serviceUri" value="${ekko.base.uri}" />
   </bean>
 
   <bean id="api.courses" parent="api.base" class="org.ccci.gto.servicemix.ekko.jaxrs.api.CoursesApi">
+    <property name="baseUri" value="${ekko.base.uri}" />
     <property name="support">
       <bean class="org.ccci.gto.servicemix.ekko.jaxrs.api.CoursesApiSupport" />
     </property>

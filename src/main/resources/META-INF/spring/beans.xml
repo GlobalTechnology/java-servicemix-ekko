@@ -22,6 +22,11 @@
         <value>file:///${karaf.home}/etc/org.ccci.gto.servicemix.ekko.cfg</value>
       </list>
     </property>
+    <property name="properties">
+      <props>
+        <prop key="ekko.base.uri">${base.uri:}ekko/</prop>
+      </props>
+    </property>
   </bean>
 
   <bean id="courseManager" class="org.ccci.gto.servicemix.ekko.CourseManagerImpl" />

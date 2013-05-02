@@ -15,7 +15,6 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
 
-import org.ccci.gto.servicemix.cas.jaxrs.api.SessionAwareApi;
 import org.ccci.gto.servicemix.cas.model.Session;
 import org.ccci.gto.servicemix.ekko.DomUtils;
 import org.ccci.gto.servicemix.ekko.jaxb.model.JaxbCourse;
@@ -25,7 +24,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.w3c.dom.Document;
 
 @Path(PATH_SESSION + "/course")
-public class CoursesApi extends SessionAwareApi {
+public class CoursesApi extends AbstractApi {
     @Autowired(required = false)
     private Support support;
 
