@@ -10,6 +10,11 @@
     <bundle>mvn:org.apache.openjpa/openjpa/${openjpa.version}</bundle>
     <feature version="${spring.version}">spring-orm</feature>
 
+    <!-- MogileFS support -->
+    <bundle>mvn:commons-io/commons-io/${commons-io.version}</bundle>
+    <bundle>wrap:mvn:fm.last.commons/lastcommons-lang/3.0.0</bundle>
+    <bundle>wrap:mvn:fm.last/moji/${moji.version}</bundle>
+
     <bundle>mvn:${project.groupId}/${project.artifactId}/${project.version}</bundle>
   </feature>
 </features>

@@ -66,6 +66,12 @@
       <artifactId>spring-orm</artifactId>
       <scope>runtime</scope>
     </dependency>
+
+    <!-- MogileFS dependency -->
+    <dependency>
+      <groupId>fm.last</groupId>
+      <artifactId>moji</artifactId>
+    </dependency>
   </dependencies>
 
   <repositories>
