@@ -1,7 +1,9 @@
 package org.ccci.gto.servicemix.ekko;
 
 import static org.ccci.gto.servicemix.ekko.Constants.XMLNS_EKKO;
+import static org.ccci.gto.servicemix.ekko.Constants.XMLNS_HUB;
 
+import java.io.InputStream;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.Writer;
@@ -39,6 +41,7 @@ public final class DomUtils {
     static {
         final NamespaceContextImpl nsContext = new NamespaceContextImpl();
         nsContext.registerNamespace("ekko", XMLNS_EKKO);
+        nsContext.registerNamespace("hub", XMLNS_HUB);
         XPATH.setNamespaceContext(nsContext);
     }
 
@@ -46,12 +49,24 @@ public final class DomUtils {
         return XPATH.compile(expression);
     }
 
-    public static final Document parse(final String rawXml) {
-        if (rawXml != null) {
+    public static final Document parse(final InputStream xml) {
+        return parse(new InputSource(xml));
+    }
+
+    public static final Document parse(final String xml) {
+        if (xml != null) {
+            return parse(new InputSource(new StringReader(xml)));
+        }
+
+        return null;
+    }
+
+    public static final Document parse(final InputSource xml) {
+        if (xml != null) {
             try {
                 final DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
                 dbf.setNamespaceAware(true);
-                return dbf.newDocumentBuilder().parse(new InputSource(new StringReader(rawXml)));
+                return dbf.newDocumentBuilder().parse(xml);
             } catch (final Exception e) {
                 LOG.error("xml parsing error", e);
             }
