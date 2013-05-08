@@ -1,11 +1,34 @@
 package org.ccci.gto.servicemix.ekko.model;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map.Entry;
+import java.util.Set;
+
 import javax.persistence.Basic;
+import javax.persistence.CascadeType;
+import javax.persistence.CollectionTable;
 import javax.persistence.Column;
+import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
+import javax.persistence.EntityManager;
 import javax.persistence.FetchType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
 import javax.persistence.Lob;
+import javax.persistence.OneToMany;
+import javax.persistence.TypedQuery;
+import javax.persistence.UniqueConstraint;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Predicate;
+import javax.persistence.criteria.Root;
+
+import org.apache.openjpa.persistence.jdbc.ContainerTable;
+import org.apache.openjpa.persistence.jdbc.ForeignKey;
+import org.apache.openjpa.persistence.jdbc.ForeignKeyAction;
 
 @Entity
 public class Course {
@@ -17,13 +40,35 @@ public class Course {
 
     private String title;
 
+    @Column(name = "public")
+    private boolean publicCourse = false;
+
     @Lob
     @Basic(fetch = FetchType.LAZY)
+    @Column(length = 1000000)
     private String manifest;
 
     @Lob
     @Basic(fetch = FetchType.LAZY)
+    @Column(length = 1000000)
     private String newManifest;
+
+    @OneToMany(mappedBy = "course", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
+    private Collection<Resource> resources = new ArrayList<Resource>();
+
+    @ElementCollection
+    @Column(name = "guid", nullable = false, length = 36)
+    @CollectionTable(name = "Course_Admins", joinColumns = @JoinColumn(name = "courseId", nullable = false), uniqueConstraints = { @UniqueConstraint(columnNames = {
+            "courseId", "guid" }) })
+    @ContainerTable(joinForeignKey = @ForeignKey(updateAction = ForeignKeyAction.CASCADE, deleteAction = ForeignKeyAction.CASCADE))
+    private Set<String> admins = new HashSet<String>();
+
+    @ElementCollection
+    @Column(name = "guid", nullable = false, length = 36)
+    @CollectionTable(name = "Course_Enrolled", joinColumns = @JoinColumn(name = "courseId", nullable = false), uniqueConstraints = { @UniqueConstraint(columnNames = {
+            "courseId", "guid" }) })
+    @ContainerTable(joinForeignKey = @ForeignKey(updateAction = ForeignKeyAction.CASCADE, deleteAction = ForeignKeyAction.CASCADE))
+    private Set<String> enrolled = new HashSet<String>();
 
     public Long getId() {
         return this.id;
@@ -57,11 +102,130 @@ public class Course {
         this.title = title;
     }
 
+    public void setPublic(boolean publicCourse) {
+        this.publicCourse = publicCourse;
+    }
+
     public void setManifest(final String manifest) {
         this.manifest = manifest;
     }
 
     public void setNewManifest(final String newManifest) {
         this.newManifest = newManifest;
+    }
+
+    public void addAdmin(final String guid) {
+        this.admins.add(guid.toUpperCase());
+    }
+
+    public void removeAdmin(final String guid) {
+        this.admins.remove(guid.toUpperCase());
+    }
+
+    public boolean isPublic() {
+        return this.publicCourse;
+    }
+
+    public boolean isAdmin(final String guid) {
+        return this.admins.contains(guid.toUpperCase());
+    }
+
+    public boolean isEnrolled(final String guid) {
+        return this.enrolled.contains(guid.toUpperCase());
+    }
+
+    public boolean canView(final String guid) {
+        return this.isPublic() || this.canViewContent(guid);
+    }
+
+    public boolean canViewContent(final String guid) {
+        return this.isEnrolled(guid) || this.isAdmin(guid);
+    }
+
+    public static class CourseQuery {
+        private boolean loadManifest = false;
+
+        private int start = 0;
+        private int limit = 0;
+
+        private Long id = null;
+
+        private String admin = null;
+
+        public CourseQuery() {
+        }
+
+        public CourseQuery id(final Long id) {
+            this.id = id;
+            return this;
+        }
+
+        public CourseQuery admin(final String guid) {
+            this.admin = guid.toUpperCase();
+            return this;
+        }
+
+        public CourseQuery loadManifest(final boolean loadManifest) {
+            this.loadManifest = loadManifest;
+            return this;
+        }
+
+        public CourseQuery start(final int start) {
+            this.start = start;
+            return this;
+        }
+
+        public CourseQuery limit(final int limit) {
+            this.limit = limit;
+            return this;
+        }
+
+        public TypedQuery<Course> compile(final EntityManager em) {
+            // generate base query
+            final CriteriaBuilder cb = em.getCriteriaBuilder();
+            final CriteriaQuery<Course> cq = cb.createQuery(Course.class);
+            final Root<Course> c = cq.from(Course.class);
+            cq.select(c);
+
+            // should the manifest be loaded?
+            if (this.loadManifest) {
+                c.fetch("manifest");
+            }
+
+            // capture various parts of query for assembly later
+            final ArrayList<Predicate> where = new ArrayList<Predicate>();
+            final HashMap<String, Object> params = new HashMap<String, Object>();
+
+            // generate where clauses
+            if (this.id != null) {
+                where.add(cb.equal(c.get("id"), cb.parameter(Long.class, "id")));
+                params.put("id", this.id);
+            }
+            if (this.admin != null) {
+                where.add(cb.parameter(String.class, "adminGuid").in(c.get("admins")));
+                params.put("adminGuid", this.admin);
+            }
+
+            // compile query
+            cq.where(cb.and(where.toArray(new Predicate[where.size()])));
+            final TypedQuery<Course> query = em.createQuery(cq);
+
+            // bind parameters
+            for (final Entry<String, Object> entry : params.entrySet()) {
+                query.setParameter(entry.getKey(), entry.getValue());
+            }
+
+            // set limits for this query
+            query.setFirstResult(this.start);
+            if (this.limit > 0) {
+                query.setMaxResults(this.limit);
+            } else if (this.id != null) {
+                // only return 1 result since we are selecting based on id
+                query.setMaxResults(1);
+            }
+
+            // return the query
+            return query;
+        }
     }
 }
