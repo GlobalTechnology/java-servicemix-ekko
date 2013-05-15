@@ -4,6 +4,7 @@ import static org.ccci.gto.servicemix.ekko.Constants.XMLNS_EKKO;
 import static org.ccci.gto.servicemix.ekko.Constants.XMLNS_HUB;
 
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.Writer;
@@ -13,6 +14,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -20,11 +22,13 @@ import javax.xml.XMLConstants;
 import javax.xml.namespace.NamespaceContext;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Result;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
@@ -32,6 +36,9 @@ import javax.xml.xpath.XPathFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 
 public final class DomUtils {
@@ -47,6 +54,30 @@ public final class DomUtils {
 
     public static final XPathExpression compileXPath(final String expression) throws XPathExpressionException {
         return XPATH.compile(expression);
+    }
+
+    public static final List<Element> getElements(final Document dom, final String xpath) {
+        try {
+            final NodeList nodes = (NodeList) compileXPath(xpath).evaluate(dom, XPathConstants.NODESET);
+            final List<Element> elements = new ArrayList<Element>();
+
+            if (nodes != null) {
+                final int len = nodes.getLength();
+                for (int i = 0; i < len; i++) {
+                    final Node element = nodes.item(i);
+                    if (element instanceof Element) {
+                        elements.add((Element) element);
+                    }
+                }
+            }
+
+            return elements;
+        } catch (final Exception e) {
+            // log error
+            LOG.error("getElements error", e);
+            return Collections.emptyList();
+        }
+
     }
 
     public static final Document parse(final InputStream xml) {
@@ -75,11 +106,19 @@ public final class DomUtils {
         return null;
     }
 
+    public static void output(final Document dom, final OutputStream out) {
+        output(dom, new StreamResult(out));
+    }
+
     public static void output(final Document dom, final Writer writer) {
+        output(dom, new StreamResult(writer));
+    }
+
+    public static void output(final Document dom, final Result out) {
         try {
             final Transformer transformer = TransformerFactory.newInstance().newTransformer();
             transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "no");
-            transformer.transform(new DOMSource(dom), new StreamResult(writer));
+            transformer.transform(new DOMSource(dom), out);
         } catch (final Exception e) {
             LOG.error("xml DOM output error", e);
         }
