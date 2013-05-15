@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -18,6 +19,7 @@ import javax.persistence.FetchType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.Lob;
+import javax.persistence.MapKeyColumn;
 import javax.persistence.OneToMany;
 import javax.persistence.TypedQuery;
 import javax.persistence.UniqueConstraint;
@@ -51,10 +53,11 @@ public class Course {
     @Lob
     @Basic(fetch = FetchType.LAZY)
     @Column(length = 1000000)
-    private String newManifest;
+    private String pendingManifest;
 
     @OneToMany(mappedBy = "course", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
-    private Collection<Resource> resources = new ArrayList<Resource>();
+    @MapKeyColumn(name = "sha1")
+    private Map<String, Resource> resources = new HashMap<String, Resource>();
 
     @ElementCollection
     @Column(name = "guid", nullable = false, length = 36)
@@ -69,6 +72,9 @@ public class Course {
             "courseId", "guid" }) })
     @ContainerTable(joinForeignKey = @ForeignKey(updateAction = ForeignKeyAction.CASCADE, deleteAction = ForeignKeyAction.CASCADE))
     private Set<String> enrolled = new HashSet<String>();
+
+    @Column(length = 40)
+    private String zipSha1;
 
     public Long getId() {
         return this.id;
@@ -86,8 +92,8 @@ public class Course {
         return this.manifest;
     }
 
-    public String getNewManifest() {
-        return this.newManifest;
+    public String getPendingManifest() {
+        return this.pendingManifest;
     }
 
     public void setId(final Long id) {
@@ -110,8 +116,36 @@ public class Course {
         this.manifest = manifest;
     }
 
-    public void setNewManifest(final String newManifest) {
-        this.newManifest = newManifest;
+    public void setPendingManifest(final String pendingManifest) {
+        this.pendingManifest = pendingManifest;
+    }
+
+    public Resource getResource(final String sha1) {
+        if (sha1 == null) {
+            return null;
+        }
+
+        return this.resources.get(sha1.toLowerCase());
+    }
+
+    public Collection<Resource> getResources() {
+        return this.resources.values();
+    }
+
+    public String getZipSha1() {
+        return this.zipSha1;
+    }
+
+    public Resource getZip() {
+        return this.getResource(this.zipSha1);
+    }
+
+    public void setZip(final Resource zip) {
+        if (zip == null) {
+            this.zipSha1 = null;
+        } else if (this.id.equals(zip.getKey().getCourseId())) {
+            this.zipSha1 = zip.getSha1();
+        }
     }
 
     public void addAdmin(final String guid) {
@@ -144,6 +178,8 @@ public class Course {
 
     public static class CourseQuery {
         private boolean loadManifest = false;
+        private boolean loadPendingManifest = false;
+        private boolean loadResources = false;
 
         private int start = 0;
         private int limit = 0;
@@ -170,6 +206,16 @@ public class Course {
             return this;
         }
 
+        public CourseQuery loadPendingManifest(final boolean loadPendingManifest) {
+            this.loadPendingManifest = loadPendingManifest;
+            return this;
+        }
+
+        public CourseQuery loadResources(final boolean loadResources) {
+            this.loadResources = loadResources;
+            return this;
+        }
+
         public CourseQuery start(final int start) {
             this.start = start;
             return this;
@@ -187,9 +233,15 @@ public class Course {
             final Root<Course> c = cq.from(Course.class);
             cq.select(c);
 
-            // should the manifest be loaded?
+            // should any lazy loaded fields be loaded?
             if (this.loadManifest) {
                 c.fetch("manifest");
+            }
+            if (this.loadPendingManifest) {
+                c.fetch("pendingManifest");
+            }
+            if (this.loadResources) {
+                c.fetch("resources");
             }
 
             // capture various parts of query for assembly later
@@ -206,8 +258,12 @@ public class Course {
                 params.put("adminGuid", this.admin);
             }
 
+            // generate where clause
+            if (where.size() > 0) {
+                cq.where(cb.and(where.toArray(new Predicate[where.size()])));
+            }
+
             // compile query
-            cq.where(cb.and(where.toArray(new Predicate[where.size()])));
             final TypedQuery<Course> query = em.createQuery(cq);
 
             // bind parameters
