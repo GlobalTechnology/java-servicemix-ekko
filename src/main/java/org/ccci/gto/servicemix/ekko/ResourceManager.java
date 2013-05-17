@@ -6,5 +6,11 @@ import org.ccci.gto.servicemix.ekko.model.Course;
 import org.ccci.gto.servicemix.ekko.model.Resource;
 
 public interface ResourceManager {
-    Resource storeResource(Course course, InputStream in) throws ResourceAlreadyExistsException;
+    Resource storeResource(Course course, String mimeType, InputStream in) throws ResourceAlreadyExistsException;
+
+    InputStream loadResource(Resource resource) throws ResourceException;
+
+    void removeResource(Resource resource);
+
+    Resource generateCourseZip(Course course);
 }
