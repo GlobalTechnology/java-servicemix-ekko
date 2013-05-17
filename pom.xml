@@ -23,14 +23,14 @@
   <properties>
     <maven.compiler.source>1.7</maven.compiler.source>
     <maven.compiler.target>1.7</maven.compiler.target>
-    <servicemix-cas-auth.version>0.1.0-SNAPSHOT</servicemix-cas-auth.version>
+    <servicemix-gto-common.version>0.1.0-SNAPSHOT</servicemix-gto-common.version>
   </properties>
 
   <dependencies>
     <dependency>
       <groupId>org.ccci.gto.servicemix</groupId>
-      <artifactId>servicemix-cas-auth</artifactId>
-      <version>${servicemix-cas-auth.version}</version>
+      <artifactId>servicemix-gto-common</artifactId>
+      <version>${servicemix-gto-common.version}</version>
     </dependency>
 
     <!-- DB/JPA dependencies -->

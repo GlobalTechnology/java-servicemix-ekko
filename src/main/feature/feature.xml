@@ -1,14 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<features xmlns="http://karaf.apache.org/xmlns/features/v1.0.0" name="${project.artifactId}">
+<features xmlns="http://karaf.apache.org/xmlns/features/v1.0.0" name="${project.artifactId}-${project.version}">
   <feature name="${project.artifactId}">
-    <feature version="${servicemix-cas-auth.version}">servicemix-cas-auth</feature>
-
-    <!-- JPA/DB dependencies -->
-    <bundle>mvn:mysql/mysql-connector-java/${mysql.version}</bundle>
-    <bundle>mvn:commons-dbcp/commons-dbcp/${commons-dbcp.version}</bundle>
-    <bundle>mvn:net.sourceforge.serp/com.springsource.serp</bundle>
-    <bundle>mvn:org.apache.openjpa/openjpa/${openjpa.version}</bundle>
-    <feature version="${spring.version}">spring-orm</feature>
+    <feature>servicemix-gto-common</feature>
+    <feature>servicemix-gto-db</feature>
 
     <!-- MogileFS support -->
     <bundle>mvn:commons-io/commons-io/${commons-io.version}</bundle>
