@@ -8,7 +8,7 @@
     <version>7-SNAPSHOT</version>
   </parent>
 
-  <artifactId>servicemix-ekko</artifactId>
+  <artifactId>servicemix-gto-ekko</artifactId>
   <version>0.1.0-SNAPSHOT</version>
 
   <name>Ekko Course Management Hub</name>
