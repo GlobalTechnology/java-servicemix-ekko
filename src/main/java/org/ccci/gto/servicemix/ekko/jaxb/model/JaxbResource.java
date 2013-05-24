@@ -1,6 +1,6 @@
 package org.ccci.gto.servicemix.ekko.jaxb.model;
 
-import static org.ccci.gto.servicemix.ekko.jaxrs.api.Constants.PARAM_RESOURCE;
+import static org.ccci.gto.servicemix.ekko.jaxrs.api.Constants.PARAM_RESOURCE_SHA1;
 
 import java.net.URI;
 import java.util.HashMap;
@@ -43,7 +43,7 @@ public class JaxbResource {
             if (uriValues != null) {
                 values.putAll(uriValues);
             }
-            values.put(PARAM_RESOURCE, resource.getSha1());
+            values.put(PARAM_RESOURCE_SHA1, resource.getSha1());
             this.uri = uri.buildFromMap(values);
         }
     }

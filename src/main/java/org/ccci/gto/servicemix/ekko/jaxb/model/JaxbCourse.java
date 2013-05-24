@@ -2,7 +2,7 @@ package org.ccci.gto.servicemix.ekko.jaxb.model;
 
 import static org.ccci.gto.servicemix.ekko.Constants.XMLNS_EKKO;
 import static org.ccci.gto.servicemix.ekko.jaxrs.api.Constants.PARAM_COURSE;
-import static org.ccci.gto.servicemix.ekko.jaxrs.api.Constants.PARAM_RESOURCE;
+import static org.ccci.gto.servicemix.ekko.jaxrs.api.Constants.PARAM_RESOURCE_SHA1;
 
 import java.net.URI;
 import java.util.HashMap;
@@ -81,7 +81,7 @@ public class JaxbCourse {
             }
             final String zipSha1 = course.getZipSha1();
             if (resourceUri != null && zipSha1 != null) {
-                values.put(PARAM_RESOURCE, zipSha1);
+                values.put(PARAM_RESOURCE_SHA1, zipSha1);
                 this.zipUri = resourceUri.buildFromMap(values);
             }
         }

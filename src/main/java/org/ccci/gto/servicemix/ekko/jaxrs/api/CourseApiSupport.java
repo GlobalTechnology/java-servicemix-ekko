@@ -1,14 +1,15 @@
 package org.ccci.gto.servicemix.ekko.jaxrs.api;
 
-import java.util.List;
-
 import org.ccci.gto.servicemix.ekko.CourseManager;
+import org.ccci.gto.servicemix.ekko.DomUtils;
 import org.ccci.gto.servicemix.ekko.model.Course;
+import org.ccci.gto.servicemix.ekko.model.Course.CourseQuery;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.w3c.dom.Document;
 
-public class CoursesApiSupport implements CoursesApi.Support {
+public class CourseApiSupport implements CourseApi.Support {
     @Autowired
     private CourseManager courseManager;
 
@@ -18,18 +19,12 @@ public class CoursesApiSupport implements CoursesApi.Support {
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     @Override
-    public List<Course> getCourses(final String guid) {
-        return this.courseManager.getCourses(true);
-    }
+    public Course updateManifest(final CourseQuery query, final Document manifest) {
+        // retrieve the specified course
+        final Course course = this.courseManager.getCourse(query);
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    @Override
-    public Course getCourse(final Long id) {
-        final Course course = this.courseManager.getCourse(id);
-
-        // load the manifest before closing transaction
         if (course != null) {
-            course.getManifest();
+            course.setPendingManifest(DomUtils.asString(manifest));
         }
 
         return course;
