@@ -35,6 +35,7 @@ import javax.xml.xpath.XPathFactory;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -54,6 +55,29 @@ public final class DomUtils {
 
     public static final XPathExpression compileXPath(final String expression) throws XPathExpressionException {
         return XPATH.compile(expression);
+    }
+
+    public static final List<Attr> getAttrs(final Document dom, final String xpath) {
+        try {
+            final NodeList nodes = (NodeList) compileXPath(xpath).evaluate(dom, XPathConstants.NODESET);
+            final List<Attr> attrs = new ArrayList<Attr>();
+
+            if (nodes != null) {
+                final int len = nodes.getLength();
+                for (int i = 0; i < len; i++) {
+                    final Node attr = nodes.item(i);
+                    if (attr instanceof Attr) {
+                        attrs.add((Attr) attr);
+                    }
+                }
+            }
+
+            return attrs;
+        } catch (final Exception e) {
+            // log error
+            LOG.error("getAttrs error", e);
+            return Collections.emptyList();
+        }
     }
 
     public static final List<Element> getElements(final Document dom, final String xpath) {
@@ -77,7 +101,6 @@ public final class DomUtils {
             LOG.error("getElements error", e);
             return Collections.emptyList();
         }
-
     }
 
     public static final Document parse(final InputStream xml) {
