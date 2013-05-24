@@ -12,8 +12,6 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 import javax.persistence.EntityExistsException;
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
 import javax.xml.bind.DatatypeConverter;
 
 import org.apache.commons.io.IOUtils;
@@ -39,17 +37,10 @@ public class MojiResourceManager implements ResourceManager {
 
     private CourseManager courseManager;
 
-    @PersistenceContext
-    private EntityManager em;
-
     private Moji moji;
 
     public void setCourseManager(final CourseManager courseManager) {
         this.courseManager = courseManager;
-    }
-
-    public void setEntityManager(final EntityManager em) {
-        this.em = em;
     }
 
     public void setMoji(final Moji moji) {
@@ -399,5 +390,4 @@ public class MojiResourceManager implements ResourceManager {
             return this.file.getInputStream();
         }
     }
-
 }
