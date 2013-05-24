@@ -129,8 +129,7 @@ public class CourseManagerImpl implements CourseManager {
     @Transactional
     @Override
     public List<Course> getCourses(final CourseQuery query) {
-        // compile, execute & return the results for this query
-        return query.compile(this.em).getResultList();
+        return query.execute(this.em);
     }
 
     @Transactional

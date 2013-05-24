@@ -28,6 +28,7 @@ import javax.persistence.TypedQuery;
 import javax.persistence.UniqueConstraint;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.JoinType;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 
@@ -268,6 +269,8 @@ public class Course {
         private boolean loadManifest = false;
         private boolean loadPendingManifest = false;
         private boolean loadResources = false;
+        private boolean loadAdmins = false;
+        private boolean loadEnrolled = false;
 
         private int start = 0;
         private int limit = 0;
@@ -275,6 +278,8 @@ public class Course {
         private Long id = null;
 
         private String admin = null;
+        private String enrolled = null;
+        private boolean publicCourse = false;
 
         public CourseQuery() {
         }
@@ -285,7 +290,17 @@ public class Course {
         }
 
         public CourseQuery admin(final String guid) {
-            this.admin = guid.toUpperCase();
+            this.admin = (guid != null ? guid.toUpperCase() : null);
+            return this;
+        }
+
+        public CourseQuery enrolled(final String guid) {
+            this.enrolled = (guid != null ? guid.toUpperCase() : null);
+            return this;
+        }
+
+        public CourseQuery publicCourse(final boolean publicCourse) {
+            this.publicCourse = publicCourse;
             return this;
         }
 
@@ -304,6 +319,16 @@ public class Course {
             return this;
         }
 
+        public CourseQuery loadAdmins(final boolean loadAdmins) {
+            this.loadAdmins = loadAdmins;
+            return this;
+        }
+
+        public CourseQuery loadEnrolled(final boolean loadEnrolled) {
+            this.loadEnrolled = loadEnrolled;
+            return this;
+        }
+
         public CourseQuery start(final int start) {
             this.start = start;
             return this;
@@ -314,12 +339,13 @@ public class Course {
             return this;
         }
 
-        public TypedQuery<Course> compile(final EntityManager em) {
+        private TypedQuery<Course> compile(final EntityManager em) {
             // generate base query
             final CriteriaBuilder cb = em.getCriteriaBuilder();
             final CriteriaQuery<Course> cq = cb.createQuery(Course.class);
             final Root<Course> c = cq.from(Course.class);
             cq.select(c);
+            cq.distinct(true);
 
             // should any lazy loaded fields be loaded?
             if (this.loadManifest) {
@@ -328,8 +354,14 @@ public class Course {
             if (this.loadPendingManifest) {
                 c.fetch("pendingManifest");
             }
+            if (this.loadAdmins) {
+                c.fetch("admins", JoinType.LEFT);
+            }
+            if (this.loadEnrolled) {
+                c.fetch("enrolled", JoinType.LEFT);
+            }
             if (this.loadResources) {
-                c.fetch("resources");
+                c.fetch("resources", JoinType.LEFT);
             }
 
             // capture various parts of query for assembly later
@@ -341,14 +373,34 @@ public class Course {
                 where.add(cb.equal(c.get("id"), cb.parameter(Long.class, "id")));
                 params.put("id", this.id);
             }
-            if (this.admin != null) {
-                where.add(cb.parameter(String.class, "adminGuid").in(c.get("admins")));
-                params.put("adminGuid", this.admin);
+
+            // course permission visibility
+            if (this.admin != null || this.enrolled != null || this.publicCourse) {
+                final ArrayList<Predicate> visibility = new ArrayList<Predicate>();
+                if (this.admin != null) {
+                    visibility.add(cb.equal(c.get("admins"), cb.parameter(String.class, "adminGuid")));
+                    // visibility.add(cb.parameter(String.class,
+                    // "adminGuid").in(c.<Set<String>> get("admins")));
+                    params.put("adminGuid", this.admin);
+                }
+                if (this.enrolled != null) {
+                    visibility.add(cb.equal(c.get("enrolled"), cb.parameter(String.class, "enrolledGuid")));
+                    // visibility.add(cb.parameter(String.class,
+                    // "enrolledGuid").in(c.<Set<String>> get("enrolled")));
+                    params.put("enrolledGuid", this.enrolled);
+                }
+                if (this.publicCourse) {
+                    visibility.add(cb.equal(c.get("publicCourse"), Boolean.TRUE));
+                }
+
+                where.add(cb.or(visibility.toArray(new Predicate[visibility.size()])));
             }
 
             // generate where clause
-            if (where.size() > 0) {
-                cq.where(cb.and(where.toArray(new Predicate[where.size()])));
+            if (where.size() > 1) {
+                cq.where(where.toArray(new Predicate[where.size()]));
+            } else if (where.size() == 1) {
+                cq.where(where.get(0));
             }
 
             // compile query
@@ -363,13 +415,33 @@ public class Course {
             query.setFirstResult(this.start);
             if (this.limit > 0) {
                 query.setMaxResults(this.limit);
-            } else if (this.id != null) {
-                // only return 1 result since we are selecting based on id
-                query.setMaxResults(1);
             }
 
             // return the query
             return query;
+        }
+
+        public List<Course> execute(final EntityManager em) {
+            return this.compile(em).getResultList();
+        }
+
+        @Override
+        public CourseQuery clone() {
+            final CourseQuery newObj = new CourseQuery();
+            newObj.id = this.id;
+            newObj.start = this.start;
+            newObj.limit = this.limit;
+
+            newObj.admin = this.admin;
+            newObj.enrolled = this.enrolled;
+            newObj.publicCourse = this.publicCourse;
+
+            newObj.loadManifest = this.loadManifest;
+            newObj.loadPendingManifest = this.loadPendingManifest;
+            newObj.loadResources = this.loadResources;
+            newObj.loadAdmins = this.loadAdmins;
+            newObj.loadEnrolled = this.loadEnrolled;
+            return newObj;
         }
     }
 }
