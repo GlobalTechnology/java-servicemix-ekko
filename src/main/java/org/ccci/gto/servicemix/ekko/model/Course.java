@@ -2,11 +2,14 @@ package org.ccci.gto.servicemix.ekko.model;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import javax.persistence.Basic;
 import javax.persistence.CascadeType;
@@ -34,6 +37,9 @@ import org.apache.openjpa.persistence.jdbc.ForeignKeyAction;
 
 @Entity
 public class Course {
+    private static final Pattern GUIDPATTERN = Pattern
+            .compile("^[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}$");
+
     @Id
     @Column(updatable = false)
     private Long id;
@@ -148,12 +154,94 @@ public class Course {
         }
     }
 
-    public void addAdmin(final String guid) {
-        this.admins.add(guid.toUpperCase());
+    public void addAdmin(String guid) {
+        if (guid != null) {
+            guid = guid.toUpperCase();
+
+            // only add valid GUIDs
+            if (GUIDPATTERN.matcher(guid).matches()) {
+                if (this.admins == null) {
+                    this.admins = new HashSet<String>();
+                }
+
+                this.admins.add(guid.toUpperCase());
+            }
+        }
+    }
+
+    public void addAdmins(final Collection<String> guids) {
+        if (guids != null) {
+            for (final String guid : guids) {
+                this.addAdmin(guid);
+            }
+        }
     }
 
     public void removeAdmin(final String guid) {
-        this.admins.remove(guid.toUpperCase());
+        if (guid != null && this.admins != null) {
+            this.admins.remove(guid.toUpperCase());
+        }
+    }
+
+    public void removeAdmins(final Collection<String> guids) {
+        if (guids != null && this.admins != null) {
+            for (final String guid : guids) {
+                this.removeAdmin(guid);
+            }
+        }
+    }
+
+    public Set<String> getAdmins() {
+        if (this.admins == null) {
+            return Collections.emptySet();
+        }
+
+        return Collections.unmodifiableSet(this.admins);
+    }
+
+    public void addEnrolled(String guid) {
+        if (guid != null) {
+            guid = guid.toUpperCase();
+
+            // only add valid GUIDs
+            if (GUIDPATTERN.matcher(guid).matches()) {
+                if (this.enrolled == null) {
+                    this.enrolled = new HashSet<String>();
+                }
+
+                this.enrolled.add(guid.toUpperCase());
+            }
+        }
+    }
+
+    public void addEnrolled(final Collection<String> guids) {
+        if (guids != null) {
+            for (final String guid : guids) {
+                this.addEnrolled(guid);
+            }
+        }
+    }
+
+    public void removeEnrolled(final String guid) {
+        if (guid != null && this.enrolled != null) {
+            this.enrolled.remove(guid.toUpperCase());
+        }
+    }
+
+    public void removeEnrolled(final Collection<String> guids) {
+        if (guids != null && this.enrolled != null) {
+            for (final String guid : guids) {
+                this.removeEnrolled(guid);
+            }
+        }
+    }
+
+    public Set<String> getEnrolled() {
+        if (this.enrolled == null) {
+            return Collections.emptySet();
+        }
+
+        return Collections.unmodifiableSet(this.enrolled);
     }
 
     public boolean isPublic() {
@@ -161,11 +249,11 @@ public class Course {
     }
 
     public boolean isAdmin(final String guid) {
-        return this.admins.contains(guid.toUpperCase());
+        return this.admins != null && guid != null && this.admins.contains(guid.toUpperCase());
     }
 
     public boolean isEnrolled(final String guid) {
-        return this.enrolled.contains(guid.toUpperCase());
+        return this.enrolled != null && guid != null && this.enrolled.contains(guid.toUpperCase());
     }
 
     public boolean canView(final String guid) {
