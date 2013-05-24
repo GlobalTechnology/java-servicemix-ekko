@@ -59,14 +59,14 @@ public class Course {
     @MapKeyColumn(name = "sha1")
     private Map<String, Resource> resources = new HashMap<String, Resource>();
 
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.LAZY)
     @Column(name = "guid", nullable = false, length = 36)
     @CollectionTable(name = "Course_Admins", joinColumns = @JoinColumn(name = "courseId", nullable = false), uniqueConstraints = { @UniqueConstraint(columnNames = {
             "courseId", "guid" }) })
     @ContainerTable(joinForeignKey = @ForeignKey(updateAction = ForeignKeyAction.CASCADE, deleteAction = ForeignKeyAction.CASCADE))
     private Set<String> admins = new HashSet<String>();
 
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.LAZY)
     @Column(name = "guid", nullable = false, length = 36)
     @CollectionTable(name = "Course_Enrolled", joinColumns = @JoinColumn(name = "courseId", nullable = false), uniqueConstraints = { @UniqueConstraint(columnNames = {
             "courseId", "guid" }) })
