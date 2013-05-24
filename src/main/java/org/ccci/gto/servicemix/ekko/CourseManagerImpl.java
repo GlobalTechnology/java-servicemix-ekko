@@ -53,36 +53,42 @@ public class CourseManagerImpl implements CourseManager {
 
     @Transactional
     @Override
-    public Course publishCourse(final CourseQuery courseQuery) {
-        final List<Exception> errors = new ArrayList<Exception>();
-
+    public Course publishCourse(final CourseQuery courseQuery) throws CourseNotFoundException, ManifestException,
+            MultipleManifestExceptions {
         // short-circuit if a valid course couldn't be found
         final Course course = this.getCourse(courseQuery.clone().loadManifest(true).loadPendingManifest(true));
         if (course == null) {
-            // TODO: maybe throw an exception instead?
-            return null;
+            throw new CourseNotFoundException();
         }
 
         // don't do anything if there isn't a pending manifest
         final String pendingManifest = course.getPendingManifest();
-        if (course.getPendingManifest() == null) {
-            // TODO: maybe throw an exception instead?
-            return course;
+        if (pendingManifest == null) {
+            throw new ManifestException("no pending manifest");
+        }
+
+        // parse the manifest
+        final Document manifest = DomUtils.parse(pendingManifest);
+        if (manifest == null) {
+            throw new ManifestException("error parsing the pending manifest");
         }
 
         // validate pending manifest
-        final Document manifest = DomUtils.parse(pendingManifest);
-
-        // make sure we have all the resources listed in the manifest
-        final Map<String, Resource> resources = new HashMap<String, Resource>();
-        for (final Element resourceNode : DomUtils.getElements(manifest, "/ekko:course/ekko:resources/ekko:resource")) {
-            final Resource resource = course.getResource(resourceNode.getAttribute("sha1"));
-            resources.put(resourceNode.getAttribute("id"), resource);
+        final List<ManifestException> exceptions = new ArrayList<ManifestException>();
+        try {
+            this.validateManifest(course, manifest);
+        } catch (final MultipleManifestExceptions e) {
+            exceptions.addAll(e.getExceptions());
+        } catch (final ManifestException e) {
+            exceptions.add(e);
+        } catch (final Exception e) {
+            exceptions.add(new ManifestException("Unexpected error", e));
         }
 
-        // TODO: finish manifest validation
-
         // throw any errors we encountered
+        if (exceptions.size() > 0) {
+            throw new MultipleManifestExceptions(exceptions);
+        }
 
         // reset published state of all resources
         // XXX OPTIMIZATION: reset all flags with single update query
@@ -91,9 +97,24 @@ public class CourseManagerImpl implements CourseManager {
             resource.setMetaResource(false);
         }
 
-        // TODO: mark published resources
+        // mark published resources
+        for (final Element element : DomUtils.getElements(manifest,
+                "/ekko:course/ekko:resources//ekko:resource[@type='file']")) {
+            final Resource resource = course.getResource(element.getAttribute("sha1"));
+            if (resource != null) {
+                resource.setPublished(true);
+            }
+        }
 
-        // TODO: mark meta resources
+        // mark meta resources
+        for (final Element element : DomUtils.getElements(manifest,
+                "/ekko:course/ekko:resources//ekko:resource[@id=/ekko:course/ekko:meta//@resource]"
+                        + "/descendant-or-self::ekko:resource[@type='file']")) {
+            final Resource resource = course.getResource(element.getAttribute("sha1"));
+            if (resource != null) {
+                resource.setMetaResource(true);
+            }
+        }
 
         // replace the manifest with the pending manifest
         course.setManifest(pendingManifest);
@@ -135,12 +156,11 @@ public class CourseManagerImpl implements CourseManager {
     @Transactional
     @Override
     public Course updateCourseAdmins(final CourseQuery query, final Collection<String> toAdd,
-            final Collection<String> toRemove) {
+            final Collection<String> toRemove) throws CourseNotFoundException {
         // short-circuit if a valid course couldn't be found
         final Course course = this.getCourse(query.clone());
         if (course == null) {
-            // TODO: maybe throw an exception instead?
-            return null;
+            throw new CourseNotFoundException();
         }
 
         // remove admins, then add new admins
@@ -154,12 +174,11 @@ public class CourseManagerImpl implements CourseManager {
     @Transactional
     @Override
     public Course updateCourseEnrolled(final CourseQuery query, final Collection<String> toAdd,
-            final Collection<String> toRemove) {
+            final Collection<String> toRemove) throws CourseNotFoundException {
         // short-circuit if a valid course couldn't be found
-        final Course course = this.getCourse(query.clone());
+        final Course course = this.getCourse(query.clone().loadEnrolled(true));
         if (course == null) {
-            // TODO: maybe throw an exception instead?
-            return null;
+            throw new CourseNotFoundException();
         }
 
         // remove enrolled, then add new enrolled
@@ -201,5 +220,55 @@ public class CourseManagerImpl implements CourseManager {
     @Override
     public void removeResource(final Resource resource) {
         this.em.remove(this.em.merge(resource));
+    }
+
+    private void validateManifest(final Course course, final Document manifest) throws ManifestException,
+            MultipleManifestExceptions {
+        // capture multiple ManifestExceptions
+        final List<ManifestException> exceptions = new ArrayList<ManifestException>();
+
+        // validate all resources
+        final List<Element> resources = DomUtils.getElements(manifest, "/ekko:course/ekko:resources//ekko:resource");
+        final Set<String> ids = new HashSet<String>();
+        for (final Element resource : resources) {
+            final String type = resource.getAttribute("type");
+            if ("dynamic".equals(type)) {
+                // make sure multi resources have at least 1 bundled resource
+                if (resource.getElementsByTagNameNS(XMLNS_EKKO, "resource").getLength() == 0) {
+                    // TODO: specific exception?
+                    exceptions.add(new ManifestException("Dynamic resource has no bundled resources"));
+                }
+            } else if ("file".equals(type)) {
+                // ensure standard resources have been uploaded to the course
+                final String sha1 = resource.getAttribute("sha1");
+                if (course.getResource(sha1) == null) {
+                    exceptions.add(new MissingResourceManifestException(sha1));
+                }
+            } else if ("uri".equals(type)) {
+                // TODO
+            } else {
+                exceptions.add(new ManifestException("unrecognized resource type"));
+            }
+
+            // store the resource id
+            if (resource.hasAttribute("id")) {
+                ids.add(resource.getAttribute("id"));
+            }
+        }
+
+        // make sure all referenced resources exist in the manifest
+        final List<Attr> attrs = DomUtils.getAttrs(manifest,
+                "/ekko:course/ekko:*[local-name()='meta' or local-name()='lessons']"
+                        + "//@*[local-name()='resource' or local-name()='thumbnail']");
+        for (final Attr attr : attrs) {
+            if (ids.contains(attr.getValue())) {
+                exceptions.add(new ManifestException("referenced resource doesn't exist"));
+            }
+        }
+
+        // throw any errors we encountered
+        if (exceptions.size() > 0) {
+            throw new MultipleManifestExceptions(exceptions);
+        }
     }
 }

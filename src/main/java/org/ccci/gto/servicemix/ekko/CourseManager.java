@@ -17,11 +17,13 @@ public interface CourseManager {
 
     List<Course> getCourses(CourseQuery courseQuery);
 
-    Course publishCourse(CourseQuery courseQuery);
+    Course publishCourse(CourseQuery courseQuery) throws CourseNotFoundException, ManifestException;
 
-    Course updateCourseAdmins(CourseQuery courseQuery, Collection<String> toAdd, Collection<String> toRemove);
+    Course updateCourseAdmins(CourseQuery courseQuery, Collection<String> toAdd, Collection<String> toRemove)
+            throws CourseNotFoundException;
 
-    Course updateCourseEnrolled(CourseQuery courseQuery, Collection<String> toAdd, Collection<String> toRemove);
+    Course updateCourseEnrolled(CourseQuery courseQuery, Collection<String> toAdd, Collection<String> toRemove)
+            throws CourseNotFoundException;
 
     Resource getResource(ResourcePrimaryKey key);
 
