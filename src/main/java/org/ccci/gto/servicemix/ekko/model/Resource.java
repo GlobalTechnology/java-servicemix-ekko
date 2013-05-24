@@ -61,10 +61,6 @@ public class Resource {
         return this.key.getSha1();
     }
 
-    public String generateMogileFsKey() {
-        return "course/" + this.key.getCourseId() + "/resource/" + this.key.getSha1();
-    }
-
     public String getMogileFsKey() {
         return this.mogileFsKey;
     }
