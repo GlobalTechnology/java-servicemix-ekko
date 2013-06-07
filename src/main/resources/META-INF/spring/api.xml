@@ -14,6 +14,7 @@
   </jaxrs:server>
 
   <bean id="api.base" abstract="true" class="org.ccci.gto.servicemix.common.jaxrs.api.CasSessionAwareApi">
+    <property name="authRealm" value="ekko" />
     <property name="baseUri" value="${ekko.base.uri}" />
     <property name="casBaseUri" value="${cas.url:https://thekey.me/cas/}" />
   </bean>
