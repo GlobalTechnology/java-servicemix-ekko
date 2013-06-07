@@ -38,7 +38,7 @@ public class CoursesApi extends AbstractApi {
         // validate the session
         final Session session = this.getSession(uri);
         if (session == null || session.isExpired()) {
-            return Response.status(Status.UNAUTHORIZED).build();
+            return this.invalidSession(uri).build();
         }
 
         // parse manifest
@@ -71,7 +71,7 @@ public class CoursesApi extends AbstractApi {
         // validate the session
         final Session session = this.getSession(uri);
         if (session == null || session.isExpired()) {
-            return Response.status(Status.UNAUTHORIZED).build();
+            return this.invalidSession(uri).build();
         }
 
         // sanitize start and limit

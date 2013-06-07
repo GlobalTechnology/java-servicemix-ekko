@@ -23,6 +23,7 @@ import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
 
 import org.ccci.gto.servicemix.common.model.Session;
+import org.ccci.gto.servicemix.common.util.ResponseUtils;
 import org.ccci.gto.servicemix.ekko.CourseNotFoundException;
 import org.ccci.gto.servicemix.ekko.DomUtils;
 import org.ccci.gto.servicemix.ekko.ManifestException;
@@ -73,7 +74,7 @@ public class CourseApi extends AbstractApi {
         // validate the session
         final Session session = this.getSession(uri);
         if (session == null || session.isExpired()) {
-            return Response.status(Status.UNAUTHORIZED).build();
+            return this.invalidSession(uri).build();
         }
 
         // retrieve course
@@ -97,7 +98,7 @@ public class CourseApi extends AbstractApi {
         // validate the session
         final Session session = this.getSession(uri);
         if (session == null || session.isExpired()) {
-            return Response.status(Status.UNAUTHORIZED).build();
+            return this.invalidSession(uri).build();
         }
 
         // retrieve course
@@ -128,7 +129,7 @@ public class CourseApi extends AbstractApi {
         // validate the session
         final Session session = this.getSession(uri);
         if (session == null || session.isExpired()) {
-            return Response.status(Status.UNAUTHORIZED).build();
+            return this.invalidSession(uri).build();
         }
 
         // parse manifest
@@ -142,7 +143,7 @@ public class CourseApi extends AbstractApi {
 
         // a valid course wasn't found to update
         if (course == null) {
-            return Response.status(Status.UNAUTHORIZED).build();
+            return ResponseUtils.unauthorized().build();
         }
 
         return Response.ok().build();
@@ -154,7 +155,7 @@ public class CourseApi extends AbstractApi {
         // validate the session
         final Session session = this.getSession(uri);
         if (session == null || session.isExpired()) {
-            return Response.status(Status.UNAUTHORIZED).build();
+            return this.invalidSession(uri).build();
         }
 
         // publish the specified course
@@ -162,7 +163,7 @@ public class CourseApi extends AbstractApi {
         try {
             course = this.courseManager.publishCourse(this.getCourseQuery(uri).admin(session.getGuid()));
         } catch (final CourseNotFoundException e) {
-            return Response.status(Status.UNAUTHORIZED).build();
+            return ResponseUtils.unauthorized().build();
         } catch (final MultipleManifestExceptions e) {
             // return the errors
             return Response.status(Status.CONFLICT).entity(JaxbError.fromException(e)).build();
@@ -187,14 +188,14 @@ public class CourseApi extends AbstractApi {
         // validate the session
         final Session session = this.getSession(uri);
         if (session == null || session.isExpired()) {
-            return Response.status(Status.UNAUTHORIZED).build();
+            return this.invalidSession(uri).build();
         }
 
         // retrieve the course
         final Course course = this.courseManager.getCourse(this.getCourseQuery(uri).admin(session.getGuid())
                 .loadAdmins(true));
         if (course == null) {
-            return Response.status(Status.UNAUTHORIZED).build();
+            return ResponseUtils.unauthorized().build();
         }
 
         // return success with the current list of admins
@@ -209,7 +210,7 @@ public class CourseApi extends AbstractApi {
         // validate the session
         final Session session = this.getSession(uri);
         if (session == null || session.isExpired()) {
-            return Response.status(Status.UNAUTHORIZED).build();
+            return this.invalidSession(uri).build();
         }
 
         // generate toAdd and toRemove Sets
@@ -230,7 +231,7 @@ public class CourseApi extends AbstractApi {
             course = this.courseManager.updateCourseAdmins(this.getCourseQuery(uri).admin(session.getGuid()), toAdd,
                     toRemove);
         } catch (final CourseNotFoundException e) {
-            return Response.status(Status.UNAUTHORIZED).build();
+            return ResponseUtils.unauthorized().build();
         }
 
         // return success with the current list of admins
@@ -245,14 +246,14 @@ public class CourseApi extends AbstractApi {
         // validate the session
         final Session session = this.getSession(uri);
         if (session == null || session.isExpired()) {
-            return Response.status(Status.UNAUTHORIZED).build();
+            return this.invalidSession(uri).build();
         }
 
         // retrieve the course
         final Course course = this.courseManager.getCourse(this.getCourseQuery(uri).admin(session.getGuid())
                 .loadEnrolled(true));
         if (course == null) {
-            return Response.status(Status.UNAUTHORIZED).build();
+            return ResponseUtils.unauthorized().build();
         }
 
         // return success with the current list of enrolled
@@ -267,7 +268,7 @@ public class CourseApi extends AbstractApi {
         // validate the session
         final Session session = this.getSession(uri);
         if (session == null || session.isExpired()) {
-            return Response.status(Status.UNAUTHORIZED).build();
+            return this.invalidSession(uri).build();
         }
 
         // generate toAdd and toRemove Sets
@@ -287,7 +288,7 @@ public class CourseApi extends AbstractApi {
             course = this.courseManager.updateCourseEnrolled(this.getCourseQuery(uri).admin(session.getGuid()), toAdd,
                     toRemove);
         } catch (final CourseNotFoundException e) {
-            return Response.status(Status.UNAUTHORIZED).build();
+            return ResponseUtils.unauthorized().build();
         }
 
         // return success with the current list of enrolled users
@@ -302,14 +303,14 @@ public class CourseApi extends AbstractApi {
         // validate the session
         final Session session = this.getSession(uri);
         if (session == null || session.isExpired()) {
-            return Response.status(Status.UNAUTHORIZED).build();
+            return this.invalidSession(uri).build();
         }
 
         // find the course
         final String guid = session.getGuid();
         final Course course = this.courseManager.getCourse(this.getCourseQuery(uri).admin(guid).enrolled(guid));
         if (course == null) {
-            return Response.status(Status.UNAUTHORIZED).build();
+            return ResponseUtils.unauthorized().build();
         }
 
         // return not found if the zip doesn't exist

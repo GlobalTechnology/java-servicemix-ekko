@@ -8,19 +8,25 @@
     <jaxrs:serviceBeans>
       <ref local="api.auth" />
       <ref local="api.courses" />
+      <ref local="api.course" />
+      <ref local="api.resources" />
     </jaxrs:serviceBeans>
   </jaxrs:server>
 
-  <bean id="api.base" abstract="true" />
-
-  <bean id="api.auth" parent="api.base" class="org.ccci.gto.servicemix.cas.jaxrs.api.AuthenticationApi">
-    <property name="serviceUri" value="${ekko.base.uri}" />
+  <bean id="api.base" abstract="true" class="org.ccci.gto.servicemix.common.jaxrs.api.CasSessionAwareApi">
+    <property name="baseUri" value="${ekko.base.uri}" />
+    <property name="casBaseUri" value="${cas.url:https://thekey.me/cas/}" />
   </bean>
 
-  <bean id="api.courses" parent="api.base" class="org.ccci.gto.servicemix.ekko.jaxrs.api.CoursesApi">
-    <property name="baseUri" value="${ekko.base.uri}" />
+  <bean id="api.auth" parent="api.base" class="org.ccci.gto.servicemix.common.jaxrs.api.AuthenticationApi" />
+
+  <bean id="api.courses" parent="api.base" class="org.ccci.gto.servicemix.ekko.jaxrs.api.CoursesApi" />
+
+  <bean id="api.course" parent="api.base" class="org.ccci.gto.servicemix.ekko.jaxrs.api.CourseApi">
     <property name="support">
-      <bean class="org.ccci.gto.servicemix.ekko.jaxrs.api.CoursesApiSupport" />
+      <bean class="org.ccci.gto.servicemix.ekko.jaxrs.api.CourseApiSupport" />
     </property>
   </bean>
+
+  <bean id="api.resources" parent="api.base" class="org.ccci.gto.servicemix.ekko.jaxrs.api.ResourcesApi" />
 </beans>

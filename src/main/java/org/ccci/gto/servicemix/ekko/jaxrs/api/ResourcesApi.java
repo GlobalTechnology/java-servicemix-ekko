@@ -21,6 +21,7 @@ import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
 import org.ccci.gto.servicemix.common.model.Session;
+import org.ccci.gto.servicemix.common.util.ResponseUtils;
 import org.ccci.gto.servicemix.ekko.ResourceAlreadyExistsException;
 import org.ccci.gto.servicemix.ekko.ResourceException;
 import org.ccci.gto.servicemix.ekko.ResourceManager;
@@ -47,13 +48,13 @@ public class ResourcesApi extends AbstractApi {
         // validate the session
         final Session session = this.getSession(uri);
         if (session == null || session.isExpired()) {
-            return Response.status(Status.UNAUTHORIZED).build();
+            return this.invalidSession(uri).build();
         }
 
         // validate the specified course
         final Course course = this.courseManager.getCourse(this.getCourseQuery(uri).admin(session.getGuid()));
         if (course == null) {
-            return Response.status(Status.UNAUTHORIZED).build();
+            return ResponseUtils.unauthorized().build();
         }
 
         // store the uploaded file
@@ -89,13 +90,13 @@ public class ResourcesApi extends AbstractApi {
         // validate the session
         final Session session = this.getSession(uri);
         if (session == null || session.isExpired()) {
-            return Response.status(Status.UNAUTHORIZED).build();
+            return this.invalidSession(uri).build();
         }
 
         // load the course
         final Course course = this.courseManager.getCourse(this.getCourseQuery(uri).loadResources(true));
         if (course == null) {
-            return Response.status(Status.UNAUTHORIZED).build();
+            return ResponseUtils.unauthorized().build();
         }
 
         // generate JAXB objects
@@ -116,13 +117,13 @@ public class ResourcesApi extends AbstractApi {
         // validate the session
         final Session session = this.getSession(uri);
         if (session == null || session.isExpired()) {
-            return Response.status(Status.UNAUTHORIZED).build();
+            return this.invalidSession(uri).build();
         }
 
         // validate the specified course
         final Course course = this.courseManager.getCourse(this.getCourseQuery(uri).loadResources(true));
         if (course == null) {
-            return Response.status(Status.UNAUTHORIZED).build();
+            return ResponseUtils.unauthorized().build();
         }
 
         // return a 404 if the resource doesn't exist
@@ -161,14 +162,14 @@ public class ResourcesApi extends AbstractApi {
         // validate the session
         final Session session = this.getSession(uri);
         if (session == null || session.isExpired()) {
-            return Response.status(Status.UNAUTHORIZED).build();
+            return this.invalidSession(uri).build();
         }
 
         // validate the specified course
         final Course course = this.courseManager.getCourse(this.getCourseQuery(uri).admin(session.getGuid())
                 .loadResources(true));
         if (course == null) {
-            return Response.status(Status.UNAUTHORIZED).build();
+            return ResponseUtils.unauthorized().build();
         }
 
         // throw a 404 if the resource doesn't exist

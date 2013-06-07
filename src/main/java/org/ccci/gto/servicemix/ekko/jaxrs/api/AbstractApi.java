@@ -10,12 +10,12 @@ import java.util.Map;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
-import org.ccci.gto.servicemix.common.jaxrs.api.SessionAwareApi;
+import org.ccci.gto.servicemix.common.jaxrs.api.CasSessionAwareApi;
 import org.ccci.gto.servicemix.ekko.CourseManager;
 import org.ccci.gto.servicemix.ekko.model.Course.CourseQuery;
 import org.springframework.beans.factory.annotation.Autowired;
 
-public abstract class AbstractApi extends SessionAwareApi {
+public abstract class AbstractApi extends CasSessionAwareApi {
     @Autowired
     protected CourseManager courseManager;
 
