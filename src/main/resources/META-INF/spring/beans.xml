@@ -10,7 +10,7 @@
   <context:annotation-config />
 
   <!-- Imported objects -->
-  <osgi:reference id="sessionManager" interface="org.ccci.gto.servicemix.cas.SessionManager" />
+  <osgi:reference id="sessionManager" interface="org.ccci.gto.servicemix.common.SessionManager" />
   <osgi:reference id="ticketValidator" interface="org.jasig.cas.client.validation.TicketValidator" />
 
   <!-- various configuration beans -->
@@ -31,12 +31,19 @@
 
   <bean id="courseManager" class="org.ccci.gto.servicemix.ekko.CourseManagerImpl" />
 
+  <bean id="resourceManager" class="org.ccci.gto.servicemix.ekko.MojiResourceManager">
+    <property name="moji" ref="moji" />
+    <property name="courseManager" ref="courseManager" />
+  </bean>
+
   <!-- JPA/DB configuration -->
   <bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource" destroy-method="close">
     <property name="driverClassName" value="${database.driver:com.mysql.jdbc.Driver}" />
     <property name="url" value="${database.uri}" />
     <property name="username" value="${database.username}" />
     <property name="password" value="${database.password}" />
+    <property name="validationQuery" value="SELECT 1" />
+    <property name="testOnBorrow" value="true" />
   </bean>
 
   <bean id="entityManagerFactory" class="org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean">
