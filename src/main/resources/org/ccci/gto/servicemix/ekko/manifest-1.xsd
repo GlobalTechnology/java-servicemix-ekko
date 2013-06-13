@@ -1,0 +1,176 @@
+<xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" targetNamespace="https://ekkoproject.org/manifest"
+  xmlns:ekko="https://ekkoproject.org/manifest" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+  <xs:complexType name="lessonMediaType">
+    <xs:attribute name="type" use="required">
+      <xs:simpleType>
+        <xs:restriction base="xs:string">
+          <xs:enumeration value="image" />
+          <xs:enumeration value="video" />
+          <xs:enumeration value="audio" />
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:attribute>
+    <xs:attribute name="id" type="xs:string" use="required" />
+    <xs:attribute name="resource" type="xs:string" use="required" />
+    <xs:attribute name="thumbnail" type="xs:string" use="optional" />
+  </xs:complexType>
+
+  <xs:complexType name="lessonTextType">
+    <xs:simpleContent>
+      <xs:extension base="xs:string">
+        <xs:attribute name="id" type="xs:string" use="required" />
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+
+  <xs:complexType name="lessonType">
+    <xs:choice minOccurs="1" maxOccurs="unbounded">
+      <xs:element name="media" type="ekko:lessonMediaType" />
+      <xs:element name="text" type="ekko:lessonTextType" />
+    </xs:choice>
+    <xs:attribute name="id" type="xs:string" use="required" />
+    <xs:attribute name="title" type="xs:string" use="optional" />
+  </xs:complexType>
+
+  <xs:complexType name="quizQuestionOptionType">
+    <xs:simpleContent>
+      <xs:extension base="xs:string">
+        <xs:attribute type="xs:string" name="id" use="required" />
+        <xs:attribute name="answer" use="optional">
+          <xs:simpleType>
+            <xs:restriction base="xs:string">
+              <xs:enumeration value="answer" />
+            </xs:restriction>
+          </xs:simpleType>
+        </xs:attribute>
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+
+  <xs:complexType name="quizQuestionType">
+    <xs:sequence>
+      <xs:element name="text" type="xs:string" />
+      <xs:element name="options">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="option" type="ekko:quizQuestionOptionType" minOccurs="0" maxOccurs="unbounded" />
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+    <xs:attribute type="xs:string" name="id" use="required" />
+    <xs:attribute name="type" use="required">
+      <xs:simpleType>
+        <xs:restriction base="xs:string">
+          <xs:enumeration value="multiple" />
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:attribute>
+  </xs:complexType>
+
+  <xs:complexType name="quizType">
+    <xs:sequence>
+      <xs:element name="question" type="ekko:quizQuestionType" minOccurs="0" maxOccurs="unbounded" />
+    </xs:sequence>
+    <xs:attribute type="xs:string" name="id" use="required" />
+  </xs:complexType>
+
+  <xs:complexType name="contentType">
+    <xs:choice minOccurs="0" maxOccurs="unbounded">
+      <xs:element name="lesson" type="ekko:lessonType" />
+      <xs:element name="quiz" type="ekko:quizType" />
+    </xs:choice>
+  </xs:complexType>
+
+  <xs:complexType name="resourceType">
+    <xs:choice minOccurs="0" maxOccurs="unbounded">
+      <xs:element name="resource" type="ekko:resourceType" />
+    </xs:choice>
+    <xs:attribute name="id" type="xs:string" use="required" />
+    <xs:attribute name="type" use="required">
+      <xs:simpleType>
+        <xs:restriction base="xs:string">
+          <xs:enumeration value="file" />
+          <xs:enumeration value="uri" />
+          <xs:enumeration value="dynamic" />
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:attribute>
+    <xs:attribute name="mimeType" type="xs:string" use="optional" />
+    <xs:attribute name="sha1" type="xs:string" use="optional" />
+    <xs:attribute name="size" type="xs:int" use="optional" />
+    <xs:attribute name="file" type="xs:string" use="optional" />
+    <xs:attribute name="uri" type="xs:anyURI" use="optional" />
+  </xs:complexType>
+
+  <xs:complexType name="metaAuthorType">
+    <xs:all>
+      <xs:element type="xs:string" name="name" />
+      <xs:element type="xs:string" name="email" />
+      <xs:element type="xs:anyURI" name="url" />
+    </xs:all>
+  </xs:complexType>
+
+  <xs:element name="meta">
+    <xs:complexType>
+      <xs:all>
+        <xs:element name="title" type="xs:string" minOccurs="0" maxOccurs="1" />
+        <xs:element name="author" type="ekko:metaAuthorType" minOccurs="0" maxOccurs="1" />
+        <xs:element name="description" type="xs:string" minOccurs="0" maxOccurs="1" />
+        <xs:element name="copyright" type="xs:string" minOccurs="0" maxOccurs="1" />
+        <xs:element name="banner" minOccurs="0" maxOccurs="1">
+          <xs:complexType>
+            <xs:simpleContent>
+              <xs:extension base="xs:string">
+                <xs:attribute type="xs:string" name="resource" />
+              </xs:extension>
+            </xs:simpleContent>
+          </xs:complexType>
+        </xs:element>
+      </xs:all>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="resources">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="resource" type="ekko:resourceType" minOccurs="0" maxOccurs="unbounded" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="course">
+    <xs:complexType>
+      <xs:all>
+        <xs:element ref="ekko:meta" />
+        <xs:element name="content" type="ekko:contentType" />
+        <xs:element ref="ekko:resources" />
+      </xs:all>
+
+      <xs:attribute type="xs:long" name="id" use="optional" />
+      <xs:attribute type="xs:int" name="version" use="optional" />
+      <xs:attribute type="xs:int" name="schemaVersion" use="required" />
+    </xs:complexType>
+    <xs:key name="resourcesKey">
+      <xs:selector xpath="ekko:resources/ekko:resource" />
+      <xs:field xpath="@id" />
+    </xs:key>
+    <xs:keyref name="bannerKeyRef" refer="ekko:resourcesKey">
+      <xs:selector xpath="ekko:meta/ekko:banner" />
+      <xs:field xpath="@resource" />
+    </xs:keyref>
+    <xs:keyref name="mediaResourceKeyRef" refer="ekko:resourcesKey">
+      <xs:selector xpath="ekko:content/ekko:lesson/ekko:media" />
+      <xs:field xpath="@resource" />
+    </xs:keyref>
+    <xs:keyref name="mediaThumbnailKeyRef" refer="ekko:resourcesKey">
+      <xs:selector xpath="ekko:content/ekko:lesson/ekko:media" />
+      <xs:field xpath="@thumbnail" />
+    </xs:keyref>
+    <xs:unique name="ids">
+      <xs:selector xpath=".//*" />
+      <xs:field xpath="@id" />
+    </xs:unique>
+  </xs:element>
+</xs:schema>

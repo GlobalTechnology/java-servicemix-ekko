@@ -3,6 +3,7 @@ package org.ccci.gto.servicemix.ekko;
 import static org.ccci.gto.servicemix.ekko.Constants.XMLNS_EKKO;
 import static org.ccci.gto.servicemix.ekko.Constants.XMLNS_HUB;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.StringReader;
@@ -27,6 +28,9 @@ import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
+import javax.xml.transform.stream.StreamSource;
+import javax.xml.validation.Schema;
+import javax.xml.validation.SchemaFactory;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpression;
@@ -41,6 +45,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
 
 public final class DomUtils {
     private static final Logger LOG = LoggerFactory.getLogger(DomUtils.class);
@@ -51,6 +56,16 @@ public final class DomUtils {
         nsContext.registerNamespace("ekko", XMLNS_EKKO);
         nsContext.registerNamespace("hub", XMLNS_HUB);
         XPATH.setNamespaceContext(nsContext);
+    }
+
+    private static final Schema MANIFEST_V1;
+    static {
+        final SchemaFactory factory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
+        try {
+            MANIFEST_V1 = factory.newSchema(new StreamSource(DomUtils.class.getResourceAsStream("manifest-1.xsd")));
+        } catch (final SAXException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public static final XPathExpression compileXPath(final String expression) throws XPathExpressionException {
@@ -127,6 +142,15 @@ public final class DomUtils {
         }
 
         return null;
+    }
+
+    public static void validate(final Document manifest) throws SAXException {
+        try {
+            MANIFEST_V1.newValidator().validate(new DOMSource(manifest));
+        } catch (final IOException e) {
+            LOG.error("unexpected exception", e);
+            throw new RuntimeException(e);
+        }
     }
 
     public static void output(final Document dom, final OutputStream out) {

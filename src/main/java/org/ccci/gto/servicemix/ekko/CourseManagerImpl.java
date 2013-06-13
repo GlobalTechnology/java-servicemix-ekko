@@ -21,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.xml.sax.SAXException;
 
 public class CourseManagerImpl implements CourseManager {
     private static final SecureRandom RAND = new SecureRandom();
@@ -229,6 +230,13 @@ public class CourseManagerImpl implements CourseManager {
             MultipleManifestExceptions {
         // capture multiple ManifestExceptions
         final List<ManifestException> exceptions = new ArrayList<ManifestException>();
+
+        // validate the actual manifest xml
+        try {
+            DomUtils.validate(manifest);
+        } catch (final SAXException e) {
+            exceptions.add(new ManifestException("invalid manifest xml", e));
+        }
 
         // validate all resources
         final List<Element> resources = DomUtils.getElements(manifest, "/ekko:course/ekko:resources//ekko:resource");
