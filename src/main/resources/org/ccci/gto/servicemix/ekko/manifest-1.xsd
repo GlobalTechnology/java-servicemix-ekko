@@ -85,16 +85,16 @@
   </xs:complexType>
 
   <xs:complexType name="resourceType">
-    <xs:choice minOccurs="0" maxOccurs="unbounded">
-      <xs:element name="resource" type="ekko:resourceType" />
-    </xs:choice>
+    <!-- <xs:choice minOccurs="0" maxOccurs="unbounded"> -->
+    <!-- <xs:element name="resource" type="ekko:resourceType" /> -->
+    <!-- </xs:choice> -->
     <xs:attribute name="id" type="xs:string" use="required" />
     <xs:attribute name="type" use="required">
       <xs:simpleType>
         <xs:restriction base="xs:string">
           <xs:enumeration value="file" />
           <xs:enumeration value="uri" />
-          <xs:enumeration value="dynamic" />
+          <!-- <xs:enumeration value="dynamic" /> -->
         </xs:restriction>
       </xs:simpleType>
     </xs:attribute>
