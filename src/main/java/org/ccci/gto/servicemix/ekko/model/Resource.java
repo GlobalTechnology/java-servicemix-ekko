@@ -26,6 +26,9 @@ public class Resource {
 
     private String mimeType;
 
+    @Column(nullable = true, updatable = false)
+    private Long crc32 = null;
+
     @Column(nullable = false, updatable = false)
     private long size = 0;
     @Column(nullable = false)
@@ -73,6 +76,10 @@ public class Resource {
         return this.size;
     }
 
+    public Long getCrc32() {
+        return this.crc32;
+    }
+
     public boolean isPublished() {
         return this.published;
     }
@@ -91,6 +98,10 @@ public class Resource {
 
     public void setSize(final long size) {
         this.size = size;
+    }
+
+    public void setCrc32(final Long crc32) {
+        this.crc32 = crc32;
     }
 
     public void setPublished(final boolean published) {
