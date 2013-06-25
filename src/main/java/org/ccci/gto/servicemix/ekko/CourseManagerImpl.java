@@ -18,7 +18,6 @@ import org.ccci.gto.servicemix.ekko.model.Course.CourseQuery;
 import org.ccci.gto.servicemix.ekko.model.Resource;
 import org.ccci.gto.servicemix.ekko.model.ResourcePrimaryKey;
 import org.springframework.transaction.annotation.Transactional;
-import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.xml.sax.SAXException;
@@ -264,16 +263,6 @@ public class CourseManagerImpl implements CourseManager {
             // store the resource id
             if (resource.hasAttribute("id")) {
                 ids.add(resource.getAttribute("id"));
-            }
-        }
-
-        // make sure all referenced resources exist in the manifest
-        final List<Attr> attrs = DomUtils.getAttrs(manifest,
-                "/ekko:course/ekko:*[local-name()='meta' or local-name()='lessons']"
-                        + "//@*[local-name()='resource' or local-name()='thumbnail']");
-        for (final Attr attr : attrs) {
-            if (ids.contains(attr.getValue())) {
-                exceptions.add(new ManifestException("referenced resource doesn't exist"));
             }
         }
 
