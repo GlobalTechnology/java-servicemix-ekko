@@ -53,7 +53,7 @@
       <xs:element name="options">
         <xs:complexType>
           <xs:sequence>
-            <xs:element name="option" type="ekko:quizQuestionOptionType" minOccurs="0" maxOccurs="unbounded" />
+            <xs:element name="option" type="ekko:quizQuestionOptionType" minOccurs="1" maxOccurs="unbounded" />
           </xs:sequence>
         </xs:complexType>
       </xs:element>
@@ -70,14 +70,14 @@
 
   <xs:complexType name="quizType">
     <xs:sequence>
-      <xs:element name="question" type="ekko:quizQuestionType" minOccurs="0" maxOccurs="unbounded" />
+      <xs:element name="question" type="ekko:quizQuestionType" minOccurs="1" maxOccurs="unbounded" />
     </xs:sequence>
     <xs:attribute name="id" type="xs:string" use="required" />
     <xs:attribute name="title" type="xs:string" use="optional" />
   </xs:complexType>
 
   <xs:complexType name="contentType">
-    <xs:choice minOccurs="0" maxOccurs="unbounded">
+    <xs:choice minOccurs="1" maxOccurs="unbounded">
       <xs:element name="lesson" type="ekko:lessonType" />
       <xs:element name="quiz" type="ekko:quizType" />
     </xs:choice>
@@ -123,11 +123,11 @@
   <xs:element name="meta">
     <xs:complexType>
       <xs:all>
-        <xs:element name="title" type="xs:string" minOccurs="0" maxOccurs="1" />
+        <xs:element name="title" type="xs:string" minOccurs="1" maxOccurs="1" />
         <xs:element name="author" type="ekko:metaAuthorType" minOccurs="0" maxOccurs="1" />
         <xs:element name="description" type="xs:string" minOccurs="0" maxOccurs="1" />
         <xs:element name="copyright" type="xs:string" minOccurs="0" maxOccurs="1" />
-        <xs:element name="banner" minOccurs="0" maxOccurs="1">
+        <xs:element name="banner" minOccurs="1" maxOccurs="1">
           <xs:complexType>
             <xs:simpleContent>
               <xs:extension base="xs:string">
@@ -156,8 +156,8 @@
         <xs:element ref="ekko:resources" />
       </xs:all>
 
-      <xs:attribute type="xs:long" name="id" use="optional" />
-      <xs:attribute type="xs:int" name="version" use="optional" />
+      <xs:attribute name="id" type="xs:long" use="optional" />
+      <xs:attribute name="version" type="xs:int" use="optional" />
       <xs:attribute name="schemaVersion" use="required">
         <xs:simpleType>
           <xs:restriction base="xs:int">
@@ -166,6 +166,7 @@
         </xs:simpleType>
       </xs:attribute>
     </xs:complexType>
+
     <xs:key name="resourcesKey">
       <xs:selector xpath="ekko:resources/ekko:resource" />
       <xs:field xpath="@id" />
