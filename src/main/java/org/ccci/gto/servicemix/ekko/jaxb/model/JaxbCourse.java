@@ -25,6 +25,9 @@ public class JaxbCourse {
     @XmlAttribute(name = "version")
     private Long version;
 
+    @XmlAttribute(name = "schemaVersion")
+    private long schemaVersion = 0;
+
     @XmlAttribute(name = "title")
     private String title;
 
@@ -64,8 +67,16 @@ public class JaxbCourse {
 
         if (parseManifest) {
             final Document manifest = DomUtils.parse(course.getManifest());
-            this.meta = JaxbDomElements.fromXPath(manifest, "/ekko:course/ekko:meta/*");
-            this.resources = JaxbDomElements.fromXPath(manifest, "/ekko:course/ekko:resources/*");
+            if (manifest != null) {
+                try {
+                    this.schemaVersion = Long.valueOf(manifest.getDocumentElement().getAttributeNS(XMLNS_EKKO,
+                            "schemaVersion"));
+                    this.meta = JaxbDomElements.fromXPath(manifest, "/ekko:course/ekko:meta/*");
+                    this.resources = JaxbDomElements.fromXPath(manifest, "/ekko:course/ekko:resources/*");
+                } catch (final Exception e) {
+                    this.schemaVersion = 0;
+                }
+            }
         }
 
         if (uri != null || resourceUri != null) {
