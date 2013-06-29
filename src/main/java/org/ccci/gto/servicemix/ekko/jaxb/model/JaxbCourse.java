@@ -69,7 +69,7 @@ public class JaxbCourse {
             final Document manifest = DomUtils.parse(course.getManifest());
             if (manifest != null) {
                 try {
-                    this.schemaVersion = Long.valueOf(manifest.getDocumentElement().getAttributeNS(XMLNS_EKKO,
+                    this.schemaVersion = Long.valueOf(manifest.getDocumentElement().getAttributeNS(null,
                             "schemaVersion"));
                     this.meta = JaxbDomElements.fromXPath(manifest, "/ekko:course/ekko:meta/*");
                     this.resources = JaxbDomElements.fromXPath(manifest, "/ekko:course/ekko:resources/*");
