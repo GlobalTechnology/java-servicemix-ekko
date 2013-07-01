@@ -5,7 +5,7 @@
   <parent>
     <groupId>org.ccci.gto.servicemix</groupId>
     <artifactId>servicemix-parent</artifactId>
-    <version>8-SNAPSHOT</version>
+    <version>8</version>
   </parent>
 
   <artifactId>servicemix-gto-ekko</artifactId>
@@ -23,7 +23,7 @@
   <properties>
     <maven.compiler.source>1.7</maven.compiler.source>
     <maven.compiler.target>1.7</maven.compiler.target>
-    <servicemix-gto-common.version>0.1.0-SNAPSHOT</servicemix-gto-common.version>
+    <servicemix-gto-common.version>0.1.0</servicemix-gto-common.version>
   </properties>
 
   <dependencies>
