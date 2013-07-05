@@ -56,6 +56,11 @@
             <xs:element name="option" type="ekko:quizQuestionOptionType" minOccurs="1" maxOccurs="unbounded" />
           </xs:sequence>
         </xs:complexType>
+
+        <xs:unique name="answer">
+          <xs:selector xpath="ekko:option" />
+          <xs:field xpath="@answer" />
+        </xs:unique>
       </xs:element>
     </xs:sequence>
     <xs:attribute name="id" type="xs:string" use="required" />
