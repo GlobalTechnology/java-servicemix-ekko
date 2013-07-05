@@ -140,6 +140,14 @@
     </xs:complexType>
   </xs:element>
 
+  <xs:element name="complete">
+    <xs:complexType>
+      <xs:all>
+        <xs:element name="message" type="xs:string" minOccurs="0" maxOccurs="1" />
+      </xs:all>
+    </xs:complexType>
+  </xs:element>
+
   <xs:element name="resources">
     <xs:complexType>
       <xs:sequence>
@@ -153,6 +161,7 @@
       <xs:all>
         <xs:element ref="ekko:meta" />
         <xs:element name="content" type="ekko:contentType" />
+        <xs:element ref="ekko:complete" minOccurs="0" maxOccurs="1" />
         <xs:element ref="ekko:resources" />
       </xs:all>
 
