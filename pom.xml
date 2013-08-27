@@ -21,6 +21,7 @@
   </scm>
 
   <properties>
+    <servicemix-gto-common.version>0.2.0-SNAPSHOT</servicemix-gto-common.version>
   </properties>
 
   <dependencies>

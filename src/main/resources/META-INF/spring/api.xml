@@ -17,6 +17,7 @@
     <property name="authRealm" value="ekko" />
     <property name="baseUri" value="${ekko.base.uri}" />
     <property name="casBaseUri" value="${cas.url:https://thekey.me/cas/}" />
+    <property name="sessionGrouping" value="${session.grouping:ekko}" />
   </bean>
 
   <bean id="api.auth" parent="api.base" class="org.ccci.gto.servicemix.common.jaxrs.api.AuthenticationApi" />
