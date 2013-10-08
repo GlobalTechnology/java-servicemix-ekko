@@ -80,7 +80,7 @@ public class CourseApi extends AbstractApi {
         // retrieve course
         final String guid = session.getGuid();
         final Course course = this.courseManager.getCourse(this.getCourseQuery(uri).admin(guid).enrolled(guid)
-                .publicCourse(true).loadManifest(true));
+                .publicCourse(true).published(true).loadManifest(true));
         if (course != null) {
             final JaxbCourse jaxbCourse = new JaxbCourse(course, true, this.getCourseUriBuilder(uri),
                     this.getResourceUriBuilder(uri), this.getUriValues(uri));
@@ -104,7 +104,7 @@ public class CourseApi extends AbstractApi {
         // retrieve course
         final String guid = session.getGuid();
         final Course course = this.courseManager.getCourse(this.getCourseQuery(uri).admin(guid).enrolled(guid)
-                .loadManifest(true));
+                .published(true).loadManifest(true));
 
         // return the manifest
         if (course != null) {
@@ -308,7 +308,8 @@ public class CourseApi extends AbstractApi {
 
         // find the course
         final String guid = session.getGuid();
-        final Course course = this.courseManager.getCourse(this.getCourseQuery(uri).admin(guid).enrolled(guid));
+        final Course course = this.courseManager.getCourse(this.getCourseQuery(uri).admin(guid).enrolled(guid)
+                .published(true));
         if (course == null) {
             return ResponseUtils.unauthorized().build();
         }
