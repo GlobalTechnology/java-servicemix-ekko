@@ -176,5 +176,65 @@ public class CourseQueryTest {
             id += 2;
         }
     }
-}
 
+    public void testPublished() {
+        long id = RAND.nextLong();
+
+        // test published course
+        {
+            em.getTransaction().begin();
+
+            // create course being tested
+            {
+                final Course course = new Course();
+                course.setId(id);
+                course.setManifest("manifest");
+                em.persist(course);
+                em.flush();
+                em.clear();
+            }
+
+            // fetch course with published
+            {
+                final List<Course> courses = new CourseQuery().id(id).published(true).execute(em);
+                em.flush();
+                em.clear();
+                assertEquals(1, courses.size());
+            }
+
+            // don't save db changes
+            em.getTransaction().rollback();
+
+            // increment id after usage
+            id++;
+        }
+
+        // test unpublished course (no manifest)
+        {
+            em.getTransaction().begin();
+
+            // create course being tested
+            {
+                final Course course = new Course();
+                course.setId(id);
+                em.persist(course);
+                em.flush();
+                em.clear();
+            }
+
+            // fetch course with published
+            {
+                final List<Course> courses = new CourseQuery().id(id).published(true).execute(em);
+                em.flush();
+                em.clear();
+                assertEquals(0, courses.size());
+            }
+
+            // don't save db changes
+            em.getTransaction().rollback();
+
+            // increment id after usage
+            id++;
+        }
+    }
+}

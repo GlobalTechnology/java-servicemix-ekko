@@ -280,6 +280,7 @@ public class Course {
         private String admin = null;
         private String enrolled = null;
         private boolean publicCourse = false;
+        private boolean published = false;
 
         public CourseQuery() {
         }
@@ -301,6 +302,11 @@ public class Course {
 
         public CourseQuery publicCourse(final boolean publicCourse) {
             this.publicCourse = publicCourse;
+            return this;
+        }
+
+        public CourseQuery published(final boolean published) {
+            this.published = published;
             return this;
         }
 
@@ -372,6 +378,9 @@ public class Course {
             if (this.id != null) {
                 where.add(cb.equal(c.get("id"), cb.parameter(Long.class, "id")));
                 params.put("id", this.id);
+            }
+            if (this.published) {
+                where.add(cb.isNotNull(c.get("manifest")));
             }
 
             // course permission visibility
