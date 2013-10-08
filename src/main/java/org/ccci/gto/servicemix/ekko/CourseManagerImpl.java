@@ -133,6 +133,41 @@ public class CourseManagerImpl implements CourseManager {
         return course;
     }
 
+    @Override
+    @Transactional
+    public Course unpublishCourse(final CourseQuery courseQuery) throws CourseNotFoundException {
+        // short-circuit if a valid course couldn't be found
+        final Course course = this.getCourse(courseQuery.clone().loadManifest(true).loadResources(true));
+        if (course == null) {
+            throw new CourseNotFoundException();
+        }
+
+        // short-circuit if the course is not currently published, we don't need
+        // to throw an exception
+        if (course.getManifest() == null) {
+            return course;
+        }
+
+        // move the manifest to the pending manifest field
+        course.setPendingManifest(course.getManifest());
+        course.setManifest(null);
+
+        // reset published state of all resources
+        // XXX OPTIMIZATION: reset all flags with single update query
+        for (final Resource resource : course.getResources()) {
+            resource.setPublished(false);
+            resource.setMetaResource(false);
+        }
+
+        // remove any previously generated zip file
+        course.setZip(null);
+
+        // increment the version of the course
+        course.incVersion();
+
+        return course;
+    }
+
     @Transactional
     @Override
     public Course getCourse(final Long id) {

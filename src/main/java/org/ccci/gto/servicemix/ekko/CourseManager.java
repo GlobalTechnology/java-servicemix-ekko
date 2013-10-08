@@ -19,6 +19,8 @@ public interface CourseManager {
 
     Course publishCourse(CourseQuery courseQuery) throws CourseNotFoundException, ManifestException;
 
+    Course unpublishCourse(CourseQuery courseQuery) throws CourseNotFoundException;
+
     Course updateCourseAdmins(CourseQuery courseQuery, Collection<String> toAdd, Collection<String> toRemove)
             throws CourseNotFoundException;
 
