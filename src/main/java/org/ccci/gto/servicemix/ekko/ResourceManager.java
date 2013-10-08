@@ -12,5 +12,7 @@ public interface ResourceManager {
 
     void removeResource(Resource resource);
 
+    void removeUnpublishedResources(Course course);
+
     Resource generateCourseZip(Course course);
 }

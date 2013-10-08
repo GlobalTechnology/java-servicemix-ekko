@@ -176,6 +176,17 @@ public class MojiResourceManager implements ResourceManager {
     }
 
     @Override
+    public void removeUnpublishedResources(final Course course) {
+        if (course != null) {
+            for (final Resource resource : course.getResources()) {
+                if (!resource.isPublished()) {
+                    this.removeResource(resource);
+                }
+            }
+        }
+    }
+
+    @Override
     public Resource generateCourseZip(final Course course) {
         try {
             // get temporary file
