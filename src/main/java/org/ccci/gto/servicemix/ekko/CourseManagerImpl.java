@@ -69,8 +69,12 @@ public class CourseManagerImpl implements CourseManager {
             return false;
         }
 
-        // delete the course
-        this.em.remove(course);
+        // remove all meta-data, but keep course to prevent future id collisions
+        course.setAdmins(null);
+        course.setEnrolled(null);
+        course.setPublic(false);
+        course.setPendingManifest(null);
+        this.em.flush();
 
         // return success
         return true;

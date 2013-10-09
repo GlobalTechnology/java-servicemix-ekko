@@ -192,6 +192,13 @@ public class Course {
         }
     }
 
+    public void setAdmins(final Collection<String> guids) {
+        if (this.admins != null) {
+            this.admins.clear();
+        }
+        this.addAdmins(guids);
+    }
+
     public Set<String> getAdmins() {
         if (this.admins == null) {
             return Collections.emptySet();
@@ -235,6 +242,13 @@ public class Course {
                 this.removeEnrolled(guid);
             }
         }
+    }
+
+    public void setEnrolled(final Collection<String> guids) {
+        if (this.enrolled != null) {
+            this.enrolled.clear();
+        }
+        this.addEnrolled(guids);
     }
 
     public Set<String> getEnrolled() {
