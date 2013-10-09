@@ -93,7 +93,6 @@ public class CoursesApi extends AbstractApi {
 
         // generate response objects
         final UriBuilder courseUri = this.getCourseUriBuilder(uri);
-        final UriBuilder resourceUri = this.getResourceUriBuilder(uri);
         final Map<String, Object> uriValues = this.getUriValues(uri);
         final JaxbCourses jaxbCourses = new JaxbCourses();
         jaxbCourses.setStart(start);
@@ -104,7 +103,7 @@ public class CoursesApi extends AbstractApi {
             jaxbCourses.setMoreUri(moreUri.build());
         }
         for (final Course course : courses.subList(0, size < limit ? size : limit)) {
-            jaxbCourses.addCourse(new JaxbCourse(course, true, courseUri, resourceUri, uriValues));
+            jaxbCourses.addCourse(new JaxbCourse(course, true, courseUri, uriValues));
         }
 
         // return the courses

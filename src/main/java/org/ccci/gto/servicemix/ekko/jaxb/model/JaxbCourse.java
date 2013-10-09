@@ -2,7 +2,6 @@ package org.ccci.gto.servicemix.ekko.jaxb.model;
 
 import static org.ccci.gto.servicemix.ekko.Constants.XMLNS_EKKO;
 import static org.ccci.gto.servicemix.ekko.jaxrs.api.Constants.PARAM_COURSE;
-import static org.ccci.gto.servicemix.ekko.jaxrs.api.Constants.PARAM_RESOURCE_SHA1;
 
 import java.net.URI;
 import java.util.HashMap;
@@ -34,9 +33,6 @@ public class JaxbCourse {
     @XmlAttribute(name = "uri")
     private URI uri;
 
-    @XmlAttribute(name = "zipUri")
-    private URI zipUri;
-
     @XmlElement(namespace = XMLNS_EKKO, name = "meta")
     private JaxbDomElements meta;
 
@@ -51,16 +47,11 @@ public class JaxbCourse {
     }
 
     public JaxbCourse(final Course course, final boolean parseManifest) {
-        this(course, parseManifest, null, null, null);
+        this(course, parseManifest, null, null);
     }
 
     public JaxbCourse(final Course course, final boolean parseManifest, final UriBuilder uri,
             final Map<String, Object> uriValues) {
-        this(course, parseManifest, uri, null, uriValues);
-    }
-
-    public JaxbCourse(final Course course, final boolean parseManifest, final UriBuilder uri,
-            final UriBuilder resourceUri, final Map<String, Object> uriValues) {
         this.id = course.getId();
         this.version = course.getVersion();
         this.title = course.getTitle();
@@ -79,7 +70,7 @@ public class JaxbCourse {
             }
         }
 
-        if (uri != null || resourceUri != null) {
+        if (uri != null) {
             final Map<String, Object> values = new HashMap<String, Object>();
             if (uriValues != null) {
                 values.putAll(uriValues);
@@ -89,11 +80,6 @@ public class JaxbCourse {
 
             if (uri != null) {
                 this.uri = uri.buildFromMap(values);
-            }
-            final String zipSha1 = course.getZipSha1();
-            if (resourceUri != null && zipSha1 != null) {
-                values.put(PARAM_RESOURCE_SHA1, zipSha1);
-                this.zipUri = resourceUri.buildFromMap(values);
             }
         }
     }
