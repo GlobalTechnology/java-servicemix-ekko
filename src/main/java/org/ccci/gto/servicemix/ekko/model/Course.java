@@ -41,6 +41,10 @@ public class Course {
     private static final Pattern GUIDPATTERN = Pattern
             .compile("^[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}$");
 
+    public static final String ENROLLMENT_DISABLED = "disabled";
+    public static final String ENROLLMENT_OPEN = "open";
+    public static final String ENROLLMENT_APPROVAL = "approval";
+
     @Id
     @Column(updatable = false)
     private Long id;
@@ -51,6 +55,8 @@ public class Course {
 
     @Column(name = "public")
     private boolean publicCourse = false;
+
+    private String enrollment = ENROLLMENT_APPROVAL;
 
     @Lob
     @Basic(fetch = FetchType.LAZY)
@@ -115,7 +121,12 @@ public class Course {
         this.title = title;
     }
 
-    public void setPublic(boolean publicCourse) {
+    public void setPublic(final boolean publicCourse) {
+        if (!publicCourse) {
+            // when making this a private course, we need to use approval
+            // enrollment
+            this.enrollment = ENROLLMENT_APPROVAL;
+        }
         this.publicCourse = publicCourse;
     }
 
@@ -125,6 +136,26 @@ public class Course {
 
     public void setPendingManifest(final String pendingManifest) {
         this.pendingManifest = pendingManifest;
+    }
+
+    public final String getEnrollment() {
+        return this.enrollment;
+    }
+
+    public final void setEnrollment(final String enrollment) {
+        // only set enrollment if it matches the supported types
+        switch (enrollment) {
+        case ENROLLMENT_DISABLED:
+        case ENROLLMENT_OPEN:
+            // when disabling or using open enrollment, the course needs to be
+            // public
+            this.publicCourse = true;
+        case ENROLLMENT_APPROVAL:
+            this.enrollment = enrollment;
+            break;
+        default:
+            throw new IllegalArgumentException("invalid enrollment type: " + enrollment);
+        }
     }
 
     public Resource getResource(final String sha1) {
@@ -267,6 +298,10 @@ public class Course {
         return this.manifest != null;
     }
 
+    public boolean isEnrollment(final String type) {
+        return this.enrollment.equals(type);
+    }
+
     public boolean isAdmin(final String guid) {
         return this.admins != null && guid != null && this.admins.contains(guid.toUpperCase());
     }
@@ -280,7 +315,7 @@ public class Course {
     }
 
     public boolean canViewContent(final String guid) {
-        return this.isEnrolled(guid) || this.isAdmin(guid);
+        return this.isEnrollment(ENROLLMENT_DISABLED) || this.isEnrolled(guid) || this.isAdmin(guid);
     }
 
     public static class CourseQuery {
