@@ -136,7 +136,7 @@ public class Course {
     }
 
     public Collection<Resource> getResources() {
-        return this.resources.values();
+        return Collections.unmodifiableCollection(this.resources.values());
     }
 
     public String getZipSha1() {
