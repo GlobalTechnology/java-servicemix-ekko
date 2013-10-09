@@ -52,6 +52,8 @@ public class JaxbCourse {
                     this.resources = JaxbDomElements.fromXPath(manifest, "/ekko:course/ekko:resources/*");
                 } catch (final Exception e) {
                     this.schemaVersion = 0;
+                    this.meta = null;
+                    this.resources = null;
                 }
             }
         }
