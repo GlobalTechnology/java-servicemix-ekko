@@ -54,6 +54,28 @@ public class CourseManagerImpl implements CourseManager {
         return course;
     }
 
+    @Override
+    @Transactional
+    public boolean deleteCourse(final CourseQuery query) throws CourseNotFoundException {
+        // short-circuit if a valid course couldn't be found
+        final Course course = this.getCourse(query.clone().loadResources(true));
+        if (course == null) {
+            throw new CourseNotFoundException();
+        }
+
+        // short-circuit if there are still resources in this course
+        if (course.getResources().size() > 0) {
+            // TODO: should this be an exception?
+            return false;
+        }
+
+        // delete the course
+        this.em.remove(course);
+
+        // return success
+        return true;
+    }
+
     @Transactional
     @Override
     public Course publishCourse(final CourseQuery courseQuery) throws CourseNotFoundException, ManifestException,

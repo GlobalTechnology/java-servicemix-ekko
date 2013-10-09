@@ -27,6 +27,8 @@ public interface CourseManager {
     Course updateCourseEnrolled(CourseQuery courseQuery, Collection<String> toAdd, Collection<String> toRemove)
             throws CourseNotFoundException;
 
+    boolean deleteCourse(CourseQuery query) throws CourseNotFoundException;
+
     Resource getResource(ResourcePrimaryKey key);
 
     Resource storeResource(Course course, Resource resource);

@@ -11,6 +11,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
@@ -89,6 +90,38 @@ public class CourseApi extends AbstractApi {
 
         // return not found because a valid course wasn't found
         return Response.status(Status.NOT_FOUND).build();
+    }
+
+    @DELETE
+    public Response deleteCourse(@Context final UriInfo uri) {
+        // validate the session
+        final Session session = this.getSession(uri);
+        if (session == null || session.isExpired()) {
+            return this.invalidSession(uri).build();
+        }
+
+        // generate the CourseQuery
+        final CourseQuery query = this.getCourseQuery(uri).admin(session.getGuid());
+
+        // unpublish the course
+        final Course course;
+        try {
+            course = this.courseManager.unpublishCourse(query);
+        } catch (final CourseNotFoundException e) {
+            return ResponseUtils.unauthorized().build();
+        }
+
+        // remove all unpublished resources
+        this.resourceManager.removeUnpublishedResources(course);
+
+        // attempt to delete this course
+        try {
+            this.courseManager.deleteCourse(query);
+        } catch (final CourseNotFoundException e) {
+            return ResponseUtils.unauthorized().build();
+        }
+
+        return Response.ok().build();
     }
 
     @GET
