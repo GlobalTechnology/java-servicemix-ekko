@@ -249,6 +249,10 @@ public class Course {
         return this.publicCourse;
     }
 
+    public boolean isPublished() {
+        return this.manifest != null;
+    }
+
     public boolean isAdmin(final String guid) {
         return this.admins != null && guid != null && this.admins.contains(guid.toUpperCase());
     }

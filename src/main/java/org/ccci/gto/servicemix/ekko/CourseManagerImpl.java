@@ -166,7 +166,7 @@ public class CourseManagerImpl implements CourseManager {
 
         // short-circuit if the course is not currently published, we don't need
         // to throw an exception
-        if (course.getManifest() == null) {
+        if (!course.isPublished()) {
             return course;
         }
 
