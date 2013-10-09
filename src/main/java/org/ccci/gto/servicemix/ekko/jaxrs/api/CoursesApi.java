@@ -2,10 +2,13 @@ package org.ccci.gto.servicemix.ekko.jaxrs.api;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import static org.ccci.gto.servicemix.common.jaxrs.api.Constants.PATH_SESSION;
+import static org.ccci.gto.servicemix.ekko.jaxrs.api.Constants.PARAM_COURSE;
 import static org.ccci.gto.servicemix.ekko.jaxrs.api.Constants.PARAM_LIMIT;
 import static org.ccci.gto.servicemix.ekko.jaxrs.api.Constants.PARAM_START;
 
 import java.io.InputStream;
+import java.net.URI;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -54,8 +57,11 @@ public class CoursesApi extends AbstractApi {
         final Course course = this.courseManager.createCourse(newCourse);
 
         // return success
-        final JaxbCourse jaxbCourse = new JaxbCourse(course, false, this.getCourseUriBuilder(uri), this.getUriValues(uri));
-        return Response.created(jaxbCourse.getUri()).entity(jaxbCourse).build();
+        final Map<String, Object> values = new HashMap<String, Object>();
+        values.putAll(this.getUriValues(uri));
+        values.put(PARAM_COURSE, course.getId());
+        final URI courseUri = this.getCourseUriBuilder(uri).buildFromMap(values);
+        return Response.created(courseUri).entity(new JaxbCourse(course, false)).build();
     }
 
     /**
@@ -103,7 +109,7 @@ public class CoursesApi extends AbstractApi {
             jaxbCourses.setMoreUri(moreUri.build());
         }
         for (final Course course : courses.subList(0, size < limit ? size : limit)) {
-            jaxbCourses.addCourse(new JaxbCourse(course, true, courseUri, uriValues));
+            jaxbCourses.addCourse(new JaxbCourse(course, true));
         }
 
         // return the courses
