@@ -320,22 +320,24 @@ public class Course {
     }
 
     public static class CourseQuery {
+        // additional data that should be loaded
         private boolean loadManifest = false;
         private boolean loadPendingManifest = false;
         private boolean loadResources = false;
         private boolean loadAdmins = false;
         private boolean loadEnrolled = false;
 
-        private int start = 0;
-        private int limit = 0;
-
         private Long id = null;
+        private String contentVisibleGuid = null;
+        private String visibleGuid = null;
+        private boolean published = false;
 
         private String admin = null;
         private String enrolled = null;
-        private String contentVisibleGuid = null;
-        private boolean publicCourse = false;
-        private boolean published = false;
+
+        // limit values
+        private int start = 0;
+        private int limit = 0;
 
         public CourseQuery() {
         }
@@ -360,12 +362,8 @@ public class Course {
             return this;
         }
 
-        public CourseQuery publicCourse() {
-            return this.publicCourse(true);
-        }
-
-        public CourseQuery publicCourse(final boolean publicCourse) {
-            this.publicCourse = publicCourse;
+        public CourseQuery visibleTo(final String guid) {
+            this.visibleGuid = (guid != null ? guid.toUpperCase() : null);
             return this;
         }
 
@@ -467,12 +465,9 @@ public class Course {
                 where.add(cb.equal(c.get("id"), cb.parameter(Long.class, "id")));
                 params.put("id", this.id);
             }
-            if (this.published) {
-                where.add(cb.isNotNull(c.get("manifest")));
-            }
 
             // course permission visibility
-            if (this.admin != null || this.enrolled != null || this.publicCourse) {
+            if (this.admin != null || this.enrolled != null) {
                 final ArrayList<Predicate> visibility = new ArrayList<Predicate>();
                 if (this.admin != null) {
                     visibility.add(cb.equal(c.get("admins"), cb.parameter(String.class, "adminGuid")));
@@ -482,15 +477,26 @@ public class Course {
                     visibility.add(cb.equal(c.get("enrolled"), cb.parameter(String.class, "enrolledGuid")));
                     params.put("enrolledGuid", this.enrolled);
                 }
-                if (this.publicCourse) {
-                    visibility.add(cb.equal(c.get("publicCourse"), Boolean.TRUE));
-                }
 
                 where.add(cb.or(visibility.toArray(new Predicate[visibility.size()])));
             }
 
-            if (this.contentVisibleGuid != null) {
+            if (this.published || this.visibleGuid != null || this.contentVisibleGuid != null) {
                 where.add(cb.isNotNull(c.get("manifest")));
+            }
+
+            if (this.visibleGuid != null) {
+                final ArrayList<Predicate> visibility = new ArrayList<Predicate>();
+                visibility.add(cb.equal(c.get("enrollment"), ENROLLMENT_DISABLED));
+                visibility.add(cb.equal(c.get("publicCourse"), Boolean.TRUE));
+                visibility.add(cb.equal(c.get("enrolled"), cb.parameter(String.class, "visibleEnrolledGuid")));
+                visibility.add(cb.equal(c.get("admins"), cb.parameter(String.class, "visibleAdminGuid")));
+                where.add(cb.or(visibility.toArray(new Predicate[visibility.size()])));
+                params.put("visibleEnrolledGuid", this.visibleGuid);
+                params.put("visibleAdminGuid", this.visibleGuid);
+            }
+
+            if (this.contentVisibleGuid != null) {
                 final ArrayList<Predicate> visibility = new ArrayList<Predicate>();
                 visibility.add(cb.equal(c.get("enrollment"), ENROLLMENT_DISABLED));
                 visibility.add(cb.equal(c.get("enrolled"), cb.parameter(String.class, "contentVisibleEnrolledGuid")));
@@ -538,8 +544,9 @@ public class Course {
 
             newObj.admin = this.admin;
             newObj.enrolled = this.enrolled;
-            newObj.publicCourse = this.publicCourse;
             newObj.published = this.published;
+            newObj.visibleGuid = this.visibleGuid;
+            newObj.contentVisibleGuid = this.contentVisibleGuid;
 
             newObj.loadManifest = this.loadManifest;
             newObj.loadPendingManifest = this.loadPendingManifest;

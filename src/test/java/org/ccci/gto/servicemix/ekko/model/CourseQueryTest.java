@@ -60,10 +60,44 @@ public class CourseQueryTest {
         return course(RAND.nextLong());
     }
 
-    private Course publishedCourse() {
-        final Course course = course();
-        course.setManifest("manifest");
-        return course;
+    // generate all possible course variations for testing.
+    // *all may be approximate
+    private List<Course> generateCourses() {
+        final List<Course> courses = new ArrayList<Course>();
+        long id = RAND.nextLong();
+
+        for (final boolean published : new Boolean[] { true, false }) {
+            for (final String enrollment : new String[] { "private-testing", ENROLLMENT_DISABLED, ENROLLMENT_OPEN,
+                    ENROLLMENT_APPROVAL }) {
+                for (final boolean admin : new Boolean[] { true, false }) {
+                    for (final String guid : new String[] { null, GUID1, GUID2 }) {
+                        // generate course
+                        final Course course = course(id++);
+                        if (published) {
+                            course.setManifest("manifest");
+                        }
+                        switch (enrollment) {
+                        case "private-testing":
+                            course.setPublic(false);
+                            break;
+                        default:
+                            course.setEnrollment(enrollment);
+                        }
+                        if (guid != null) {
+                            if (admin) {
+                                course.addAdmin(guid);
+                            } else {
+                                course.addEnrolled(guid);
+                            }
+                        }
+
+                        courses.add(course);
+                    }
+                }
+            }
+        }
+
+        return courses;
     }
 
     private Set<Long> extractIds(final Collection<Course> courses) {
@@ -96,7 +130,7 @@ public class CourseQueryTest {
 
             // fetch course with loadEnrolled
             {
-                final List<Course> courses = new CourseQuery().id(id).loadEnrolled(true).execute(em);
+                final List<Course> courses = new CourseQuery().id(id).loadEnrolled(true).clone().execute(em);
                 em.flush();
                 em.clear();
                 assertEquals(1, courses.size());
@@ -125,7 +159,7 @@ public class CourseQueryTest {
 
             // fetch course with loadEnrolled
             {
-                final List<Course> courses = new CourseQuery().id(id).loadEnrolled(true).execute(em);
+                final List<Course> courses = new CourseQuery().id(id).loadEnrolled(true).clone().execute(em);
                 em.flush();
                 em.clear();
                 assertEquals(1, courses.size());
@@ -162,7 +196,7 @@ public class CourseQueryTest {
 
             // fetch course with loadEnrolled
             {
-                final List<Course> courses = new CourseQuery().loadEnrolled(true).execute(em);
+                final List<Course> courses = new CourseQuery().loadEnrolled(true).clone().execute(em);
                 em.flush();
                 em.clear();
                 assertEquals(2, courses.size());
@@ -199,7 +233,7 @@ public class CourseQueryTest {
 
             // fetch course with loadEnrolled
             {
-                final List<Course> courses = new CourseQuery().loadEnrolled(true).start(0).limit(1).execute(em);
+                final List<Course> courses = new CourseQuery().loadEnrolled(true).start(0).limit(1).clone().execute(em);
                 em.flush();
                 em.clear();
                 assertEquals(1, courses.size());
@@ -234,7 +268,7 @@ public class CourseQueryTest {
 
             // fetch course with published
             {
-                final List<Course> courses = new CourseQuery().id(id).published(true).execute(em);
+                final List<Course> courses = new CourseQuery().id(id).published(true).clone().execute(em);
                 em.flush();
                 em.clear();
                 assertEquals(1, courses.size());
@@ -262,7 +296,7 @@ public class CourseQueryTest {
 
             // fetch course with published
             {
-                final List<Course> courses = new CourseQuery().id(id).published(true).execute(em);
+                final List<Course> courses = new CourseQuery().id(id).published(true).clone().execute(em);
                 em.flush();
                 em.clear();
                 assertEquals(0, courses.size());
@@ -277,91 +311,19 @@ public class CourseQueryTest {
     }
 
     @Test
-    public void testContentVisibleTo() {
-        // test several content visible variations
+    public void testVisibleTo() {
+        // test several visible variations
         {
             // generate several test courses that are visible/not visible
             final List<Course> visible = new ArrayList<Course>();
             final List<Course> notVisible = new ArrayList<Course>();
-
-            // public course
-            {
-                final Course course1 = publishedCourse();
-                course1.setPublic(true);
-                course1.setEnrollment(ENROLLMENT_DISABLED);
-                visible.add(course1);
-                final Course course2 = course();
-                course2.setPublic(true);
-                course2.setEnrollment(ENROLLMENT_DISABLED);
-                notVisible.add(course2);
-            }
-
-            // open enrollment course
-            {
-                final Course course1 = publishedCourse();
-                course1.setPublic(true);
-                course1.setEnrollment(ENROLLMENT_OPEN);
-                course1.addAdmin(GUID1);
-                visible.add(course1);
-                final Course course2 = publishedCourse();
-                course2.setPublic(true);
-                course2.setEnrollment(ENROLLMENT_OPEN);
-                course2.addAdmin(GUID2);
-                notVisible.add(course2);
-                final Course course3 = publishedCourse();
-                course3.setPublic(true);
-                course3.setEnrollment(ENROLLMENT_OPEN);
-                course3.addEnrolled(GUID1);
-                visible.add(course3);
-                final Course course4 = publishedCourse();
-                course4.setPublic(true);
-                course4.setEnrollment(ENROLLMENT_OPEN);
-                course4.addEnrolled(GUID2);
-                notVisible.add(course4);
-            }
-
-            // approval enrollment course
-            {
-                final Course course1 = publishedCourse();
-                course1.setPublic(true);
-                course1.setEnrollment(ENROLLMENT_APPROVAL);
-                course1.addAdmin(GUID1);
-                visible.add(course1);
-                final Course course2 = publishedCourse();
-                course2.setPublic(true);
-                course2.setEnrollment(ENROLLMENT_APPROVAL);
-                course2.addAdmin(GUID2);
-                notVisible.add(course2);
-                final Course course3 = publishedCourse();
-                course3.setPublic(true);
-                course3.setEnrollment(ENROLLMENT_APPROVAL);
-                course3.addEnrolled(GUID1);
-                visible.add(course3);
-                final Course course4 = publishedCourse();
-                course4.setPublic(true);
-                course4.setEnrollment(ENROLLMENT_APPROVAL);
-                course4.addEnrolled(GUID2);
-                notVisible.add(course4);
-            }
-
-            // private course
-            {
-                final Course course1 = publishedCourse();
-                course1.setPublic(false);
-                course1.addAdmin(GUID1);
-                visible.add(course1);
-                final Course course2 = publishedCourse();
-                course2.setPublic(false);
-                course2.addAdmin(GUID2);
-                notVisible.add(course2);
-                final Course course3 = publishedCourse();
-                course3.setPublic(false);
-                course3.addEnrolled(GUID1);
-                visible.add(course3);
-                final Course course4 = publishedCourse();
-                course4.setPublic(false);
-                course4.addEnrolled(GUID2);
-                notVisible.add(course4);
+            for (final Course course : this.generateCourses()) {
+                // put course into correct bucket
+                if (course.isVisibleTo(GUID1)) {
+                    visible.add(course);
+                } else {
+                    notVisible.add(course);
+                }
             }
 
             // extract all ids
@@ -381,7 +343,61 @@ public class CourseQueryTest {
             em.clear();
 
             // fetch visible courses
-            final List<Course> courses = new CourseQuery().contentVisibleTo(GUID1).execute(em);
+            final List<Course> courses = new CourseQuery().visibleTo(GUID1).clone().execute(em);
+            em.flush();
+            em.clear();
+            final Set<Long> ids = extractIds(courses);
+
+            // check to see if the correct courses were returned
+            assertEquals(visible.size(), courses.size());
+            assertTrue(ids.containsAll(visibleIds));
+            assertTrue(visibleIds.containsAll(ids));
+            for (final Long id : ids) {
+                assertFalse(notVisibleIds.contains(id));
+            }
+            for (final Long id : notVisibleIds) {
+                assertFalse(ids.contains(id));
+            }
+
+            // don't save db changes
+            em.getTransaction().rollback();
+        }
+    }
+
+    @Test
+    public void testContentVisibleTo() {
+        // test several content visible variations
+        {
+            // generate several test courses that are visible/not visible
+            final List<Course> visible = new ArrayList<Course>();
+            final List<Course> notVisible = new ArrayList<Course>();
+            for (final Course course : this.generateCourses()) {
+                // put course into correct bucket
+                if (course.isContentVisibleTo(GUID1)) {
+                    visible.add(course);
+                } else {
+                    notVisible.add(course);
+                }
+            }
+
+            // extract all ids
+            final Set<Long> visibleIds = extractIds(visible);
+            final Set<Long> notVisibleIds = extractIds(notVisible);
+
+            em.getTransaction().begin();
+
+            // persist all courses
+            for (final Course course : visible) {
+                em.persist(course);
+            }
+            for (final Course course : notVisible) {
+                em.persist(course);
+            }
+            em.flush();
+            em.clear();
+
+            // fetch visible courses
+            final List<Course> courses = new CourseQuery().contentVisibleTo(GUID1).clone().execute(em);
             em.flush();
             em.clear();
             final Set<Long> ids = extractIds(courses);
