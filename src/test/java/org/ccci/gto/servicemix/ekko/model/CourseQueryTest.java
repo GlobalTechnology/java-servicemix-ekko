@@ -29,6 +29,8 @@ import org.junit.Test;
 public class CourseQueryTest {
     private static final SecureRandom RAND = new SecureRandom();
 
+    private static final String ENROLLMENT_PRIVATE_TESTING = "private-testing";
+
     private static EntityManagerFactory emf;
     private static EntityManager em;
 
@@ -50,16 +52,6 @@ public class CourseQueryTest {
         }
     }
 
-    private Course course(final long id) {
-        final Course course = new Course();
-        course.setId(id);
-        return course;
-    }
-
-    private Course course() {
-        return course(RAND.nextLong());
-    }
-
     // generate all possible course variations for testing.
     // *all may be approximate
     private List<Course> generateCourses() {
@@ -67,17 +59,18 @@ public class CourseQueryTest {
         long id = RAND.nextLong();
 
         for (final boolean published : new Boolean[] { true, false }) {
-            for (final String enrollment : new String[] { "private-testing", ENROLLMENT_DISABLED, ENROLLMENT_OPEN,
-                    ENROLLMENT_APPROVAL }) {
+            for (final String enrollment : new String[] { ENROLLMENT_DISABLED, ENROLLMENT_OPEN, ENROLLMENT_APPROVAL,
+                    ENROLLMENT_PRIVATE_TESTING, }) {
                 for (final boolean admin : new Boolean[] { true, false }) {
                     for (final String guid : new String[] { null, GUID1, GUID2 }) {
                         // generate course
-                        final Course course = course(id++);
+                        final Course course = new Course();
+                        course.setId(id++);
                         if (published) {
                             course.setManifest("manifest");
                         }
                         switch (enrollment) {
-                        case "private-testing":
+                        case ENROLLMENT_PRIVATE_TESTING:
                             course.setPublic(false);
                             break;
                         default:

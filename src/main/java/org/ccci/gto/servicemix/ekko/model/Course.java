@@ -327,13 +327,14 @@ public class Course {
         private boolean loadAdmins = false;
         private boolean loadEnrolled = false;
 
+        // where parameters (they are and-ed together)
         private Long id = null;
-        private String contentVisibleGuid = null;
-        private String visibleGuid = null;
         private boolean published = false;
 
+        // visibility attributes (they are exclusive options)
         private String admin = null;
-        private String enrolled = null;
+        private String contentVisibleGuid = null;
+        private String visibleGuid = null;
 
         // limit values
         private int start = 0;
@@ -348,22 +349,39 @@ public class Course {
         }
 
         public CourseQuery admin(final String guid) {
+            if (guid != null) {
+                this.admin = guid.toUpperCase();
+                this.contentVisibleGuid = null;
+                this.visibleGuid = null;
+            } else {
+                this.admin = null;
+            }
+
             this.admin = (guid != null ? guid.toUpperCase() : null);
             return this;
         }
 
-        public CourseQuery enrolled(final String guid) {
-            this.enrolled = (guid != null ? guid.toUpperCase() : null);
-            return this;
-        }
-
         public CourseQuery contentVisibleTo(final String guid) {
-            this.contentVisibleGuid = (guid != null ? guid.toUpperCase() : null);
+            if (guid != null) {
+                this.contentVisibleGuid = guid.toUpperCase();
+                this.admin = null;
+                this.visibleGuid = null;
+            } else {
+                this.contentVisibleGuid = null;
+            }
+
             return this;
         }
 
         public CourseQuery visibleTo(final String guid) {
-            this.visibleGuid = (guid != null ? guid.toUpperCase() : null);
+            if (guid != null) {
+                this.visibleGuid = guid.toUpperCase();
+                this.admin = null;
+                this.contentVisibleGuid = null;
+            } else {
+                this.visibleGuid = null;
+            }
+
             return this;
         }
 
@@ -466,44 +484,29 @@ public class Course {
                 params.put("id", this.id);
             }
 
-            // course permission visibility
-            if (this.admin != null || this.enrolled != null) {
-                final ArrayList<Predicate> visibility = new ArrayList<Predicate>();
-                if (this.admin != null) {
-                    visibility.add(cb.equal(c.get("admins"), cb.parameter(String.class, "adminGuid")));
-                    params.put("adminGuid", this.admin);
-                }
-                if (this.enrolled != null) {
-                    visibility.add(cb.equal(c.get("enrolled"), cb.parameter(String.class, "enrolledGuid")));
-                    params.put("enrolledGuid", this.enrolled);
-                }
-
-                where.add(cb.or(visibility.toArray(new Predicate[visibility.size()])));
-            }
-
+            // visibleGuid or contentVisibleGuid implies it's a published course
             if (this.published || this.visibleGuid != null || this.contentVisibleGuid != null) {
                 where.add(cb.isNotNull(c.get("manifest")));
             }
 
-            if (this.visibleGuid != null) {
-                final ArrayList<Predicate> visibility = new ArrayList<Predicate>();
-                visibility.add(cb.equal(c.get("enrollment"), ENROLLMENT_DISABLED));
-                visibility.add(cb.equal(c.get("publicCourse"), Boolean.TRUE));
-                visibility.add(cb.equal(c.get("enrolled"), cb.parameter(String.class, "visibleEnrolledGuid")));
-                visibility.add(cb.equal(c.get("admins"), cb.parameter(String.class, "visibleAdminGuid")));
-                where.add(cb.or(visibility.toArray(new Predicate[visibility.size()])));
-                params.put("visibleEnrolledGuid", this.visibleGuid);
-                params.put("visibleAdminGuid", this.visibleGuid);
-            }
-
-            if (this.contentVisibleGuid != null) {
-                final ArrayList<Predicate> visibility = new ArrayList<Predicate>();
-                visibility.add(cb.equal(c.get("enrollment"), ENROLLMENT_DISABLED));
-                visibility.add(cb.equal(c.get("enrolled"), cb.parameter(String.class, "contentVisibleEnrolledGuid")));
-                visibility.add(cb.equal(c.get("admins"), cb.parameter(String.class, "contentVisibleAdminGuid")));
-                where.add(cb.or(visibility.toArray(new Predicate[visibility.size()])));
+            // visibility filters, these should be exclusive (we use most
+            // restrictive first)
+            if (this.admin != null) {
+                where.add(cb.equal(c.get("admins"), cb.parameter(String.class, "adminGuid")));
+                params.put("adminGuid", this.admin);
+            } else if (this.contentVisibleGuid != null) {
+                where.add(cb.or(cb.equal(c.get("enrollment"), ENROLLMENT_DISABLED),
+                        cb.equal(c.get("enrolled"), cb.parameter(String.class, "contentVisibleEnrolledGuid")),
+                        cb.equal(c.get("admins"), cb.parameter(String.class, "adminGuid"))));
                 params.put("contentVisibleEnrolledGuid", this.contentVisibleGuid);
-                params.put("contentVisibleAdminGuid", this.contentVisibleGuid);
+                params.put("adminGuid", this.contentVisibleGuid);
+            } else if (this.visibleGuid != null) {
+                where.add(cb.or(cb.equal(c.get("enrollment"), ENROLLMENT_DISABLED),
+                        cb.equal(c.get("publicCourse"), Boolean.TRUE),
+                        cb.equal(c.get("enrolled"), cb.parameter(String.class, "visibleEnrolledGuid")),
+                        cb.equal(c.get("admins"), cb.parameter(String.class, "adminGuid"))));
+                params.put("visibleEnrolledGuid", this.visibleGuid);
+                params.put("adminGuid", this.visibleGuid);
             }
 
             // generate where clause
@@ -543,7 +546,6 @@ public class Course {
             newObj.limit = this.limit;
 
             newObj.admin = this.admin;
-            newObj.enrolled = this.enrolled;
             newObj.published = this.published;
             newObj.visibleGuid = this.visibleGuid;
             newObj.contentVisibleGuid = this.contentVisibleGuid;
