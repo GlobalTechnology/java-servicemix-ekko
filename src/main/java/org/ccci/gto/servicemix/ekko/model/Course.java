@@ -310,12 +310,13 @@ public class Course {
         return this.enrolled != null && guid != null && this.enrolled.contains(guid.toUpperCase());
     }
 
-    public boolean canView(final String guid) {
-        return this.isPublic() || this.canViewContent(guid);
+    public boolean isContentVisibleTo(final String guid) {
+        return this.isPublished()
+                && (this.isEnrollment(ENROLLMENT_DISABLED) || this.isEnrolled(guid) || this.isAdmin(guid));
     }
 
-    public boolean canViewContent(final String guid) {
-        return this.isEnrollment(ENROLLMENT_DISABLED) || this.isEnrolled(guid) || this.isAdmin(guid);
+    public boolean isVisibleTo(final String guid) {
+        return this.isPublished() && (this.isPublic() || this.isContentVisibleTo(guid));
     }
 
     public static class CourseQuery {
@@ -441,14 +442,10 @@ public class Course {
                 final ArrayList<Predicate> visibility = new ArrayList<Predicate>();
                 if (this.admin != null) {
                     visibility.add(cb.equal(c.get("admins"), cb.parameter(String.class, "adminGuid")));
-                    // visibility.add(cb.parameter(String.class,
-                    // "adminGuid").in(c.<Set<String>> get("admins")));
                     params.put("adminGuid", this.admin);
                 }
                 if (this.enrolled != null) {
                     visibility.add(cb.equal(c.get("enrolled"), cb.parameter(String.class, "enrolledGuid")));
-                    // visibility.add(cb.parameter(String.class,
-                    // "enrolledGuid").in(c.<Set<String>> get("enrolled")));
                     params.put("enrolledGuid", this.enrolled);
                 }
                 if (this.publicCourse) {
