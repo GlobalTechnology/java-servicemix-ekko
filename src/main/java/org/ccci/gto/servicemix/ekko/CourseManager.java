@@ -30,6 +30,8 @@ public interface CourseManager {
     Course updateCoursePending(CourseQuery courseQuery, Collection<String> toAdd, Collection<String> toRemove)
             throws CourseNotFoundException;
 
+    Course enroll(CourseQuery query, String guid) throws CourseNotFoundException;
+
     boolean deleteCourse(CourseQuery query) throws CourseNotFoundException;
 
     Resource getResource(ResourcePrimaryKey key);

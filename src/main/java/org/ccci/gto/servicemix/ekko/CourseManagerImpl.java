@@ -1,6 +1,8 @@
 package org.ccci.gto.servicemix.ekko;
 
 import static org.ccci.gto.servicemix.ekko.Constants.XMLNS_EKKO;
+import static org.ccci.gto.servicemix.ekko.model.Course.ENROLLMENT_APPROVAL;
+import static org.ccci.gto.servicemix.ekko.model.Course.ENROLLMENT_OPEN;
 
 import java.security.SecureRandom;
 import java.util.ArrayList;
@@ -274,6 +276,32 @@ public class CourseManagerImpl implements CourseManager {
         course.removePending(course.getEnrolled());
 
         // return the updated course
+        return course;
+    }
+
+    @Override
+    @Transactional
+    public Course enroll(final CourseQuery query, final String guid) throws CourseNotFoundException {
+        // short-circuit if a valid course couldn't be found
+        final Course course = this.getCourse(query.clone().loadEnrolled().loadPending());
+        if (course == null) {
+            throw new CourseNotFoundException();
+        }
+
+        // determine what we do based on enrollment model
+        switch (course.getEnrollment()) {
+        case ENROLLMENT_OPEN:
+            course.addEnrolled(guid);
+            break;
+        case ENROLLMENT_APPROVAL:
+            course.addPending(guid);
+            break;
+        }
+
+        // filter all enrolled users out of pending users
+        course.removePending(course.getEnrolled());
+
+        // return the course
         return course;
     }
 

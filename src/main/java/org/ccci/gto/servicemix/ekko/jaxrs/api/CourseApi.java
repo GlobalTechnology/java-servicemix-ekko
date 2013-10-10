@@ -7,6 +7,7 @@ import static org.ccci.gto.servicemix.ekko.jaxrs.api.Constants.PATH_COURSE;
 
 import java.io.InputStream;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -89,6 +90,57 @@ public class CourseApi extends AbstractApi {
 
         // return not found because a valid course wasn't found
         return Response.status(Status.NOT_FOUND).build();
+    }
+
+    @POST
+    @Path("enroll")
+    @Produces(APPLICATION_XML)
+    public Response enroll(@Context final UriInfo uri) {
+        // validate the session
+        final Session session = this.getSession(uri);
+        if (session == null || session.isExpired()) {
+            return this.invalidSession(uri).build();
+        }
+
+        // generate the CourseQuery
+        final String guid = session.getGuid();
+        final CourseQuery query = this.getCourseQuery(uri).visibleTo(guid).loadAdmins().loadEnrolled().loadManifest();
+
+        // enroll the user in this course
+        final Course course;
+        try {
+            course = this.courseManager.enroll(query, guid);
+        } catch (final CourseNotFoundException e) {
+            return ResponseUtils.unauthorized().build();
+        }
+
+        // return the updated Course object to save an additional round trip for
+        // the updated state
+        return Response.ok(new JaxbCourse(course, true, guid)).build();
+    }
+
+    @POST
+    @Path("unenroll")
+    public Response unenroll(@Context final UriInfo uri) {
+        // validate the session
+        final Session session = this.getSession(uri);
+        if (session == null || session.isExpired()) {
+            return this.invalidSession(uri).build();
+        }
+
+        // generate the CourseQuery
+        final String guid = session.getGuid();
+        final CourseQuery query = this.getCourseQuery(uri).enrolled(guid);
+
+        // remove the current user from the course
+        try {
+            this.courseManager.updateCourseEnrolled(query, null, Collections.singleton(guid));
+        } catch (final CourseNotFoundException e) {
+            return ResponseUtils.unauthorized().build();
+        }
+
+        // return success
+        return Response.ok().build();
     }
 
     @DELETE
