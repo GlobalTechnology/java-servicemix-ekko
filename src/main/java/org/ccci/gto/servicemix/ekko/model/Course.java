@@ -333,6 +333,7 @@ public class Course {
 
         private String admin = null;
         private String enrolled = null;
+        private String contentVisibleGuid = null;
         private boolean publicCourse = false;
         private boolean published = false;
 
@@ -351,6 +352,11 @@ public class Course {
 
         public CourseQuery enrolled(final String guid) {
             this.enrolled = (guid != null ? guid.toUpperCase() : null);
+            return this;
+        }
+
+        public CourseQuery contentVisibleTo(final String guid) {
+            this.contentVisibleGuid = (guid != null ? guid.toUpperCase() : null);
             return this;
         }
 
@@ -481,6 +487,17 @@ public class Course {
                 }
 
                 where.add(cb.or(visibility.toArray(new Predicate[visibility.size()])));
+            }
+
+            if (this.contentVisibleGuid != null) {
+                where.add(cb.isNotNull(c.get("manifest")));
+                final ArrayList<Predicate> visibility = new ArrayList<Predicate>();
+                visibility.add(cb.equal(c.get("enrollment"), ENROLLMENT_DISABLED));
+                visibility.add(cb.equal(c.get("enrolled"), cb.parameter(String.class, "contentVisibleEnrolledGuid")));
+                visibility.add(cb.equal(c.get("admins"), cb.parameter(String.class, "contentVisibleAdminGuid")));
+                where.add(cb.or(visibility.toArray(new Predicate[visibility.size()])));
+                params.put("contentVisibleEnrolledGuid", this.contentVisibleGuid);
+                params.put("contentVisibleAdminGuid", this.contentVisibleGuid);
             }
 
             // generate where clause
