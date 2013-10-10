@@ -1,5 +1,8 @@
 package org.ccci.gto.servicemix.ekko.model;
 
+import static org.ccci.gto.servicemix.ekko.TestConstants.GUID1;
+import static org.ccci.gto.servicemix.ekko.TestConstants.GUID2;
+import static org.ccci.gto.servicemix.ekko.TestConstants.GUID3;
 import static org.junit.Assert.assertEquals;
 
 import java.security.SecureRandom;
@@ -50,8 +53,8 @@ public class CourseQueryTest {
             {
                 final Course course = new Course();
                 course.setId(id);
-                course.addEnrolled("3A3CB21C-752E-0651-A41B-6DBE868C8576");
-                course.addEnrolled("8F612500-7977-541D-FC38-2AF75974729F");
+                course.addEnrolled(GUID1);
+                course.addEnrolled(GUID2);
                 em.persist(course);
                 em.flush();
                 em.clear();
@@ -110,14 +113,14 @@ public class CourseQueryTest {
             {
                 final Course course1 = new Course();
                 course1.setId(id);
-                course1.addEnrolled("3A3CB21C-752E-0651-A41B-6DBE868C8576");
-                course1.addEnrolled("8F612500-7977-541D-FC38-2AF75974729F");
+                course1.addEnrolled(GUID1);
+                course1.addEnrolled(GUID2);
                 em.persist(course1);
                 final Course course2 = new Course();
                 course2.setId(id + 1);
-                course2.addEnrolled("3A3CB21C-752E-0651-A41B-6DBE868C8576");
-                course2.addEnrolled("8F612500-7977-541D-FC38-2AF75974729F");
-                course2.addEnrolled("01234567-89AB-CDEF-0123-456789ABCDEF");
+                course2.addEnrolled(GUID1);
+                course2.addEnrolled(GUID2);
+                course2.addEnrolled(GUID3);
                 em.persist(course2);
                 em.flush();
                 em.clear();
@@ -148,13 +151,13 @@ public class CourseQueryTest {
             {
                 final Course course1 = new Course();
                 course1.setId(id);
-                course1.addEnrolled("3A3CB21C-752E-0651-A41B-6DBE868C8576");
-                course1.addEnrolled("8F612500-7977-541D-FC38-2AF75974729F");
+                course1.addEnrolled(GUID1);
+                course1.addEnrolled(GUID2);
                 em.persist(course1);
                 final Course course2 = new Course();
                 course2.setId(id + 1);
-                course2.addEnrolled("3A3CB21C-752E-0651-A41B-6DBE868C8576");
-                course2.addEnrolled("8F612500-7977-541D-FC38-2AF75974729F");
+                course2.addEnrolled(GUID1);
+                course2.addEnrolled(GUID2);
                 em.persist(course2);
                 em.flush();
                 em.clear();
