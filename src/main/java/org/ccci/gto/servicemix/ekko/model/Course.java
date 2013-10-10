@@ -56,6 +56,7 @@ public class Course {
     @Column(name = "public")
     private boolean publicCourse = false;
 
+    @Column(length = 20, nullable = false)
     private String enrollment = ENROLLMENT_APPROVAL;
 
     @Lob
@@ -299,7 +300,7 @@ public class Course {
     }
 
     public boolean isEnrollment(final String type) {
-        return this.enrollment.equals(type);
+        return this.enrollment != null && this.enrollment.equals(type);
     }
 
     public boolean isAdmin(final String guid) {
