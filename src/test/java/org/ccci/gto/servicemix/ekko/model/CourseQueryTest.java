@@ -93,13 +93,31 @@ public class CourseQueryTest {
         return courses;
     }
 
-    private Set<Long> extractIds(final Collection<Course> courses) {
+    private static Set<Long> extractIds(final Collection<Course> courses) {
         final Set<Long> ids = new HashSet<Long>();
         for (final Course course : courses) {
             ids.add(course.getId());
         }
 
         return ids;
+    }
+
+    private static void assertValidCourses(final Collection<Course> result, final Collection<Course> valid,
+            final Collection<Course> invalid) {
+        final Set<Long> resultIds = extractIds(result);
+        final Set<Long> validIds = extractIds(valid);
+        final Set<Long> invalidIds = extractIds(invalid);
+
+        // check to see if the correct courses were returned
+        assertTrue("results are missing a valid Course", resultIds.containsAll(validIds));
+        assertTrue(validIds.containsAll(validIds));
+        for (final Long id : resultIds) {
+            assertFalse(invalidIds.contains(id));
+        }
+        for (final Long id : invalidIds) {
+            assertFalse(resultIds.contains(id));
+        }
+        assertEquals(valid.size(), result.size());
     }
 
     @Test
@@ -304,6 +322,47 @@ public class CourseQueryTest {
     }
 
     @Test
+    public void testEnrolled() {
+        // test several enrolled variations
+        {
+            // generate several test courses that are enrolled/not enrolled
+            final List<Course> enrolled = new ArrayList<Course>();
+            final List<Course> notEnrolled = new ArrayList<Course>();
+            for (final Course course : this.generateCourses()) {
+                // put course into correct bucket
+                if (course.isEnrolled(GUID1)) {
+                    enrolled.add(course);
+                } else {
+                    notEnrolled.add(course);
+                }
+            }
+
+            em.getTransaction().begin();
+
+            // persist all courses
+            for (final Course course : enrolled) {
+                em.persist(course);
+            }
+            for (final Course course : notEnrolled) {
+                em.persist(course);
+            }
+            em.flush();
+            em.clear();
+
+            // fetch visible courses
+            final List<Course> courses = new CourseQuery().enrolled(GUID1).clone().execute(em);
+            em.flush();
+            em.clear();
+
+            // check to see if the correct courses were returned
+            assertValidCourses(courses, enrolled, notEnrolled);
+
+            // don't save db changes
+            em.getTransaction().rollback();
+        }
+    }
+
+    @Test
     public void testVisibleTo() {
         // test several visible variations
         {
@@ -318,10 +377,6 @@ public class CourseQueryTest {
                     notVisible.add(course);
                 }
             }
-
-            // extract all ids
-            final Set<Long> visibleIds = extractIds(visible);
-            final Set<Long> notVisibleIds = extractIds(notVisible);
 
             em.getTransaction().begin();
 
@@ -339,18 +394,9 @@ public class CourseQueryTest {
             final List<Course> courses = new CourseQuery().visibleTo(GUID1).clone().execute(em);
             em.flush();
             em.clear();
-            final Set<Long> ids = extractIds(courses);
 
             // check to see if the correct courses were returned
-            assertEquals(visible.size(), courses.size());
-            assertTrue(ids.containsAll(visibleIds));
-            assertTrue(visibleIds.containsAll(ids));
-            for (final Long id : ids) {
-                assertFalse(notVisibleIds.contains(id));
-            }
-            for (final Long id : notVisibleIds) {
-                assertFalse(ids.contains(id));
-            }
+            assertValidCourses(courses, visible, notVisible);
 
             // don't save db changes
             em.getTransaction().rollback();
@@ -373,10 +419,6 @@ public class CourseQueryTest {
                 }
             }
 
-            // extract all ids
-            final Set<Long> visibleIds = extractIds(visible);
-            final Set<Long> notVisibleIds = extractIds(notVisible);
-
             em.getTransaction().begin();
 
             // persist all courses
@@ -393,18 +435,9 @@ public class CourseQueryTest {
             final List<Course> courses = new CourseQuery().contentVisibleTo(GUID1).clone().execute(em);
             em.flush();
             em.clear();
-            final Set<Long> ids = extractIds(courses);
 
             // check to see if the correct courses were returned
-            assertEquals(visible.size(), courses.size());
-            assertTrue(ids.containsAll(visibleIds));
-            assertTrue(visibleIds.containsAll(ids));
-            for (final Long id : ids) {
-                assertFalse(notVisibleIds.contains(id));
-            }
-            for (final Long id : notVisibleIds) {
-                assertFalse(ids.contains(id));
-            }
+            assertValidCourses(courses, visible, notVisible);
 
             // don't save db changes
             em.getTransaction().rollback();

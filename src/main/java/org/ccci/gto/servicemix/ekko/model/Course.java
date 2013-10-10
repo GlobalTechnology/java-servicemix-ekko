@@ -397,7 +397,8 @@ public class Course {
         private boolean published = false;
 
         // visibility attributes (they are exclusive options)
-        private String admin = null;
+        private String adminGuid = null;
+        private String enrolledGuid = null;
         private String contentVisibleGuid = null;
         private String visibleGuid = null;
 
@@ -415,21 +416,35 @@ public class Course {
 
         public CourseQuery admin(final String guid) {
             if (guid != null) {
-                this.admin = guid.toUpperCase();
+                this.adminGuid = guid.toUpperCase();
+                this.contentVisibleGuid = null;
+                this.enrolledGuid = null;
+                this.visibleGuid = null;
+            } else {
+                this.adminGuid = null;
+            }
+
+            return this;
+        }
+
+        public CourseQuery enrolled(final String guid) {
+            if (guid != null) {
+                this.enrolledGuid = guid.toUpperCase();
+                this.adminGuid = null;
                 this.contentVisibleGuid = null;
                 this.visibleGuid = null;
             } else {
-                this.admin = null;
+                this.enrolledGuid = null;
             }
 
-            this.admin = (guid != null ? guid.toUpperCase() : null);
             return this;
         }
 
         public CourseQuery contentVisibleTo(final String guid) {
             if (guid != null) {
                 this.contentVisibleGuid = guid.toUpperCase();
-                this.admin = null;
+                this.adminGuid = null;
+                this.enrolledGuid = null;
                 this.visibleGuid = null;
             } else {
                 this.contentVisibleGuid = null;
@@ -441,8 +456,9 @@ public class Course {
         public CourseQuery visibleTo(final String guid) {
             if (guid != null) {
                 this.visibleGuid = guid.toUpperCase();
-                this.admin = null;
+                this.adminGuid = null;
                 this.contentVisibleGuid = null;
+                this.enrolledGuid = null;
             } else {
                 this.visibleGuid = null;
             }
@@ -566,23 +582,26 @@ public class Course {
                 where.add(cb.isNotNull(c.get("manifest")));
             }
 
-            // visibility filters, these should be exclusive (we use most
+            // visibility filters, these should be exclusive (we check most
             // restrictive first)
-            if (this.admin != null) {
+            if (this.adminGuid != null) {
                 where.add(cb.equal(c.get("admins"), cb.parameter(String.class, "adminGuid")));
-                params.put("adminGuid", this.admin);
+                params.put("adminGuid", this.adminGuid);
+            } else if (this.enrolledGuid != null) {
+                where.add(cb.equal(c.get("enrolled"), cb.parameter(String.class, "enrolledGuid")));
+                params.put("enrolledGuid", this.enrolledGuid);
             } else if (this.contentVisibleGuid != null) {
                 where.add(cb.or(cb.equal(c.get("enrollment"), ENROLLMENT_DISABLED),
-                        cb.equal(c.get("enrolled"), cb.parameter(String.class, "contentVisibleEnrolledGuid")),
+                        cb.equal(c.get("enrolled"), cb.parameter(String.class, "enrolledGuid")),
                         cb.equal(c.get("admins"), cb.parameter(String.class, "adminGuid"))));
-                params.put("contentVisibleEnrolledGuid", this.contentVisibleGuid);
+                params.put("enrolledGuid", this.contentVisibleGuid);
                 params.put("adminGuid", this.contentVisibleGuid);
             } else if (this.visibleGuid != null) {
                 where.add(cb.or(cb.equal(c.get("enrollment"), ENROLLMENT_DISABLED),
                         cb.equal(c.get("publicCourse"), Boolean.TRUE),
-                        cb.equal(c.get("enrolled"), cb.parameter(String.class, "visibleEnrolledGuid")),
+                        cb.equal(c.get("enrolled"), cb.parameter(String.class, "enrolledGuid")),
                         cb.equal(c.get("admins"), cb.parameter(String.class, "adminGuid"))));
-                params.put("visibleEnrolledGuid", this.visibleGuid);
+                params.put("enrolledGuid", this.visibleGuid);
                 params.put("adminGuid", this.visibleGuid);
             }
 
@@ -622,7 +641,8 @@ public class Course {
             newObj.start = this.start;
             newObj.limit = this.limit;
 
-            newObj.admin = this.admin;
+            newObj.adminGuid = this.adminGuid;
+            newObj.enrolledGuid = this.enrolledGuid;
             newObj.published = this.published;
             newObj.visibleGuid = this.visibleGuid;
             newObj.contentVisibleGuid = this.contentVisibleGuid;
