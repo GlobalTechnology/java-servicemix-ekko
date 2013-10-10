@@ -21,8 +21,17 @@ public class JaxbCourse {
     @XmlAttribute(name = "schemaVersion")
     private long schemaVersion = 0;
 
-    @XmlAttribute(name = "title")
-    private String title;
+    @XmlAttribute(name = "admin")
+    private Boolean admin = null;
+
+    @XmlAttribute(name = "contentVisible")
+    private Boolean contentVisible = null;
+
+    @XmlAttribute(name = "public")
+    private boolean publicCourse = false;
+
+    @XmlElement(name = "enrollment")
+    private JaxbEnrollment enrollment;
 
     @XmlElement(namespace = XMLNS_EKKO, name = "meta")
     private JaxbDomElements meta;
@@ -33,14 +42,12 @@ public class JaxbCourse {
     public JaxbCourse() {
     }
 
-    public JaxbCourse(final Course course) {
-        this(course, true);
-    }
-
-    public JaxbCourse(final Course course, final boolean parseManifest) {
+    public JaxbCourse(final Course course, final boolean parseManifest, final String guid) {
         this.id = course.getId();
         this.version = course.getVersion();
-        this.title = course.getTitle();
+        this.publicCourse = course.isPublic();
+        this.enrollment = new JaxbEnrollment();
+        this.enrollment.type = course.getEnrollment();
 
         if (parseManifest) {
             final Document manifest = DomUtils.parse(course.getManifest());
@@ -57,5 +64,24 @@ public class JaxbCourse {
                 }
             }
         }
+
+        if (guid != null) {
+            this.contentVisible = course.isContentVisibleTo(guid);
+            this.admin = course.isAdmin(guid);
+            this.enrollment.enrolled = course.isEnrolled(guid);
+            this.enrollment.pending = course.isPending(guid);
+        }
+    }
+
+    @XmlRootElement
+    public static class JaxbEnrollment {
+        @XmlAttribute(name = "type")
+        private String type;
+
+        @XmlAttribute(name = "enrolled")
+        private Boolean enrolled = null;
+
+        @XmlAttribute(name = "pending")
+        private Boolean pending = null;
     }
 }

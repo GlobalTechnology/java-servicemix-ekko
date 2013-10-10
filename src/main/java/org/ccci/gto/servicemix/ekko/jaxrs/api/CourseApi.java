@@ -84,7 +84,7 @@ public class CourseApi extends AbstractApi {
         final Course course = this.courseManager.getCourse(this.getCourseQuery(uri).visibleTo(guid).loadManifest()
                 .loadAdmins().loadEnrolled());
         if (course != null) {
-            return Response.ok(new JaxbCourse(course, true)).build();
+            return Response.ok(new JaxbCourse(course, true, guid)).build();
         }
 
         // return not found because a valid course wasn't found

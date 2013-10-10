@@ -51,9 +51,10 @@ public class CoursesApi extends AbstractApi {
         }
 
         // create new course object
+        final String guid = session.getGuid();
         final Course newCourse = new Course();
         newCourse.setPendingManifest(DomUtils.asString(manifest));
-        newCourse.addAdmin(session.getGuid());
+        newCourse.addAdmin(guid);
         final Course course = this.courseManager.createCourse(newCourse);
 
         // return success
@@ -61,7 +62,7 @@ public class CoursesApi extends AbstractApi {
         values.putAll(this.getUriValues(uri));
         values.put(PARAM_COURSE, course.getId());
         final URI courseUri = this.getCourseUriBuilder(uri).buildFromMap(values);
-        return Response.created(courseUri).entity(new JaxbCourse(course, false)).build();
+        return Response.created(courseUri).entity(new JaxbCourse(course, false, null)).build();
     }
 
     /**
@@ -93,8 +94,8 @@ public class CoursesApi extends AbstractApi {
         // fetch the courses, we fetch 1 more than the limit to determine if
         // additional requests are needed
         final String guid = session.getGuid();
-        final List<Course> courses = this.courseManager.getCourses(new CourseQuery().loadManifest().visibleTo(guid)
-                .start(start).limit(limit + 1));
+        final List<Course> courses = this.courseManager.getCourses(new CourseQuery().visibleTo(guid).loadManifest()
+                .loadAdmins().loadEnrolled().start(start).limit(limit + 1));
         final int size = courses.size();
 
         // generate response objects
@@ -107,7 +108,7 @@ public class CoursesApi extends AbstractApi {
             jaxbCourses.setMoreUri(moreUri.build());
         }
         for (final Course course : courses.subList(0, size < limit ? size : limit)) {
-            jaxbCourses.addCourse(new JaxbCourse(course, true));
+            jaxbCourses.addCourse(new JaxbCourse(course, true, guid));
         }
 
         // return the courses
