@@ -35,6 +35,7 @@ import org.ccci.gto.servicemix.ekko.jaxb.model.JaxbCourse;
 import org.ccci.gto.servicemix.ekko.jaxb.model.JaxbEnrolled;
 import org.ccci.gto.servicemix.ekko.jaxb.model.JaxbError;
 import org.ccci.gto.servicemix.ekko.jaxb.model.JaxbErrors;
+import org.ccci.gto.servicemix.ekko.jaxb.model.JaxbPending;
 import org.ccci.gto.servicemix.ekko.model.Course;
 import org.ccci.gto.servicemix.ekko.model.Course.CourseQuery;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -80,7 +81,8 @@ public class CourseApi extends AbstractApi {
 
         // retrieve course
         final String guid = session.getGuid();
-        final Course course = this.courseManager.getCourse(this.getCourseQuery(uri).visibleTo(guid).loadManifest());
+        final Course course = this.courseManager.getCourse(this.getCourseQuery(uri).visibleTo(guid).loadManifest()
+                .loadAdmins().loadEnrolled());
         if (course != null) {
             return Response.ok(new JaxbCourse(course, true)).build();
         }
@@ -281,7 +283,7 @@ public class CourseApi extends AbstractApi {
 
         // retrieve the course
         final Course course = this.courseManager.getCourse(this.getCourseQuery(uri).admin(session.getGuid())
-                .loadEnrolled(true));
+                .loadEnrolled());
         if (course == null) {
             return ResponseUtils.unauthorized().build();
         }
@@ -325,6 +327,63 @@ public class CourseApi extends AbstractApi {
         final JaxbEnrolled enrolled = new JaxbEnrolled();
         enrolled.setUsers(course.getEnrolled());
         return Response.ok(enrolled).build();
+    }
+
+    @GET
+    @Path("pending")
+    public Response listPending(@Context final UriInfo uri) {
+        // validate the session
+        final Session session = this.getSession(uri);
+        if (session == null || session.isExpired()) {
+            return this.invalidSession(uri).build();
+        }
+
+        // retrieve the course
+        final Course course = this.courseManager.getCourse(this.getCourseQuery(uri).admin(session.getGuid())
+                .loadPending());
+        if (course == null) {
+            return ResponseUtils.unauthorized().build();
+        }
+
+        // return success with the current list of pending enrollments
+        final JaxbPending pending = new JaxbPending();
+        pending.setUsers(course.getPending());
+        return Response.ok(pending).build();
+    }
+
+    @POST
+    @Path("pending")
+    public Response updatePending(@Context final UriInfo uri, final MultivaluedMap<String, String> form) {
+        // validate the session
+        final Session session = this.getSession(uri);
+        if (session == null || session.isExpired()) {
+            return this.invalidSession(uri).build();
+        }
+
+        // generate toAdd and toRemove Sets
+        final Set<String> toAdd = new HashSet<String>();
+        final Set<String> toRemove = new HashSet<String>();
+        Collection<String> guids;
+        if ((guids = form.get("add")) != null) {
+            toAdd.addAll(guids);
+        }
+        if ((guids = form.get("remove")) != null) {
+            toRemove.addAll(guids);
+        }
+
+        // update the pending users
+        final Course course;
+        try {
+            course = this.courseManager.updateCoursePending(this.getCourseQuery(uri).admin(session.getGuid()), toAdd,
+                    toRemove);
+        } catch (final CourseNotFoundException e) {
+            return ResponseUtils.unauthorized().build();
+        }
+
+        // return success with the current list of pending enrollments
+        final JaxbPending pending = new JaxbPending();
+        pending.setUsers(course.getPending());
+        return Response.ok(pending).build();
     }
 
     @GET

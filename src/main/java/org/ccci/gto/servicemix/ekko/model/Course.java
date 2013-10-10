@@ -87,6 +87,13 @@ public class Course {
     @ContainerTable(joinForeignKey = @ForeignKey(updateAction = ForeignKeyAction.CASCADE, deleteAction = ForeignKeyAction.CASCADE))
     private Set<String> enrolled = new HashSet<String>();
 
+    @ElementCollection(fetch = FetchType.LAZY)
+    @Column(name = "guid", nullable = false, length = 36)
+    @CollectionTable(name = "Course_Pending", joinColumns = @JoinColumn(name = "courseId", nullable = false), uniqueConstraints = { @UniqueConstraint(columnNames = {
+            "courseId", "guid" }) })
+    @ContainerTable(joinForeignKey = @ForeignKey(updateAction = ForeignKeyAction.CASCADE, deleteAction = ForeignKeyAction.CASCADE))
+    private Set<String> pending = new HashSet<String>();
+
     @Column(length = 40)
     private String zipSha1;
 
@@ -291,6 +298,58 @@ public class Course {
         return Collections.unmodifiableSet(this.enrolled);
     }
 
+    public void addPending(String guid) {
+        if (guid != null) {
+            guid = guid.toUpperCase();
+
+            // only add valid GUIDs
+            if (GUIDPATTERN.matcher(guid).matches()) {
+                if (this.pending == null) {
+                    this.pending = new HashSet<String>();
+                }
+
+                this.pending.add(guid.toUpperCase());
+            }
+        }
+    }
+
+    public void addPending(final Collection<String> guids) {
+        if (guids != null) {
+            for (final String guid : guids) {
+                this.addPending(guid);
+            }
+        }
+    }
+
+    public void setPending(final Collection<String> guids) {
+        if (this.pending != null) {
+            this.pending.clear();
+        }
+        this.addPending(guids);
+    }
+
+    public void removePending(final String guid) {
+        if (guid != null && this.pending != null) {
+            this.pending.remove(guid.toUpperCase());
+        }
+    }
+
+    public void removePending(final Collection<String> guids) {
+        if (guids != null && this.pending != null) {
+            for (final String guid : guids) {
+                this.removePending(guid);
+            }
+        }
+    }
+
+    public Set<String> getPending() {
+        if (this.pending == null) {
+            return Collections.emptySet();
+        }
+
+        return Collections.unmodifiableSet(this.pending);
+    }
+
     public boolean isPublic() {
         return this.publicCourse;
     }
@@ -311,6 +370,10 @@ public class Course {
         return this.enrolled != null && guid != null && this.enrolled.contains(guid.toUpperCase());
     }
 
+    public boolean isPending(final String guid) {
+        return this.pending != null && guid != null && this.pending.contains(guid.toUpperCase());
+    }
+
     public boolean isContentVisibleTo(final String guid) {
         return this.isPublished()
                 && (this.isEnrollment(ENROLLMENT_DISABLED) || this.isEnrolled(guid) || this.isAdmin(guid));
@@ -327,6 +390,7 @@ public class Course {
         private boolean loadResources = false;
         private boolean loadAdmins = false;
         private boolean loadEnrolled = false;
+        private boolean loadPending = false;
 
         // where parameters (they are and-ed together)
         private Long id = null;
@@ -440,6 +504,15 @@ public class Course {
             return this;
         }
 
+        public CourseQuery loadPending() {
+            return this.loadPending(true);
+        }
+
+        public CourseQuery loadPending(final boolean loadPending) {
+            this.loadPending = loadPending;
+            return this;
+        }
+
         public CourseQuery start(final int start) {
             this.start = start;
             return this;
@@ -470,6 +543,9 @@ public class Course {
             }
             if (this.loadEnrolled) {
                 c.fetch("enrolled", JoinType.LEFT);
+            }
+            if (this.loadPending) {
+                c.fetch("pending", JoinType.LEFT);
             }
             if (this.loadResources) {
                 c.fetch("resources", JoinType.LEFT);

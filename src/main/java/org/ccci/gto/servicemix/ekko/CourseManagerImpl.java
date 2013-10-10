@@ -240,7 +240,7 @@ public class CourseManagerImpl implements CourseManager {
     public Course updateCourseEnrolled(final CourseQuery query, final Collection<String> toAdd,
             final Collection<String> toRemove) throws CourseNotFoundException {
         // short-circuit if a valid course couldn't be found
-        final Course course = this.getCourse(query.clone().loadEnrolled(true));
+        final Course course = this.getCourse(query.clone().loadEnrolled().loadPending());
         if (course == null) {
             throw new CourseNotFoundException();
         }
@@ -248,6 +248,30 @@ public class CourseManagerImpl implements CourseManager {
         // remove enrolled, then add new enrolled
         course.removeEnrolled(toRemove);
         course.addEnrolled(toAdd);
+
+        // filter all enrolled users out of pending users
+        course.removePending(course.getEnrolled());
+
+        // return the updated course
+        return course;
+    }
+
+    @Override
+    @Transactional
+    public Course updateCoursePending(final CourseQuery query, final Collection<String> toAdd,
+            final Collection<String> toRemove) throws CourseNotFoundException {
+        // short-circuit if a valid course couldn't be found
+        final Course course = this.getCourse(query.clone().loadEnrolled().loadPending());
+        if (course == null) {
+            throw new CourseNotFoundException();
+        }
+
+        // remove enrolled, then add new enrolled
+        course.removePending(toRemove);
+        course.addPending(toAdd);
+
+        // filter all enrolled users out of pending users
+        course.removePending(course.getEnrolled());
 
         // return the updated course
         return course;
