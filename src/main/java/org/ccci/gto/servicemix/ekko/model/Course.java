@@ -354,9 +354,17 @@ public class Course {
             return this;
         }
 
+        public CourseQuery publicCourse() {
+            return this.publicCourse(true);
+        }
+
         public CourseQuery publicCourse(final boolean publicCourse) {
             this.publicCourse = publicCourse;
             return this;
+        }
+
+        public CourseQuery published() {
+            return this.published(true);
         }
 
         public CourseQuery published(final boolean published) {
@@ -364,9 +372,17 @@ public class Course {
             return this;
         }
 
+        public CourseQuery loadManifest() {
+            return this.loadManifest(true);
+        }
+
         public CourseQuery loadManifest(final boolean loadManifest) {
             this.loadManifest = loadManifest;
             return this;
+        }
+
+        public CourseQuery loadPendingManifest() {
+            return this.loadPendingManifest(true);
         }
 
         public CourseQuery loadPendingManifest(final boolean loadPendingManifest) {
@@ -374,14 +390,26 @@ public class Course {
             return this;
         }
 
+        public CourseQuery loadResources() {
+            return this.loadResources(true);
+        }
+
         public CourseQuery loadResources(final boolean loadResources) {
             this.loadResources = loadResources;
             return this;
         }
 
+        public CourseQuery loadAdmins() {
+            return this.loadAdmins(true);
+        }
+
         public CourseQuery loadAdmins(final boolean loadAdmins) {
             this.loadAdmins = loadAdmins;
             return this;
+        }
+
+        public CourseQuery loadEnrolled() {
+            return this.loadEnrolled(true);
         }
 
         public CourseQuery loadEnrolled(final boolean loadEnrolled) {
@@ -494,6 +522,7 @@ public class Course {
             newObj.admin = this.admin;
             newObj.enrolled = this.enrolled;
             newObj.publicCourse = this.publicCourse;
+            newObj.published = this.published;
 
             newObj.loadManifest = this.loadManifest;
             newObj.loadPendingManifest = this.loadPendingManifest;

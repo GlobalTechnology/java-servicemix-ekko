@@ -93,13 +93,11 @@ public class CoursesApi extends AbstractApi {
         // fetch the courses, we fetch 1 more than the limit to determine if
         // additional requests are needed
         final String guid = session.getGuid();
-        final List<Course> courses = this.courseManager.getCourses(new CourseQuery().loadManifest(true).admin(guid)
-                .enrolled(guid).publicCourse(true).published(true).start(start).limit(limit + 1));
+        final List<Course> courses = this.courseManager.getCourses(new CourseQuery().loadManifest().admin(guid)
+                .enrolled(guid).publicCourse().published().start(start).limit(limit + 1));
         final int size = courses.size();
 
         // generate response objects
-        final UriBuilder courseUri = this.getCourseUriBuilder(uri);
-        final Map<String, Object> uriValues = this.getUriValues(uri);
         final JaxbCourses jaxbCourses = new JaxbCourses();
         jaxbCourses.setStart(start);
         jaxbCourses.setLimit(limit);

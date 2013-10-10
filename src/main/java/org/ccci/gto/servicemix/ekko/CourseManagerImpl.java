@@ -85,7 +85,7 @@ public class CourseManagerImpl implements CourseManager {
     public Course publishCourse(final CourseQuery courseQuery) throws CourseNotFoundException, ManifestException,
             MultipleManifestExceptions {
         // short-circuit if a valid course couldn't be found
-        final Course course = this.getCourse(courseQuery.clone().loadManifest(true).loadPendingManifest(true));
+        final Course course = this.getCourse(courseQuery.clone().loadManifest().loadPendingManifest());
         if (course == null) {
             throw new CourseNotFoundException();
         }
@@ -163,7 +163,7 @@ public class CourseManagerImpl implements CourseManager {
     @Transactional
     public Course unpublishCourse(final CourseQuery courseQuery) throws CourseNotFoundException {
         // short-circuit if a valid course couldn't be found
-        final Course course = this.getCourse(courseQuery.clone().loadManifest(true).loadResources(true));
+        final Course course = this.getCourse(courseQuery.clone().loadManifest().loadResources());
         if (course == null) {
             throw new CourseNotFoundException();
         }
