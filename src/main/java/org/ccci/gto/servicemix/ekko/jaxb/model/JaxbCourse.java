@@ -21,8 +21,14 @@ public class JaxbCourse {
     @XmlAttribute(name = "schemaVersion")
     private long schemaVersion = 0;
 
-    @XmlElement(name = "access")
-    private JaxbAccess access;
+    @XmlAttribute(name = "public")
+    private boolean publicCourse = false;
+
+    @XmlAttribute(name = "enrollmentType")
+    private String enrollmentType;
+
+    @XmlElement(name = "permission")
+    private JaxbPermission permission;
 
     @XmlElement(namespace = XMLNS_EKKO, name = "meta")
     private JaxbDomElements meta;
@@ -36,9 +42,8 @@ public class JaxbCourse {
     public JaxbCourse(final Course course, final boolean parseManifest, final String guid) {
         this.id = course.getId();
         this.version = course.getVersion();
-        this.access = new JaxbAccess();
-        this.access.enrollmentType = course.getEnrollment();
-        this.access.publicCourse = course.isPublic();
+        this.publicCourse = course.isPublic();
+        this.enrollmentType = course.getEnrollment();
 
         if (parseManifest) {
             final Document manifest = DomUtils.parse(course.getManifest());
@@ -57,26 +62,25 @@ public class JaxbCourse {
         }
 
         if (guid != null) {
-            this.access.admin = course.isAdmin(guid);
-            this.access.enrolled = course.isEnrolled(guid);
-            this.access.pending = course.isPending(guid);
-            this.access.contentVisible = course.isContentVisibleTo(guid);
+            this.permission = new JaxbPermission();
+            this.permission.guid = guid;
+            this.permission.admin = course.isAdmin(guid);
+            this.permission.enrolled = course.isEnrolled(guid);
+            this.permission.pending = course.isPending(guid);
+            this.permission.contentVisible = course.isContentVisibleTo(guid);
         }
     }
 
     @XmlRootElement
-    public static class JaxbAccess {
-        @XmlAttribute(name = "enrollmentType")
-        private String enrollmentType;
+    public static class JaxbPermission {
+        @XmlAttribute(name = "guid")
+        private String guid;
 
         @XmlAttribute(name = "admin")
         private Boolean admin = null;
 
         @XmlAttribute(name = "enrolled")
         private Boolean enrolled = null;
-
-        @XmlAttribute(name = "public")
-        private boolean publicCourse = false;
 
         @XmlAttribute(name = "pending")
         private Boolean pending = null;
