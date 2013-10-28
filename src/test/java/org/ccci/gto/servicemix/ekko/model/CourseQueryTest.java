@@ -30,6 +30,9 @@ public class CourseQueryTest {
     private static final SecureRandom RAND = new SecureRandom();
 
     private static final String ENROLLMENT_PRIVATE_TESTING = "private-testing";
+    private static enum MEMBERSHIP {
+        NONE, ADMIN, ENROLLED, ADMIN_ENROLLED, PENDING
+    };
 
     private static EntityManagerFactory emf;
     private static EntityManager em;
@@ -61,7 +64,8 @@ public class CourseQueryTest {
         for (final boolean published : new Boolean[] { true, false }) {
             for (final String enrollment : new String[] { ENROLLMENT_DISABLED, ENROLLMENT_OPEN, ENROLLMENT_APPROVAL,
                     ENROLLMENT_PRIVATE_TESTING, }) {
-                for (final boolean admin : new Boolean[] { true, false }) {
+                for (final MEMBERSHIP membership : new MEMBERSHIP[] { MEMBERSHIP.NONE, MEMBERSHIP.ADMIN,
+                        MEMBERSHIP.ENROLLED, MEMBERSHIP.ADMIN_ENROLLED, MEMBERSHIP.PENDING, }) {
                     for (final String guid : new String[] { null, GUID1, GUID2 }) {
                         // generate course
                         final Course course = new Course();
@@ -76,11 +80,22 @@ public class CourseQueryTest {
                         default:
                             course.setEnrollment(enrollment);
                         }
+
                         if (guid != null) {
-                            if (admin) {
-                                course.addAdmin(guid);
-                            } else {
+                            switch (membership) {
+                            case ADMIN_ENROLLED:
                                 course.addEnrolled(guid);
+                            case ADMIN:
+                                course.addAdmin(guid);
+                                break;
+                            case ENROLLED:
+                                course.addEnrolled(guid);
+                                break;
+                            case PENDING:
+                                course.addPending(guid);
+                                break;
+                            case NONE:
+                                break;
                             }
                         }
 
@@ -356,6 +371,47 @@ public class CourseQueryTest {
 
             // check to see if the correct courses were returned
             assertValidCourses(courses, enrolled, notEnrolled);
+
+            // don't save db changes
+            em.getTransaction().rollback();
+        }
+    }
+
+    @Test
+    public void testPendingOrEnrolled() {
+        // test several pending & enrolled variations
+        {
+            // generate several test courses that are enrolled/not enrolled
+            final List<Course> valid = new ArrayList<Course>();
+            final List<Course> notValid = new ArrayList<Course>();
+            for (final Course course : this.generateCourses()) {
+                // put course into correct bucket
+                if (course.isEnrolled(GUID1) || course.isPending(GUID1)) {
+                    valid.add(course);
+                } else {
+                    notValid.add(course);
+                }
+            }
+
+            em.getTransaction().begin();
+
+            // persist all courses
+            for (final Course course : valid) {
+                em.persist(course);
+            }
+            for (final Course course : notValid) {
+                em.persist(course);
+            }
+            em.flush();
+            em.clear();
+
+            // fetch visible courses
+            final List<Course> courses = new CourseQuery().enrolled(GUID1).pending(GUID1).clone().execute(em);
+            em.flush();
+            em.clear();
+
+            // check to see if the correct courses were returned
+            assertValidCourses(courses, valid, notValid);
 
             // don't save db changes
             em.getTransaction().rollback();

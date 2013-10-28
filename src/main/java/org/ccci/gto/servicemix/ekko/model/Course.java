@@ -399,6 +399,7 @@ public class Course {
         // visibility attributes (they are exclusive options)
         private String adminGuid = null;
         private String enrolledGuid = null;
+        private String pendingGuid = null;
         private String contentVisibleGuid = null;
         private String visibleGuid = null;
 
@@ -418,7 +419,6 @@ public class Course {
             if (guid != null) {
                 this.adminGuid = guid.toUpperCase();
                 this.contentVisibleGuid = null;
-                this.enrolledGuid = null;
                 this.visibleGuid = null;
             } else {
                 this.adminGuid = null;
@@ -430,11 +430,22 @@ public class Course {
         public CourseQuery enrolled(final String guid) {
             if (guid != null) {
                 this.enrolledGuid = guid.toUpperCase();
-                this.adminGuid = null;
                 this.contentVisibleGuid = null;
                 this.visibleGuid = null;
             } else {
                 this.enrolledGuid = null;
+            }
+
+            return this;
+        }
+
+        public CourseQuery pending(final String guid) {
+            if (guid != null) {
+                this.pendingGuid = guid.toUpperCase();
+                this.contentVisibleGuid = null;
+                this.visibleGuid = null;
+            } else {
+                this.pendingGuid = null;
             }
 
             return this;
@@ -445,6 +456,7 @@ public class Course {
                 this.contentVisibleGuid = guid.toUpperCase();
                 this.adminGuid = null;
                 this.enrolledGuid = null;
+                this.pendingGuid = null;
                 this.visibleGuid = null;
             } else {
                 this.contentVisibleGuid = null;
@@ -459,6 +471,7 @@ public class Course {
                 this.adminGuid = null;
                 this.contentVisibleGuid = null;
                 this.enrolledGuid = null;
+                this.pendingGuid = null;
             } else {
                 this.visibleGuid = null;
             }
@@ -584,12 +597,23 @@ public class Course {
 
             // visibility filters, these should be exclusive (we check most
             // restrictive first)
-            if (this.adminGuid != null) {
-                where.add(cb.equal(c.get("admins"), cb.parameter(String.class, "adminGuid")));
-                params.put("adminGuid", this.adminGuid);
-            } else if (this.enrolledGuid != null) {
-                where.add(cb.equal(c.get("enrolled"), cb.parameter(String.class, "enrolledGuid")));
-                params.put("enrolledGuid", this.enrolledGuid);
+            if (this.adminGuid != null || this.enrolledGuid != null || this.pendingGuid != null) {
+                final List<Predicate> filters = new ArrayList<Predicate>();
+
+                if (this.adminGuid != null) {
+                    filters.add(cb.equal(c.get("admins"), cb.parameter(String.class, "adminGuid")));
+                    params.put("adminGuid", this.adminGuid);
+                }
+                if (this.enrolledGuid != null) {
+                    filters.add(cb.equal(c.get("enrolled"), cb.parameter(String.class, "enrolledGuid")));
+                    params.put("enrolledGuid", this.enrolledGuid);
+                }
+                if (this.pendingGuid != null) {
+                    filters.add(cb.equal(c.get("pending"), cb.parameter(String.class, "pendingGuid")));
+                    params.put("pendingGuid", this.pendingGuid);
+                }
+
+                where.add(cb.or(filters.toArray(new Predicate[filters.size()])));
             } else if (this.contentVisibleGuid != null) {
                 where.add(cb.or(cb.equal(c.get("enrollment"), ENROLLMENT_DISABLED),
                         cb.equal(c.get("enrolled"), cb.parameter(String.class, "enrolledGuid")),
@@ -643,6 +667,7 @@ public class Course {
 
             newObj.adminGuid = this.adminGuid;
             newObj.enrolledGuid = this.enrolledGuid;
+            newObj.pendingGuid = this.pendingGuid;
             newObj.published = this.published;
             newObj.visibleGuid = this.visibleGuid;
             newObj.contentVisibleGuid = this.contentVisibleGuid;
