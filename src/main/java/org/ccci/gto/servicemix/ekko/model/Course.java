@@ -542,6 +542,10 @@ public class Course {
             return this;
         }
 
+        public CourseQuery loadPermissionAttrs() {
+            return this.loadAdmins().loadEnrolled().loadPending();
+        }
+
         public CourseQuery start(final int start) {
             this.start = start;
             return this;

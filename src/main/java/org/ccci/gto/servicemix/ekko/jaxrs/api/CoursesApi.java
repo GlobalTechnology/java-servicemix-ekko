@@ -95,7 +95,7 @@ public class CoursesApi extends AbstractApi {
         // additional requests are needed
         final String guid = session.getGuid();
         final List<Course> courses = this.courseManager.getCourses(new CourseQuery().visibleTo(guid).loadManifest()
-                .loadAdmins().loadEnrolled().start(start).limit(limit + 1));
+                .loadPermissionAttrs().start(start).limit(limit + 1));
         final int size = courses.size();
 
         // generate response objects

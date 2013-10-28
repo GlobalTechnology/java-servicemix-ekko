@@ -82,7 +82,7 @@ public class CourseApi extends AbstractApi {
         // retrieve course
         final String guid = session.getGuid();
         final Course course = this.courseManager.getCourse(this.getCourseQuery(uri).visibleTo(guid).loadManifest()
-                .loadAdmins().loadEnrolled());
+                .loadPermissionAttrs());
         if (course != null) {
             return Response.ok(new JaxbCourse(course, true, guid)).build();
         }
@@ -103,7 +103,7 @@ public class CourseApi extends AbstractApi {
 
         // generate the CourseQuery
         final String guid = session.getGuid();
-        final CourseQuery query = this.getCourseQuery(uri).visibleTo(guid).loadAdmins().loadEnrolled().loadManifest();
+        final CourseQuery query = this.getCourseQuery(uri).visibleTo(guid).loadPermissionAttrs().loadManifest();
 
         // enroll the user in this course
         final Course course;
@@ -284,7 +284,7 @@ public class CourseApi extends AbstractApi {
 
         // retrieve the course
         final Course course = this.courseManager.getCourse(this.getCourseQuery(uri).admin(session.getGuid())
-                .loadAdmins(true));
+                .loadAdmins());
         if (course == null) {
             return ResponseUtils.unauthorized().build();
         }
