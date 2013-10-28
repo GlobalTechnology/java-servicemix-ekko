@@ -32,6 +32,8 @@ public interface CourseManager {
 
     Course enroll(CourseQuery query, String guid) throws CourseNotFoundException;
 
+    Course unenroll(CourseQuery query, String guid) throws CourseNotFoundException;
+
     boolean deleteCourse(CourseQuery query) throws CourseNotFoundException;
 
     Resource getResource(ResourcePrimaryKey key);

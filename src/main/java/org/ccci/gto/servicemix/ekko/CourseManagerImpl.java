@@ -305,6 +305,23 @@ public class CourseManagerImpl implements CourseManager {
         return course;
     }
 
+    @Override
+    @Transactional
+    public Course unenroll(final CourseQuery query, final String guid) throws CourseNotFoundException {
+        // short-circuit if a valid course couldn't be found
+        final Course course = this.getCourse(query.clone().loadEnrolled().loadPending());
+        if (course == null) {
+            throw new CourseNotFoundException();
+        }
+
+        // remove the specified user from enrolled and pending enrollment
+        course.removeEnrolled(guid);
+        course.removePending(guid);
+
+        // return the course
+        return course;
+    }
+
     @Transactional
     @Override
     public Resource getResource(final ResourcePrimaryKey key) {

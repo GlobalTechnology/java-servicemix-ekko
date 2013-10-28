@@ -7,7 +7,6 @@ import static org.ccci.gto.servicemix.ekko.jaxrs.api.Constants.PATH_COURSE;
 
 import java.io.InputStream;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -134,13 +133,21 @@ public class CourseApi extends AbstractApi {
 
         // remove the current user from the course
         try {
-            this.courseManager.updateCourseEnrolled(query, null, Collections.singleton(guid));
+            this.courseManager.unenroll(query, guid);
         } catch (final CourseNotFoundException e) {
             return ResponseUtils.unauthorized().build();
         }
 
-        // return success
-        return Response.ok().build();
+        // return success response
+        // return the course xml if we can still see it
+        final Response response;
+        if ((response = this.getCourse(uri)) != null && response.getStatus() == 200) {
+            return response;
+        }
+        // otherwise return a simple OK response
+        else {
+            return Response.ok().build();
+        }
     }
 
     @DELETE
