@@ -294,7 +294,12 @@ public class CourseManagerImpl implements CourseManager {
             course.addEnrolled(guid);
             break;
         case ENROLLMENT_APPROVAL:
-            course.addPending(guid);
+            // admins should immediately be enrolled
+            if (course.isAdmin(guid)) {
+                course.addEnrolled(guid);
+            } else {
+                course.addPending(guid);
+            }
             break;
         }
 
