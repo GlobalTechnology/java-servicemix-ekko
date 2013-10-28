@@ -129,7 +129,7 @@ public class CourseApi extends AbstractApi {
 
         // generate the CourseQuery
         final String guid = session.getGuid();
-        final CourseQuery query = this.getCourseQuery(uri).enrolled(guid);
+        final CourseQuery query = this.getCourseQuery(uri).enrolled(guid).pending(guid);
 
         // remove the current user from the course
         try {
