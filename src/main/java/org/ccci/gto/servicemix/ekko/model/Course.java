@@ -56,10 +56,10 @@ public class Course {
     private String title;
 
     @Column(name = "public")
-    private boolean publicCourse = false;
+    private boolean publicCourse = true;
 
     @Column(length = 20, nullable = false)
-    private String enrollment = ENROLLMENT_APPROVAL;
+    private String enrollment = ENROLLMENT_OPEN;
 
     @Lob
     @Basic(fetch = FetchType.LAZY)
