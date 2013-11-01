@@ -125,7 +125,7 @@ public class CourseQueryTest {
 
         // check to see if the correct courses were returned
         assertTrue("results are missing a valid Course", resultIds.containsAll(validIds));
-        assertTrue(validIds.containsAll(validIds));
+        assertTrue(validIds.containsAll(resultIds));
         for (final Long id : resultIds) {
             assertFalse(invalidIds.contains(id));
         }
@@ -334,169 +334,102 @@ public class CourseQueryTest {
             // increment id after usage
             id++;
         }
+
+        // test a wide array of possible courses
+        testCondition(new CourseQuery().published(), new Condition() {
+            @Override
+            public boolean test(final Course course) {
+                return course.isPublished();
+            }
+        });
     }
 
     @Test
     public void testEnrolled() {
-        // test several enrolled variations
-        {
-            // generate several test courses that are enrolled/not enrolled
-            final List<Course> enrolled = new ArrayList<Course>();
-            final List<Course> notEnrolled = new ArrayList<Course>();
-            for (final Course course : this.generateCourses()) {
-                // put course into correct bucket
-                if (course.isEnrolled(GUID1)) {
-                    enrolled.add(course);
-                } else {
-                    notEnrolled.add(course);
+        for (final String guid : new String[] { GUID1, GUID2, GUID3 }) {
+            testCondition(new CourseQuery().enrolled(guid), new Condition() {
+                @Override
+                public boolean test(final Course course) {
+                    return course.isEnrolled(guid);
                 }
-            }
-
-            em.getTransaction().begin();
-
-            // persist all courses
-            for (final Course course : enrolled) {
-                em.persist(course);
-            }
-            for (final Course course : notEnrolled) {
-                em.persist(course);
-            }
-            em.flush();
-            em.clear();
-
-            // fetch visible courses
-            final List<Course> courses = new CourseQuery().enrolled(GUID1).clone().execute(em);
-            em.flush();
-            em.clear();
-
-            // check to see if the correct courses were returned
-            assertValidCourses(courses, enrolled, notEnrolled);
-
-            // don't save db changes
-            em.getTransaction().rollback();
+            });
         }
     }
 
     @Test
     public void testPendingOrEnrolled() {
-        // test several pending & enrolled variations
-        {
-            // generate several test courses that are enrolled/not enrolled
-            final List<Course> valid = new ArrayList<Course>();
-            final List<Course> notValid = new ArrayList<Course>();
-            for (final Course course : this.generateCourses()) {
-                // put course into correct bucket
-                if (course.isEnrolled(GUID1) || course.isPending(GUID1)) {
-                    valid.add(course);
-                } else {
-                    notValid.add(course);
+        for (final String guid : new String[] { GUID1, GUID2, GUID3 }) {
+            testCondition(new CourseQuery().enrolled(guid).pending(guid), new Condition() {
+                @Override
+                public boolean test(final Course course) {
+                    return course.isEnrolled(guid) || course.isPending(guid);
                 }
-            }
-
-            em.getTransaction().begin();
-
-            // persist all courses
-            for (final Course course : valid) {
-                em.persist(course);
-            }
-            for (final Course course : notValid) {
-                em.persist(course);
-            }
-            em.flush();
-            em.clear();
-
-            // fetch visible courses
-            final List<Course> courses = new CourseQuery().enrolled(GUID1).pending(GUID1).clone().execute(em);
-            em.flush();
-            em.clear();
-
-            // check to see if the correct courses were returned
-            assertValidCourses(courses, valid, notValid);
-
-            // don't save db changes
-            em.getTransaction().rollback();
+            });
         }
     }
 
     @Test
     public void testVisibleTo() {
-        // test several visible variations
-        {
-            // generate several test courses that are visible/not visible
-            final List<Course> visible = new ArrayList<Course>();
-            final List<Course> notVisible = new ArrayList<Course>();
-            for (final Course course : this.generateCourses()) {
-                // put course into correct bucket
-                if (course.isVisibleTo(GUID1)) {
-                    visible.add(course);
-                } else {
-                    notVisible.add(course);
+        for (final String guid : new String[] { GUID1, GUID2, GUID3 }) {
+            testCondition(new CourseQuery().visibleTo(guid), new Condition() {
+                @Override
+                public boolean test(final Course course) {
+                    return course.isVisibleTo(guid);
                 }
-            }
-
-            em.getTransaction().begin();
-
-            // persist all courses
-            for (final Course course : visible) {
-                em.persist(course);
-            }
-            for (final Course course : notVisible) {
-                em.persist(course);
-            }
-            em.flush();
-            em.clear();
-
-            // fetch visible courses
-            final List<Course> courses = new CourseQuery().visibleTo(GUID1).clone().execute(em);
-            em.flush();
-            em.clear();
-
-            // check to see if the correct courses were returned
-            assertValidCourses(courses, visible, notVisible);
-
-            // don't save db changes
-            em.getTransaction().rollback();
+            });
         }
     }
 
     @Test
     public void testContentVisibleTo() {
-        // test several content visible variations
-        {
-            // generate several test courses that are visible/not visible
-            final List<Course> visible = new ArrayList<Course>();
-            final List<Course> notVisible = new ArrayList<Course>();
-            for (final Course course : this.generateCourses()) {
-                // put course into correct bucket
-                if (course.isContentVisibleTo(GUID1)) {
-                    visible.add(course);
-                } else {
-                    notVisible.add(course);
+        for (final String guid : new String[] { GUID1, GUID2, GUID3 }) {
+            testCondition(new CourseQuery().contentVisibleTo(guid), new Condition() {
+                @Override
+                public boolean test(final Course course) {
+                    return course.isContentVisibleTo(guid);
                 }
-            }
-
-            em.getTransaction().begin();
-
-            // persist all courses
-            for (final Course course : visible) {
-                em.persist(course);
-            }
-            for (final Course course : notVisible) {
-                em.persist(course);
-            }
-            em.flush();
-            em.clear();
-
-            // fetch visible courses
-            final List<Course> courses = new CourseQuery().contentVisibleTo(GUID1).clone().execute(em);
-            em.flush();
-            em.clear();
-
-            // check to see if the correct courses were returned
-            assertValidCourses(courses, visible, notVisible);
-
-            // don't save db changes
-            em.getTransaction().rollback();
+            });
         }
+    }
+    
+    private void testCondition(final CourseQuery query, final Condition condition) {
+        // generate several test courses
+        final List<Course> positive = new ArrayList<Course>();
+        final List<Course> negative = new ArrayList<Course>();
+        for (final Course course : this.generateCourses()) {
+            // put course into correct bucket
+            if (condition.test(course)) {
+                positive.add(course);
+            } else {
+                negative.add(course);
+            }
+        }
+
+        em.getTransaction().begin();
+
+        // persist all courses
+        for (final Course course : positive) {
+            em.persist(course);
+        }
+        for (final Course course : negative) {
+            em.persist(course);
+        }
+        em.flush();
+        em.clear();
+
+        // fetch matching courses
+        final List<Course> courses = query.clone().execute(em);
+        em.flush();
+        em.clear();
+
+        // check to see if the correct courses were returned
+        assertValidCourses(courses, positive, negative);
+
+        // don't save db changes
+        em.getTransaction().rollback();
+    }
+    
+    private interface Condition {
+        boolean test(Course course);
     }
 }
