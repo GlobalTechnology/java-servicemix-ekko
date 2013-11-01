@@ -97,7 +97,7 @@ public class CourseApi extends AbstractApi {
     public Response enroll(@Context final UriInfo uri) {
         // validate the session
         final Session session = this.getSession(uri);
-        if (session == null || session.isExpired()) {
+        if (session == null || session.isExpired() || session.isGuest()) {
             return this.invalidSession(uri).build();
         }
 
@@ -123,7 +123,7 @@ public class CourseApi extends AbstractApi {
     public Response unenroll(@Context final UriInfo uri) {
         // validate the session
         final Session session = this.getSession(uri);
-        if (session == null || session.isExpired()) {
+        if (session == null || session.isExpired() || session.isGuest()) {
             return this.invalidSession(uri).build();
         }
 
@@ -154,7 +154,7 @@ public class CourseApi extends AbstractApi {
     public Response deleteCourse(@Context final UriInfo uri) {
         // validate the session
         final Session session = this.getSession(uri);
-        if (session == null || session.isExpired()) {
+        if (session == null || session.isExpired() || session.isGuest()) {
             return this.invalidSession(uri).build();
         }
 
@@ -219,7 +219,7 @@ public class CourseApi extends AbstractApi {
     public Response updateManifest(@Context final UriInfo uri, final InputStream in) {
         // validate the session
         final Session session = this.getSession(uri);
-        if (session == null || session.isExpired()) {
+        if (session == null || session.isExpired() || session.isGuest()) {
             return this.invalidSession(uri).build();
         }
 
@@ -245,7 +245,7 @@ public class CourseApi extends AbstractApi {
     public Response publish(@Context final UriInfo uri) {
         // validate the session
         final Session session = this.getSession(uri);
-        if (session == null || session.isExpired()) {
+        if (session == null || session.isExpired() || session.isGuest()) {
             return this.invalidSession(uri).build();
         }
 
@@ -278,7 +278,7 @@ public class CourseApi extends AbstractApi {
     public Response listAdmins(@Context final UriInfo uri) {
         // validate the session
         final Session session = this.getSession(uri);
-        if (session == null || session.isExpired()) {
+        if (session == null || session.isExpired() || session.isGuest()) {
             return this.invalidSession(uri).build();
         }
 
@@ -300,7 +300,7 @@ public class CourseApi extends AbstractApi {
     public Response updateAdmins(@Context final UriInfo uri, final MultivaluedMap<String, String> form) {
         // validate the session
         final Session session = this.getSession(uri);
-        if (session == null || session.isExpired()) {
+        if (session == null || session.isExpired() || session.isGuest()) {
             return this.invalidSession(uri).build();
         }
 
@@ -336,7 +336,7 @@ public class CourseApi extends AbstractApi {
     public Response listEnrolled(@Context final UriInfo uri) {
         // validate the session
         final Session session = this.getSession(uri);
-        if (session == null || session.isExpired()) {
+        if (session == null || session.isExpired() || session.isGuest()) {
             return this.invalidSession(uri).build();
         }
 
@@ -358,7 +358,7 @@ public class CourseApi extends AbstractApi {
     public Response updateEnrolled(@Context final UriInfo uri, final MultivaluedMap<String, String> form) {
         // validate the session
         final Session session = this.getSession(uri);
-        if (session == null || session.isExpired()) {
+        if (session == null || session.isExpired() || session.isGuest()) {
             return this.invalidSession(uri).build();
         }
 
@@ -393,7 +393,7 @@ public class CourseApi extends AbstractApi {
     public Response listPending(@Context final UriInfo uri) {
         // validate the session
         final Session session = this.getSession(uri);
-        if (session == null || session.isExpired()) {
+        if (session == null || session.isExpired() || session.isGuest()) {
             return this.invalidSession(uri).build();
         }
 
@@ -415,7 +415,7 @@ public class CourseApi extends AbstractApi {
     public Response updatePending(@Context final UriInfo uri, final MultivaluedMap<String, String> form) {
         // validate the session
         final Session session = this.getSession(uri);
-        if (session == null || session.isExpired()) {
+        if (session == null || session.isExpired() || session.isGuest()) {
             return this.invalidSession(uri).build();
         }
 

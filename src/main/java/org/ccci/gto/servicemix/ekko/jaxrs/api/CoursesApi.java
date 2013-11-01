@@ -40,7 +40,7 @@ public class CoursesApi extends AbstractApi {
     public Response createCourse(@Context final UriInfo uri, final InputStream in) {
         // validate the session
         final Session session = this.getSession(uri);
-        if (session == null || session.isExpired()) {
+        if (session == null || session.isExpired() || session.isGuest()) {
             return this.invalidSession(uri).build();
         }
 

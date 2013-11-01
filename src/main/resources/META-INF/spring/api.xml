@@ -20,7 +20,9 @@
     <property name="sessionGrouping" value="${session.grouping:ekko}" />
   </bean>
 
-  <bean id="api.auth" parent="api.base" class="org.ccci.gto.servicemix.common.jaxrs.api.AuthenticationApi" />
+  <bean id="api.auth" parent="api.base" class="org.ccci.gto.servicemix.common.jaxrs.api.AuthenticationApi">
+    <property name="guestAccessEnabled" value="true" />
+  </bean>
 
   <bean id="api.courses" parent="api.base" class="org.ccci.gto.servicemix.ekko.jaxrs.api.CoursesApi" />
 

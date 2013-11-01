@@ -47,7 +47,7 @@ public class ResourcesApi extends AbstractApi {
             final InputStream in) {
         // validate the session
         final Session session = this.getSession(uri);
-        if (session == null || session.isExpired()) {
+        if (session == null || session.isExpired() || session.isGuest()) {
             return this.invalidSession(uri).build();
         }
 
@@ -89,7 +89,7 @@ public class ResourcesApi extends AbstractApi {
     public Response getResources(@Context final UriInfo uri) {
         // validate the session
         final Session session = this.getSession(uri);
-        if (session == null || session.isExpired()) {
+        if (session == null || session.isExpired() || session.isGuest()) {
             return this.invalidSession(uri).build();
         }
 
@@ -161,7 +161,7 @@ public class ResourcesApi extends AbstractApi {
     public Response deleteResourceBySha1(@Context final UriInfo uri) {
         // validate the session
         final Session session = this.getSession(uri);
-        if (session == null || session.isExpired()) {
+        if (session == null || session.isExpired() || session.isGuest()) {
             return this.invalidSession(uri).build();
         }
 
