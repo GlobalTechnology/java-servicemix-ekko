@@ -120,6 +120,7 @@ public class CourseTest {
     public void testIsVisibleTo() {
         final Course course = new Course();
         course.setManifest("asdf");
+        course.setPublic(false);
 
         // test access for admins
         assertFalse(course.isVisibleTo(GUID1));
