@@ -111,4 +111,9 @@ public class Resource {
     public void setMetaResource(final boolean metaResource) {
         this.metaResource = metaResource;
     }
+
+    public boolean isVisibleTo(final String guid) {
+        return this.course.isAdmin(guid) || (this.isPublished() && this.course.isContentVisibleTo(guid))
+                || (this.isMetaResource() && this.course.isVisibleTo(guid));
+    }
 }

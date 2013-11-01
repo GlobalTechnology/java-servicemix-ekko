@@ -7,6 +7,7 @@ import static org.ccci.gto.servicemix.ekko.jaxrs.api.Constants.PATH_RESOURCE_SHA
 
 import java.io.InputStream;
 import java.util.Map;
+import java.util.concurrent.Callable;
 
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -20,6 +21,7 @@ import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
+import org.ccci.gto.persistence.tx.TransactionService;
 import org.ccci.gto.servicemix.common.model.Session;
 import org.ccci.gto.servicemix.common.util.ResponseUtils;
 import org.ccci.gto.servicemix.ekko.ResourceAlreadyExistsException;
@@ -38,8 +40,15 @@ public class ResourcesApi extends AbstractApi {
     @Autowired
     private ResourceManager resourceManager;
 
+    @Autowired
+    private TransactionService txService;
+
     public void setResourceManager(final ResourceManager resourceManager) {
         this.resourceManager = resourceManager;
+    }
+
+    public final void setTransactionService(final TransactionService transactionService) {
+        this.txService = transactionService;
     }
 
     @POST
@@ -121,16 +130,32 @@ public class ResourcesApi extends AbstractApi {
             return this.invalidSession(uri).build();
         }
 
-        // validate the specified course
-        final Course course = this.courseManager.getCourse(this.getCourseQuery(uri).loadResources(true));
-        if (course == null) {
+        // retrieve the requested resource, checking authorization in the
+        // process
+        final String guid = session.getGuid();
+        final Resource resource;
+        try {
+            resource = txService.inTransaction(new Callable<Resource>() {
+                @Override
+                public Resource call() throws Exception {
+                    final Course course;
+                    final Resource resource;
+                    if ((course = courseManager.getCourse(getCourseId(uri))) != null && course.isVisibleTo(guid)
+                            && (resource = course.getResource(getResourceSha1(uri))) != null
+                            && resource.isVisibleTo(guid)) {
+                        return resource;
+                    }
+
+                    return null;
+                }
+            });
+        } catch (final Exception e) {
             return ResponseUtils.unauthorized().build();
         }
 
-        // return a 404 if the resource doesn't exist
-        final Resource resource = course.getResource(this.getResourceSha1(uri));
+        // return a 404 if a resource wasn't found
         if (resource == null) {
-            return Response.status(Status.NOT_FOUND).build();
+            return ResponseUtils.unauthorized().build();
         }
 
         // get an InputStream for the requested file

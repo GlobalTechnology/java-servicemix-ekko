@@ -5,7 +5,7 @@
   <parent>
     <groupId>org.ccci.gto.servicemix</groupId>
     <artifactId>servicemix-parent</artifactId>
-    <version>10</version>
+    <version>11-SNAPSHOT</version>
   </parent>
 
   <artifactId>servicemix-gto-ekko</artifactId>
@@ -21,6 +21,7 @@
   </scm>
 
   <properties>
+    <gto.extension.persistence.version>0.2.0-SNAPSHOT</gto.extension.persistence.version>
     <servicemix-gto-common.version>0.3.0-SNAPSHOT</servicemix-gto-common.version>
   </properties>
 
@@ -44,6 +45,10 @@
       <groupId>mysql</groupId>
       <artifactId>mysql-connector-java</artifactId>
       <scope>runtime</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.ccci.gto</groupId>
+      <artifactId>extension-persistence</artifactId>
     </dependency>
 
     <!-- CXF dependency -->
