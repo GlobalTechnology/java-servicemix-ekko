@@ -94,7 +94,8 @@ public class ResourcesApi extends AbstractApi {
         }
 
         // load the course
-        final Course course = this.courseManager.getCourse(this.getCourseQuery(uri).loadResources(true));
+        final Course course = this.courseManager.getCourse(this.getCourseQuery(uri).admin(session.getGuid())
+                .loadResources(true));
         if (course == null) {
             return ResponseUtils.unauthorized().build();
         }
