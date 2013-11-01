@@ -1,12 +1,15 @@
 package org.ccci.gto.servicemix.ekko.model;
-
+import static org.ccci.gto.servicemix.ekko.Constants.GUID_GUEST;
 import static org.ccci.gto.servicemix.ekko.TestConstants.GUID1;
 import static org.ccci.gto.servicemix.ekko.TestConstants.GUID2;
 import static org.ccci.gto.servicemix.ekko.model.Course.ENROLLMENT_APPROVAL;
 import static org.ccci.gto.servicemix.ekko.model.Course.ENROLLMENT_DISABLED;
 import static org.ccci.gto.servicemix.ekko.model.Course.ENROLLMENT_OPEN;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+
+import java.util.Collections;
 
 import org.junit.Test;
 
@@ -149,5 +152,35 @@ public class CourseTest {
         course.setManifest(null);
         assertFalse(course.isContentVisibleTo(GUID1));
         assertFalse(course.isContentVisibleTo(GUID2));
+    }
+
+    @Test
+    public void testGuestUser() {
+        final Course course = new Course();
+        course.setManifest("asdf");
+
+        // make sure a GUEST user cannot be pending, enrolled, or an admin
+        course.setAdmins(Collections.singleton(GUID_GUEST));
+        course.setEnrolled(Collections.singleton(GUID_GUEST));
+        course.setPending(Collections.singleton(GUID_GUEST));
+        assertEquals(0, course.getAdmins().size());
+        assertEquals(0, course.getEnrolled().size());
+        assertEquals(0, course.getPending().size());
+
+        // test visibility for various enrollment types
+        course.setPublic(true);
+        course.setEnrollment(ENROLLMENT_DISABLED);
+        assertTrue(course.isVisibleTo(GUID_GUEST));
+        assertTrue(course.isContentVisibleTo(GUID_GUEST));
+        course.setEnrollment(ENROLLMENT_OPEN);
+        assertFalse(course.isVisibleTo(GUID_GUEST));
+        assertFalse(course.isContentVisibleTo(GUID_GUEST));
+        course.setEnrollment(ENROLLMENT_APPROVAL);
+        assertFalse(course.isVisibleTo(GUID_GUEST));
+        assertFalse(course.isContentVisibleTo(GUID_GUEST));
+        course.setPublic(false);
+        course.setEnrollment(ENROLLMENT_APPROVAL);
+        assertFalse(course.isVisibleTo(GUID_GUEST));
+        assertFalse(course.isContentVisibleTo(GUID_GUEST));
     }
 }

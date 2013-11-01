@@ -1,5 +1,6 @@
 package org.ccci.gto.servicemix.ekko.model;
 
+import static org.ccci.gto.servicemix.ekko.Constants.GUID_GUEST;
 import static org.ccci.gto.servicemix.ekko.TestConstants.GUID1;
 import static org.ccci.gto.servicemix.ekko.TestConstants.GUID2;
 import static org.ccci.gto.servicemix.ekko.TestConstants.GUID3;
@@ -66,7 +67,7 @@ public class CourseQueryTest {
                     ENROLLMENT_PRIVATE_TESTING, }) {
                 for (final MEMBERSHIP membership : new MEMBERSHIP[] { MEMBERSHIP.NONE, MEMBERSHIP.ADMIN,
                         MEMBERSHIP.ENROLLED, MEMBERSHIP.ADMIN_ENROLLED, MEMBERSHIP.PENDING, }) {
-                    for (final String guid : new String[] { null, GUID1, GUID2 }) {
+                    for (final String guid : new String[] { null, GUID_GUEST, GUID1, GUID2 }) {
                         // generate course
                         final Course course = new Course();
                         course.setId(id++);
@@ -346,7 +347,7 @@ public class CourseQueryTest {
 
     @Test
     public void testEnrolled() {
-        for (final String guid : new String[] { GUID1, GUID2, GUID3 }) {
+        for (final String guid : new String[] { GUID_GUEST, GUID1, GUID2, GUID3 }) {
             testCondition(new CourseQuery().enrolled(guid), new Condition() {
                 @Override
                 public boolean test(final Course course) {
@@ -358,7 +359,7 @@ public class CourseQueryTest {
 
     @Test
     public void testPendingOrEnrolled() {
-        for (final String guid : new String[] { GUID1, GUID2, GUID3 }) {
+        for (final String guid : new String[] { GUID_GUEST, GUID1, GUID2, GUID3 }) {
             testCondition(new CourseQuery().enrolled(guid).pending(guid), new Condition() {
                 @Override
                 public boolean test(final Course course) {
@@ -370,7 +371,7 @@ public class CourseQueryTest {
 
     @Test
     public void testVisibleTo() {
-        for (final String guid : new String[] { GUID1, GUID2, GUID3 }) {
+        for (final String guid : new String[] { GUID_GUEST, GUID1, GUID2, GUID3 }) {
             testCondition(new CourseQuery().visibleTo(guid), new Condition() {
                 @Override
                 public boolean test(final Course course) {
@@ -382,7 +383,7 @@ public class CourseQueryTest {
 
     @Test
     public void testContentVisibleTo() {
-        for (final String guid : new String[] { GUID1, GUID2, GUID3 }) {
+        for (final String guid : new String[] { GUID_GUEST, GUID1, GUID2, GUID3 }) {
             testCondition(new CourseQuery().contentVisibleTo(guid), new Condition() {
                 @Override
                 public boolean test(final Course course) {

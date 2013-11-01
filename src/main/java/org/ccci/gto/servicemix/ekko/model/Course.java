@@ -1,5 +1,7 @@
 package org.ccci.gto.servicemix.ekko.model;
 
+import static org.ccci.gto.servicemix.ekko.Constants.GUID_GUEST;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -375,12 +377,23 @@ public class Course {
     }
 
     public boolean isContentVisibleTo(final String guid) {
+        // there is no need to check if this is the GUEST guid, isEnrolled and
+        // isAdmin will return false because a GUEST cannot be in those lists
+        // and we want to allow access for enrollment disabled courses
         return this.isPublished()
                 && (this.isEnrollment(ENROLLMENT_DISABLED) || this.isEnrolled(guid) || this.isAdmin(guid));
     }
 
     public boolean isVisibleTo(final String guid) {
-        return this.isPublished() && (this.isPublic() || this.isContentVisibleTo(guid));
+        if (this.isPublished()) {
+            if (GUID_GUEST.equals(guid)) {
+                return this.isEnrollment(ENROLLMENT_DISABLED);
+            } else {
+                return this.isPublic() || this.isContentVisibleTo(guid);
+            }
+        }
+
+        return false;
     }
 
     public static class CourseQuery {
@@ -625,12 +638,17 @@ public class Course {
                 params.put("enrolledGuid", this.contentVisibleGuid);
                 params.put("adminGuid", this.contentVisibleGuid);
             } else if (this.visibleGuid != null) {
-                where.add(cb.or(cb.equal(c.get("enrollment"), ENROLLMENT_DISABLED),
-                        cb.equal(c.get("publicCourse"), Boolean.TRUE),
-                        cb.equal(c.get("enrolled"), cb.parameter(String.class, "enrolledGuid")),
-                        cb.equal(c.get("admins"), cb.parameter(String.class, "adminGuid"))));
-                params.put("enrolledGuid", this.visibleGuid);
-                params.put("adminGuid", this.visibleGuid);
+                if (this.visibleGuid.equals(GUID_GUEST)) {
+                    where.add(cb.equal(c.get("publicCourse"), Boolean.TRUE));
+                    where.add(cb.equal(c.get("enrollment"), ENROLLMENT_DISABLED));
+                } else {
+                    where.add(cb.or(cb.equal(c.get("enrollment"), ENROLLMENT_DISABLED),
+                            cb.equal(c.get("publicCourse"), Boolean.TRUE),
+                            cb.equal(c.get("enrolled"), cb.parameter(String.class, "enrolledGuid")),
+                            cb.equal(c.get("admins"), cb.parameter(String.class, "adminGuid"))));
+                    params.put("enrolledGuid", this.visibleGuid);
+                    params.put("adminGuid", this.visibleGuid);
+                }
             }
 
             // generate where clause
