@@ -49,9 +49,9 @@ public class Course {
 
     @Id
     @Column(updatable = false)
-    private Long id;
+    private long id = 0;
 
-    private Long version = 0L;
+    private long version = 0;
 
     private String title;
 
@@ -99,11 +99,11 @@ public class Course {
     @Column(length = 40)
     private String zipSha1;
 
-    public Long getId() {
+    public long getId() {
         return this.id;
     }
 
-    public Long getVersion() {
+    public long getVersion() {
         return this.version;
     }
 
@@ -119,7 +119,7 @@ public class Course {
         return this.pendingManifest;
     }
 
-    public void setId(final Long id) {
+    public void setId(final long id) {
         this.id = id;
     }
 
@@ -191,7 +191,7 @@ public class Course {
     public void setZip(final Resource zip) {
         if (zip == null) {
             this.zipSha1 = null;
-        } else if (this.id.equals(zip.getKey().getCourseId())) {
+        } else if (this.id == zip.getKey().getCourseId()) {
             this.zipSha1 = zip.getSha1();
         }
     }

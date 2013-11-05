@@ -194,8 +194,8 @@ public class MojiResourceManager implements ResourceManager {
 
             // load the current manifest
             final Document manifest = DomUtils.parse(course.getManifest());
-            manifest.getDocumentElement().setAttribute("id", course.getId().toString());
-            manifest.getDocumentElement().setAttribute("version", course.getVersion().toString());
+            manifest.getDocumentElement().setAttribute("id", Long.toString(course.getId()));
+            manifest.getDocumentElement().setAttribute("version", Long.toString(course.getVersion()));
 
             // generate zip file
             DigestOutputStream digest = null;

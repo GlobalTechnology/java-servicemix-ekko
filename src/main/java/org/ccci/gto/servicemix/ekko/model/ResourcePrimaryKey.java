@@ -9,7 +9,7 @@ import javax.persistence.Embeddable;
 public class ResourcePrimaryKey implements Serializable {
     private static final long serialVersionUID = -91895163112177105L;
 
-    private Long courseId = null;
+    private long courseId;
     @Column(length = 40)
     private String sha1 = null;
 
@@ -20,14 +20,14 @@ public class ResourcePrimaryKey implements Serializable {
         this(course.getId(), sha1);
     }
 
-    protected ResourcePrimaryKey(final Long courseId, final String sha1) {
+    protected ResourcePrimaryKey(final long courseId, final String sha1) {
         this.courseId = courseId;
         if (sha1 != null) {
             this.sha1 = sha1.toLowerCase();
         }
     }
 
-    public Long getCourseId() {
+    public long getCourseId() {
         return this.courseId;
     }
 
@@ -41,7 +41,7 @@ public class ResourcePrimaryKey implements Serializable {
     @Override
     public int hashCode() {
         int hash = super.hashCode();
-        hash = (hash * 31) + this.courseId.hashCode();
+        hash = (hash * 31) + Long.valueOf(this.courseId).hashCode();
         hash = (hash * 31) + this.sha1.hashCode();
         return hash;
     }
@@ -52,6 +52,6 @@ public class ResourcePrimaryKey implements Serializable {
             return false;
         }
         final ResourcePrimaryKey key2 = (ResourcePrimaryKey) obj;
-        return (this.courseId.equals(key2.courseId)) && (this.sha1.equals(key2.sha1));
+        return (this.courseId == key2.courseId) && (this.sha1.equals(key2.sha1));
     }
 }

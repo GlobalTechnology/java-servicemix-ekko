@@ -276,8 +276,8 @@ public class CourseApi extends AbstractApi {
             final Document manifest = DomUtils.parse(course.getManifest());
 
             // set the course id and version in the manifest
-            manifest.getDocumentElement().setAttribute("id", course.getId().toString());
-            manifest.getDocumentElement().setAttribute("version", course.getVersion().toString());
+            manifest.getDocumentElement().setAttribute("id", Long.toString(course.getId()));
+            manifest.getDocumentElement().setAttribute("version", Long.toString(course.getVersion()));
 
             // return the manifest
             return Response.ok(DomUtils.asString(manifest)).build();
