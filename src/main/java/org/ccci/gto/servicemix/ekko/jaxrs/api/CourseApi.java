@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
+import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -288,6 +289,7 @@ public class CourseApi extends AbstractApi {
 
     @PUT
     @Path("manifest")
+    @Consumes(APPLICATION_XML)
     public Response updateManifest(@Context final UriInfo uri, final InputStream in) {
         // validate the session
         final Session session = this.getSession(uri);
