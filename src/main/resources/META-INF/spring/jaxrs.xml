@@ -1,0 +1,22 @@
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:jaxrs="http://cxf.apache.org/jaxrs"
+  xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+                      http://cxf.apache.org/jaxrs http://cxf.apache.org/schemas/jaxrs.xsd">
+
+  <!-- JAX-RS providers -->
+  <bean id="jaxbProvider" class="org.apache.cxf.jaxrs.provider.JAXBElementProvider" />
+
+  <bean id="jsonProvider" class="org.apache.cxf.jaxrs.provider.json.JSONProvider">
+    <property name="attributesToElements" value="true" />
+    <property name="dropCollectionWrapperElement" value="true" />
+    <property name="dropRootElement" value="true" />
+    <property name="serializeAsArray" value="true" />
+    <property name="namespaceMap">
+      <map>
+        <entry key="https://ekkoproject.org/hub" value="" />
+      </map>
+    </property>
+  </bean>
+  <!-- end JAX-RS providers -->
+
+</beans>

@@ -1,5 +1,6 @@
 package org.ccci.gto.servicemix.ekko.jaxrs.api;
 
+import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import static org.ccci.gto.servicemix.common.jaxrs.api.Constants.PATH_SESSION;
 import static org.ccci.gto.servicemix.ekko.jaxrs.api.Constants.PARAM_RESOURCE_SHA1;
@@ -36,6 +37,7 @@ import org.ccci.gto.servicemix.ekko.jaxb.model.JaxbEnrolled;
 import org.ccci.gto.servicemix.ekko.jaxb.model.JaxbError;
 import org.ccci.gto.servicemix.ekko.jaxb.model.JaxbErrors;
 import org.ccci.gto.servicemix.ekko.jaxb.model.JaxbPending;
+import org.ccci.gto.servicemix.ekko.jaxb.model.JaxbSettings;
 import org.ccci.gto.servicemix.ekko.model.Course;
 import org.ccci.gto.servicemix.ekko.model.Course.CourseQuery;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,12 +55,12 @@ public class CourseApi extends AbstractApi {
     // @Autowired
     private Support support;
 
+    @Autowired
+    private ResourceManager resourceManager;
+
     public void setSupport(final Support support) {
         this.support = support;
     }
-
-    @Autowired
-    private ResourceManager resourceManager;
 
     public void setResourceManager(final ResourceManager resourceManager) {
         this.resourceManager = resourceManager;
@@ -89,6 +91,24 @@ public class CourseApi extends AbstractApi {
 
         // return not found because a valid course wasn't found
         return Response.status(Status.NOT_FOUND).build();
+    }
+
+    @GET
+    @Path("settings")
+    @Produces({ APPLICATION_XML, APPLICATION_JSON })
+    public Response getSettings(@Context final UriInfo uri) {
+        // validate the session
+        final Session session = this.getSession(uri);
+        if (session == null || session.isExpired() || session.isGuest()) {
+            return this.invalidSession(uri).build();
+        }
+
+        final Course course = this.courseManager.getCourse(this.getCourseQuery(uri).admin(session.getGuid()));
+        if (course == null) {
+            return ResponseUtils.unauthorized().build();
+        }
+
+        return Response.ok(new JaxbSettings(course)).build();
     }
 
     @POST

@@ -5,6 +5,14 @@
                       http://cxf.apache.org/jaxrs http://cxf.apache.org/schemas/jaxrs.xsd">
 
   <jaxrs:server address="${url.servicemix:}/ekko">
+    <jaxrs:providers>
+      <ref bean="jaxbProvider" />
+      <ref bean="jsonProvider" />
+    </jaxrs:providers>
+    <jaxrs:extensionMappings>
+      <entry key="json" value="application/json" />
+      <entry key="xml" value="application/xml" />
+    </jaxrs:extensionMappings>
     <jaxrs:serviceBeans>
       <ref local="api.auth" />
       <ref local="api.courses" />
