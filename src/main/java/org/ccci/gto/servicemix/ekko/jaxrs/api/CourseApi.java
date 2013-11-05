@@ -3,6 +3,8 @@ package org.ccci.gto.servicemix.ekko.jaxrs.api;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import static org.ccci.gto.servicemix.common.jaxrs.api.Constants.PATH_SESSION;
+import static org.ccci.gto.servicemix.ekko.jaxrs.api.Constants.PARAM_ENROLLMENT_TYPE;
+import static org.ccci.gto.servicemix.ekko.jaxrs.api.Constants.PARAM_PUBLIC;
 import static org.ccci.gto.servicemix.ekko.jaxrs.api.Constants.PARAM_RESOURCE_SHA1;
 import static org.ccci.gto.servicemix.ekko.jaxrs.api.Constants.PATH_COURSE;
 
@@ -11,6 +13,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
 
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -24,6 +27,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
 
+import org.ccci.gto.persistence.tx.TransactionService;
 import org.ccci.gto.servicemix.common.model.Session;
 import org.ccci.gto.servicemix.common.util.ResponseUtils;
 import org.ccci.gto.servicemix.ekko.CourseNotFoundException;
@@ -58,12 +62,19 @@ public class CourseApi extends AbstractApi {
     @Autowired
     private ResourceManager resourceManager;
 
+    @Autowired
+    private TransactionService txService;
+
     public void setSupport(final Support support) {
         this.support = support;
     }
 
-    public void setResourceManager(final ResourceManager resourceManager) {
+    public final void setResourceManager(final ResourceManager resourceManager) {
         this.resourceManager = resourceManager;
+    }
+
+    public final void setTransactionService(final TransactionService transactionService) {
+        this.txService = transactionService;
     }
 
     /**
@@ -109,6 +120,47 @@ public class CourseApi extends AbstractApi {
         }
 
         return Response.ok(new JaxbSettings(course)).build();
+    }
+
+    @POST
+    @Path("settings")
+    @Produces({ APPLICATION_XML, APPLICATION_JSON })
+    public Response updateSettings(@Context final UriInfo uri, final MultivaluedMap<String, String> form) {
+        // validate the session
+        final Session session = this.getSession(uri);
+        if (session == null || session.isExpired() || session.isGuest()) {
+            return this.invalidSession(uri).build();
+        }
+
+        try {
+            return this.txService.inTransaction(new Callable<Response>() {
+                @Override
+                public Response call() {
+                    // make sure the current user is an admin
+                    final Course course = courseManager.getCourse(getCourseQuery(uri).admin(session.getGuid()));
+                    if (course == null) {
+                        return ResponseUtils.unauthorized().build();
+                    }
+
+                    // update settings based on what was submitted
+                    if (form.containsKey(PARAM_PUBLIC)) {
+                        course.setPublic(Boolean.parseBoolean(form.getFirst(PARAM_PUBLIC)));
+                    }
+                    if (form.containsKey(PARAM_ENROLLMENT_TYPE)) {
+                        final String type = form.getFirst(PARAM_ENROLLMENT_TYPE);
+                        if (!"disabled".equalsIgnoreCase(type)) {
+                            course.setEnrollment(type);
+                        }
+                    }
+
+                    // return success
+                    return Response.ok(new JaxbSettings(course)).build();
+                }
+            });
+        } catch (final Exception e) {
+            // we encountered some sort of exception
+            return Response.status(Status.BAD_REQUEST).build();
+        }
     }
 
     @POST
