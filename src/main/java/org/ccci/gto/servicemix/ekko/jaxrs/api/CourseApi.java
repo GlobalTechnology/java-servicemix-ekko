@@ -36,13 +36,11 @@ import org.ccci.gto.servicemix.ekko.DomUtils;
 import org.ccci.gto.servicemix.ekko.ManifestException;
 import org.ccci.gto.servicemix.ekko.MultipleManifestExceptions;
 import org.ccci.gto.servicemix.ekko.ResourceManager;
-import org.ccci.gto.servicemix.ekko.jaxb.model.JaxbAdmins;
 import org.ccci.gto.servicemix.ekko.jaxb.model.JaxbCourse;
-import org.ccci.gto.servicemix.ekko.jaxb.model.JaxbEnrolled;
 import org.ccci.gto.servicemix.ekko.jaxb.model.JaxbError;
 import org.ccci.gto.servicemix.ekko.jaxb.model.JaxbErrors;
-import org.ccci.gto.servicemix.ekko.jaxb.model.JaxbPending;
 import org.ccci.gto.servicemix.ekko.jaxb.model.JaxbSettings;
+import org.ccci.gto.servicemix.ekko.jaxb.model.JaxbUsers;
 import org.ccci.gto.servicemix.ekko.model.Course;
 import org.ccci.gto.servicemix.ekko.model.Course.CourseQuery;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -364,9 +362,9 @@ public class CourseApi extends AbstractApi {
         }
 
         // return success with the current list of admins
-        final JaxbAdmins admins = new JaxbAdmins();
-        admins.setUsers(course.getAdmins());
-        return Response.ok(admins).build();
+        final JaxbUsers users = new JaxbUsers();
+        users.setUsers(course.getAdmins());
+        return Response.ok(users).build();
     }
 
     @POST
@@ -400,9 +398,9 @@ public class CourseApi extends AbstractApi {
         }
 
         // return success with the current list of admins
-        final JaxbAdmins admins = new JaxbAdmins();
-        admins.setUsers(course.getAdmins());
-        return Response.ok(admins).build();
+        final JaxbUsers users = new JaxbUsers();
+        users.setUsers(course.getAdmins());
+        return Response.ok(users).build();
     }
 
     @GET
@@ -422,9 +420,9 @@ public class CourseApi extends AbstractApi {
         }
 
         // return success with the current list of enrolled
-        final JaxbEnrolled enrolled = new JaxbEnrolled();
-        enrolled.setUsers(course.getEnrolled());
-        return Response.ok(enrolled).build();
+        final JaxbUsers users = new JaxbUsers();
+        users.setUsers(course.getEnrolled());
+        return Response.ok(users).build();
     }
 
     @POST
@@ -457,9 +455,9 @@ public class CourseApi extends AbstractApi {
         }
 
         // return success with the current list of enrolled users
-        final JaxbEnrolled enrolled = new JaxbEnrolled();
-        enrolled.setUsers(course.getEnrolled());
-        return Response.ok(enrolled).build();
+        final JaxbUsers users = new JaxbUsers();
+        users.setUsers(course.getEnrolled());
+        return Response.ok(users).build();
     }
 
     @GET
@@ -479,9 +477,9 @@ public class CourseApi extends AbstractApi {
         }
 
         // return success with the current list of pending enrollments
-        final JaxbPending pending = new JaxbPending();
-        pending.setUsers(course.getPending());
-        return Response.ok(pending).build();
+        final JaxbUsers users = new JaxbUsers();
+        users.setUsers(course.getPending());
+        return Response.ok(users).build();
     }
 
     @POST
@@ -514,9 +512,9 @@ public class CourseApi extends AbstractApi {
         }
 
         // return success with the current list of pending enrollments
-        final JaxbPending pending = new JaxbPending();
-        pending.setUsers(course.getPending());
-        return Response.ok(pending).build();
+        final JaxbUsers users = new JaxbUsers();
+        users.setUsers(course.getPending());
+        return Response.ok(users).build();
     }
 
     @GET
