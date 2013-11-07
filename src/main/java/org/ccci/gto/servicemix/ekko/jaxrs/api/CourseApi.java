@@ -191,6 +191,7 @@ public class CourseApi extends AbstractApi {
 
     @POST
     @Path("unenroll")
+    @Produces(APPLICATION_XML)
     public Response unenroll(@Context final UriInfo uri) {
         // validate the session
         final Session session = this.getSession(uri);
@@ -347,6 +348,7 @@ public class CourseApi extends AbstractApi {
 
     @GET
     @Path("admins")
+    @Produces(APPLICATION_XML)
     public Response listAdmins(@Context final UriInfo uri) {
         // validate the session
         final Session session = this.getSession(uri);
@@ -369,6 +371,7 @@ public class CourseApi extends AbstractApi {
 
     @POST
     @Path("admins")
+    @Produces(APPLICATION_XML)
     public Response updateAdmins(@Context final UriInfo uri, final MultivaluedMap<String, String> form) {
         // validate the session
         final Session session = this.getSession(uri);
@@ -405,6 +408,7 @@ public class CourseApi extends AbstractApi {
 
     @GET
     @Path("enrolled")
+    @Produces(APPLICATION_XML)
     public Response listEnrolled(@Context final UriInfo uri) {
         // validate the session
         final Session session = this.getSession(uri);
@@ -427,6 +431,7 @@ public class CourseApi extends AbstractApi {
 
     @POST
     @Path("enrolled")
+    @Produces(APPLICATION_XML)
     public Response updateEnrolled(@Context final UriInfo uri, final MultivaluedMap<String, String> form) {
         // validate the session
         final Session session = this.getSession(uri);
@@ -462,6 +467,7 @@ public class CourseApi extends AbstractApi {
 
     @GET
     @Path("pending")
+    @Produces(APPLICATION_XML)
     public Response listPending(@Context final UriInfo uri) {
         // validate the session
         final Session session = this.getSession(uri);
@@ -484,6 +490,7 @@ public class CourseApi extends AbstractApi {
 
     @POST
     @Path("pending")
+    @Produces(APPLICATION_XML)
     public Response updatePending(@Context final UriInfo uri, final MultivaluedMap<String, String> form) {
         // validate the session
         final Session session = this.getSession(uri);
