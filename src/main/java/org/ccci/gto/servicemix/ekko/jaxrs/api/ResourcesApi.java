@@ -1,5 +1,6 @@
 package org.ccci.gto.servicemix.ekko.jaxrs.api;
 
+import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import static org.ccci.gto.servicemix.common.jaxrs.api.Constants.PATH_SESSION;
 import static org.ccci.gto.servicemix.ekko.jaxrs.api.Constants.PARAM_RESOURCE_SHA1;
 import static org.ccci.gto.servicemix.ekko.jaxrs.api.Constants.PATH_COURSE;
@@ -14,6 +15,7 @@ import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
@@ -95,6 +97,7 @@ public class ResourcesApi extends AbstractApi {
     }
 
     @GET
+    @Produces(APPLICATION_XML)
     public Response getResources(@Context final UriInfo uri) {
         // validate the session
         final Session session = this.getSession(uri);
