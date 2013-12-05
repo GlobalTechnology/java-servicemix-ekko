@@ -88,7 +88,7 @@ public class CourseApi extends AbstractApi {
         // validate the session
         final Session session = this.getSession(uri);
         if (session == null || session.isExpired()) {
-            return this.invalidSession(uri).build();
+            return this.unauthorized(uri).build();
         }
 
         // retrieve course
@@ -110,7 +110,7 @@ public class CourseApi extends AbstractApi {
         // validate the session
         final Session session = this.getSession(uri);
         if (session == null || session.isExpired() || session.isGuest()) {
-            return this.invalidSession(uri).build();
+            return this.unauthorized(uri).build();
         }
 
         final Course course = this.courseManager.getCourse(this.getCourseQuery(uri).admin(session.getGuid()));
@@ -128,7 +128,7 @@ public class CourseApi extends AbstractApi {
         // validate the session
         final Session session = this.getSession(uri);
         if (session == null || session.isExpired() || session.isGuest()) {
-            return this.invalidSession(uri).build();
+            return this.unauthorized(uri).build();
         }
 
         try {
@@ -169,7 +169,7 @@ public class CourseApi extends AbstractApi {
         // validate the session
         final Session session = this.getSession(uri);
         if (session == null || session.isExpired() || session.isGuest()) {
-            return this.invalidSession(uri).build();
+            return this.unauthorized(uri).build();
         }
 
         // generate the CourseQuery
@@ -196,7 +196,7 @@ public class CourseApi extends AbstractApi {
         // validate the session
         final Session session = this.getSession(uri);
         if (session == null || session.isExpired() || session.isGuest()) {
-            return this.invalidSession(uri).build();
+            return this.unauthorized(uri).build();
         }
 
         // generate the CourseQuery
@@ -227,7 +227,7 @@ public class CourseApi extends AbstractApi {
         // validate the session
         final Session session = this.getSession(uri);
         if (session == null || session.isExpired() || session.isGuest()) {
-            return this.invalidSession(uri).build();
+            return this.unauthorized(uri).build();
         }
 
         // generate the CourseQuery
@@ -261,7 +261,7 @@ public class CourseApi extends AbstractApi {
         // validate the session
         final Session session = this.getSession(uri);
         if (session == null || session.isExpired()) {
-            return this.invalidSession(uri).build();
+            return this.unauthorized(uri).build();
         }
 
         // retrieve course
@@ -293,7 +293,7 @@ public class CourseApi extends AbstractApi {
         // validate the session
         final Session session = this.getSession(uri);
         if (session == null || session.isExpired() || session.isGuest()) {
-            return this.invalidSession(uri).build();
+            return this.unauthorized(uri).build();
         }
 
         // parse manifest
@@ -319,7 +319,7 @@ public class CourseApi extends AbstractApi {
         // validate the session
         final Session session = this.getSession(uri);
         if (session == null || session.isExpired() || session.isGuest()) {
-            return this.invalidSession(uri).build();
+            return this.unauthorized(uri).build();
         }
 
         // publish the specified course
@@ -353,7 +353,7 @@ public class CourseApi extends AbstractApi {
         // validate the session
         final Session session = this.getSession(uri);
         if (session == null || session.isExpired() || session.isGuest()) {
-            return this.invalidSession(uri).build();
+            return this.unauthorized(uri).build();
         }
 
         // retrieve the course
@@ -376,7 +376,7 @@ public class CourseApi extends AbstractApi {
         // validate the session
         final Session session = this.getSession(uri);
         if (session == null || session.isExpired() || session.isGuest()) {
-            return this.invalidSession(uri).build();
+            return this.unauthorized(uri).build();
         }
 
         // generate toAdd and toRemove Sets
@@ -413,7 +413,7 @@ public class CourseApi extends AbstractApi {
         // validate the session
         final Session session = this.getSession(uri);
         if (session == null || session.isExpired() || session.isGuest()) {
-            return this.invalidSession(uri).build();
+            return this.unauthorized(uri).build();
         }
 
         // retrieve the course
@@ -436,7 +436,7 @@ public class CourseApi extends AbstractApi {
         // validate the session
         final Session session = this.getSession(uri);
         if (session == null || session.isExpired() || session.isGuest()) {
-            return this.invalidSession(uri).build();
+            return this.unauthorized(uri).build();
         }
 
         // generate toAdd and toRemove Sets
@@ -472,7 +472,7 @@ public class CourseApi extends AbstractApi {
         // validate the session
         final Session session = this.getSession(uri);
         if (session == null || session.isExpired() || session.isGuest()) {
-            return this.invalidSession(uri).build();
+            return this.unauthorized(uri).build();
         }
 
         // retrieve the course
@@ -495,7 +495,7 @@ public class CourseApi extends AbstractApi {
         // validate the session
         final Session session = this.getSession(uri);
         if (session == null || session.isExpired() || session.isGuest()) {
-            return this.invalidSession(uri).build();
+            return this.unauthorized(uri).build();
         }
 
         // generate toAdd and toRemove Sets
@@ -530,7 +530,7 @@ public class CourseApi extends AbstractApi {
         // validate the session
         final Session session = this.getSession(uri);
         if (session == null || session.isExpired()) {
-            return this.invalidSession(uri).build();
+            return this.unauthorized(uri).build();
         }
 
         // find the course

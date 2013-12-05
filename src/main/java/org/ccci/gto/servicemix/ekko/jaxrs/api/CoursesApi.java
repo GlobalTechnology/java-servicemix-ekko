@@ -37,11 +37,12 @@ import org.w3c.dom.Document;
 public class CoursesApi extends AbstractApi {
     @POST
     @Consumes(APPLICATION_XML)
+    @Produces(APPLICATION_XML)
     public Response createCourse(@Context final UriInfo uri, final InputStream in) {
         // validate the session
         final Session session = this.getSession(uri);
         if (session == null || session.isExpired() || session.isGuest()) {
-            return this.invalidSession(uri).build();
+            return this.unauthorized(uri).build();
         }
 
         // parse manifest
@@ -78,7 +79,7 @@ public class CoursesApi extends AbstractApi {
         // validate the session
         final Session session = this.getSession(uri);
         if (session == null || session.isExpired()) {
-            return this.invalidSession(uri).build();
+            return this.unauthorized(uri).build();
         }
 
         // sanitize start and limit

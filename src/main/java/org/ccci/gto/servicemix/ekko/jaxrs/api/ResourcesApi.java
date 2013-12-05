@@ -58,7 +58,7 @@ public class ResourcesApi extends AbstractApi {
         // validate the session
         final Session session = this.getSession(uri);
         if (session == null || session.isExpired() || session.isGuest()) {
-            return this.invalidSession(uri).build();
+            return this.unauthorized(uri).build();
         }
 
         // validate the specified course
@@ -101,7 +101,7 @@ public class ResourcesApi extends AbstractApi {
         // validate the session
         final Session session = this.getSession(uri);
         if (session == null || session.isExpired() || session.isGuest()) {
-            return this.invalidSession(uri).build();
+            return this.unauthorized(uri).build();
         }
 
         // load the course
@@ -129,7 +129,7 @@ public class ResourcesApi extends AbstractApi {
         // validate the session
         final Session session = this.getSession(uri);
         if (session == null || session.isExpired()) {
-            return this.invalidSession(uri).build();
+            return this.unauthorized(uri).build();
         }
 
         // retrieve the requested resource, checking authorization in the
@@ -190,7 +190,7 @@ public class ResourcesApi extends AbstractApi {
         // validate the session
         final Session session = this.getSession(uri);
         if (session == null || session.isExpired() || session.isGuest()) {
-            return this.invalidSession(uri).build();
+            return this.unauthorized(uri).build();
         }
 
         // validate the specified course

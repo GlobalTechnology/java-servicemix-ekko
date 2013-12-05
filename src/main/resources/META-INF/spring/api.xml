@@ -4,6 +4,7 @@
   xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
                       http://cxf.apache.org/jaxrs http://cxf.apache.org/schemas/jaxrs.xsd">
 
+  <!-- Current Endpoints -->
   <jaxrs:server address="${url.servicemix:}/ekko">
     <jaxrs:providers>
       <ref bean="jaxbProvider" />
@@ -21,24 +22,45 @@
     </jaxrs:serviceBeans>
   </jaxrs:server>
 
-  <bean id="api.base" abstract="true" class="org.ccci.gto.servicemix.common.jaxrs.api.CasSessionAwareApi">
+  <!-- Versioned Endpoints -->
+  <jaxrs:server address="${url.servicemix:}/ekko/v1">
+    <jaxrs:providers>
+      <ref bean="jaxbProvider" />
+      <ref bean="jsonProvider" />
+    </jaxrs:providers>
+    <jaxrs:extensionMappings>
+      <entry key="json" value="application/json" />
+      <entry key="xml" value="application/xml" />
+    </jaxrs:extensionMappings>
+    <jaxrs:serviceBeans>
+      <ref local="api.auth" />
+      <ref local="api.courses" />
+      <ref local="api.course" />
+      <ref local="api.resources" />
+    </jaxrs:serviceBeans>
+  </jaxrs:server>
+
+  <bean id="api.base" abstract="true" class="org.ccci.gto.servicemix.common.jaxrs.api.AbstractApi">
     <property name="authRealm" value="ekko" />
     <property name="baseUri" value="${ekko.base.uri}" />
-    <property name="casBaseUri" value="${cas.url:https://thekey.me/cas/}" />
-    <property name="sessionGrouping" value="${session.grouping:ekko}" />
+    <property name="apiGroup" value="${api.group:ekko}" />
   </bean>
 
-  <bean id="api.auth" parent="api.base" class="org.ccci.gto.servicemix.common.jaxrs.api.AuthenticationApi">
+  <bean id="api.cas.base" abstract="true" parent="api.base" class="org.ccci.gto.servicemix.common.jaxrs.api.CasSessionAwareApi">
+    <property name="casBaseUri" value="${cas.url:https://thekey.me/cas/}" />
+  </bean>
+
+  <bean id="api.auth" parent="api.cas.base" class="org.ccci.gto.servicemix.common.jaxrs.api.AuthenticationApi">
     <property name="guestAccessEnabled" value="true" />
   </bean>
 
-  <bean id="api.courses" parent="api.base" class="org.ccci.gto.servicemix.ekko.jaxrs.api.CoursesApi" />
+  <bean id="api.courses" parent="api.cas.base" class="org.ccci.gto.servicemix.ekko.jaxrs.api.CoursesApi" />
 
-  <bean id="api.course" parent="api.base" class="org.ccci.gto.servicemix.ekko.jaxrs.api.CourseApi">
+  <bean id="api.course" parent="api.cas.base" class="org.ccci.gto.servicemix.ekko.jaxrs.api.CourseApi">
     <property name="support">
       <bean class="org.ccci.gto.servicemix.ekko.jaxrs.api.CourseApiSupport" />
     </property>
   </bean>
 
-  <bean id="api.resources" parent="api.base" class="org.ccci.gto.servicemix.ekko.jaxrs.api.ResourcesApi" />
+  <bean id="api.resources" parent="api.cas.base" class="org.ccci.gto.servicemix.ekko.jaxrs.api.ResourcesApi" />
 </beans>
