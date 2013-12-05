@@ -72,6 +72,10 @@
       <artifactId>spring-orm</artifactId>
       <scope>runtime</scope>
     </dependency>
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-context-support</artifactId>
+    </dependency>
 
     <!-- MogileFS dependency -->
     <dependency>
@@ -83,6 +87,12 @@
     <dependency>
       <groupId>com.amazonaws</groupId>
       <artifactId>aws-java-sdk</artifactId>
+    </dependency>
+
+    <!-- Quartz dependency -->
+    <dependency>
+      <groupId>org.quartz-scheduler</groupId>
+      <artifactId>quartz</artifactId>
     </dependency>
 
     <!-- Testing dependencies -->
@@ -174,6 +184,10 @@
                 org.aopalliance.aop,
                 org.springframework.aop,
                 org.springframework.aop.framework,
+
+                <!-- Quartz -->
+                org.quartz.simpl,
+                org.quartz.spi,
               </Import-Package>
             </instructions>
           </configuration>
