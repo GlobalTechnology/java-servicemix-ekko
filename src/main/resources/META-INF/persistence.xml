@@ -5,6 +5,10 @@
     <class>org.ccci.gto.servicemix.ekko.model.Course</class>
     <class>org.ccci.gto.servicemix.ekko.model.Resource</class>
     <class>org.ccci.gto.servicemix.ekko.model.Resource$PrimaryKey</class>
+    <class>org.ccci.gto.servicemix.ekko.cloudvideo.model.Video</class>
+    <class>org.ccci.gto.servicemix.ekko.cloudvideo.model.AwsFile</class>
+    <class>org.ccci.gto.servicemix.ekko.cloudvideo.model.AwsFileToDelete</class>
+    <class>org.ccci.gto.servicemix.ekko.cloudvideo.model.AwsFileToUpload</class>
     <exclude-unlisted-classes>true</exclude-unlisted-classes>
   </persistence-unit>
 </persistence>

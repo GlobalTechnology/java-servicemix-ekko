@@ -4,6 +4,9 @@
     <feature>servicemix-gto-common</feature>
     <feature>servicemix-gto-db</feature>
 
+    <!-- AWS support -->
+    <feature>aws</feature>
+
     <!-- MogileFS support -->
     <bundle>mvn:commons-io/commons-io/${commons-io.version}</bundle>
     <bundle>wrap:mvn:fm.last.commons/lastcommons-lang/3.0.0</bundle>

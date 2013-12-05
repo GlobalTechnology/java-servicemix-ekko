@@ -5,7 +5,7 @@
   <parent>
     <groupId>org.ccci.gto.servicemix</groupId>
     <artifactId>servicemix-parent</artifactId>
-    <version>12-SNAPSHOT</version>
+    <version>13-SNAPSHOT</version>
   </parent>
 
   <artifactId>servicemix-gto-ekko</artifactId>
@@ -77,6 +77,12 @@
     <dependency>
       <groupId>fm.last</groupId>
       <artifactId>moji</artifactId>
+    </dependency>
+
+    <!-- Amazon AWS dependency -->
+    <dependency>
+      <groupId>com.amazonaws</groupId>
+      <artifactId>aws-java-sdk</artifactId>
     </dependency>
 
     <!-- Testing dependencies -->
