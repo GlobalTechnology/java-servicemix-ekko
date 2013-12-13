@@ -198,8 +198,6 @@
       <plugin>
         <groupId>org.apache.openjpa</groupId>
         <artifactId>openjpa-maven-plugin</artifactId>
-        <configuration>
-        </configuration>
       </plugin>
     </plugins>
   </build>
