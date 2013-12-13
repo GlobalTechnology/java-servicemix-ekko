@@ -53,6 +53,9 @@ public class Video {
     @Enumerated(EnumType.STRING)
     private State state = State.NEW;
 
+    @Column(nullable = false)
+    private String title = "";
+
     @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "Video_jobs", joinColumns = @JoinColumn(name = "videoId", referencedColumnName = "id"), uniqueConstraints = @UniqueConstraint(columnNames = {
             "videoId", "jobId" }))
@@ -96,6 +99,14 @@ public class Video {
 
     public boolean isInState(final State state) {
         return this.state == state;
+    }
+
+    public final String getTitle() {
+        return this.title;
+    }
+
+    public final void setTitle(final String title) {
+        this.title = title != null ? title : "";
     }
 
     public void addJob(final String jobId) {
