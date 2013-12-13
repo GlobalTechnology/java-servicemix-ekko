@@ -9,6 +9,9 @@
     <class>org.ccci.gto.servicemix.ekko.cloudvideo.model.AwsFile</class>
     <class>org.ccci.gto.servicemix.ekko.cloudvideo.model.AwsFileToDelete</class>
     <class>org.ccci.gto.servicemix.ekko.cloudvideo.model.AwsFileToUpload</class>
+    <class>org.ccci.gto.servicemix.ekko.cloudvideo.model.AwsJob</class>
+    <class>org.ccci.gto.servicemix.ekko.cloudvideo.model.AwsOutput</class>
+    <class>org.ccci.gto.servicemix.ekko.cloudvideo.model.AwsOutput$PrimaryKey</class>
     <exclude-unlisted-classes>true</exclude-unlisted-classes>
   </persistence-unit>
 </persistence>
