@@ -9,8 +9,11 @@ import static org.ccci.gto.servicemix.ekko.model.Course.ENROLLMENT_OPEN;
 
 import java.security.SecureRandom;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 
+import org.ccci.gto.servicemix.ekko.cloudvideo.model.Video;
+import org.ccci.gto.servicemix.ekko.cloudvideo.model.Video.State;
 import org.ccci.gto.servicemix.ekko.model.Course;
 
 public class TestUtils {
@@ -36,7 +39,7 @@ public class TestUtils {
                     for (final String guid : new String[] { null, GUID_GUEST, GUID1, GUID2 }) {
                         // generate course
                         final Course course = new Course();
-                        course.setId(id++);
+                        course.setId(++id);
                         if (published) {
                             course.setManifest("manifest");
                         }
@@ -73,5 +76,23 @@ public class TestUtils {
         }
 
         return courses;
+    }
+
+    public static List<Video> generateVideos() {
+        final List<Video> videos = new ArrayList<>();
+        long id = RAND.nextLong();
+
+        for (final String title : new String[] { null, "title", }) {
+            for (final State state : EnumSet
+                    .of(State.NEW, State.NEW_MASTER, State.ENCODING, State.CHECK, State.ENCODED)) {
+                final Video video = new Video();
+                video.setId(++id);
+                video.setTitle(title != null ? title + "-" + Long.valueOf(id).toString() : title);
+                video.setState(state);
+                videos.add(video);
+            }
+        }
+
+        return videos;
     }
 }
