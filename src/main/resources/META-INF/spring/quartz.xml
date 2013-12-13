@@ -2,12 +2,12 @@
 <beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd">
 
-  <bean id="aws.job.controller" class="org.ccci.gto.servicemix.ekko.cloudvideo.AwsJobController" />
-
   <bean class="org.springframework.scheduling.quartz.SchedulerFactoryBean">
     <property name="triggers">
       <list>
         <ref local="trigger.processUploads" />
+        <ref local="trigger.processStartEncodes" />
+        <ref local="trigger.processCheckEncoding" />
         <ref local="trigger.processDeletions" />
       </list>
     </property>
@@ -15,7 +15,7 @@
 
   <!-- triggers -->
   <bean id="job.base" abstract="true" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
-    <property name="targetObject" ref="aws.job.controller" />
+    <property name="targetObject" ref="aws.controller" />
     <property name="concurrent" value="true" />
   </bean>
 
@@ -30,6 +30,24 @@
       <bean parent="job.base">
         <property name="name" value="processUploads" />
         <property name="targetMethod" value="processUploads" />
+      </bean>
+    </property>
+  </bean>
+
+  <bean id="trigger.processStartEncodes" parent="trigger.base">
+    <property name="jobDetail">
+      <bean parent="job.base">
+        <property name="name" value="processStartEncodes" />
+        <property name="targetMethod" value="processStartEncodes" />
+      </bean>
+    </property>
+  </bean>
+
+  <bean id="trigger.processCheckEncoding" parent="trigger.base">
+    <property name="jobDetail">
+      <bean parent="job.base">
+        <property name="name" value="processCheckEncoding" />
+        <property name="targetMethod" value="processCheckEncoding" />
       </bean>
     </property>
   </bean>

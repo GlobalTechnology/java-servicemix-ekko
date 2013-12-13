@@ -8,10 +8,9 @@ import javax.persistence.LockModeType;
 import javax.persistence.PersistenceContext;
 
 import org.ccci.gto.servicemix.ekko.cloudvideo.model.Video;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-public abstract class AbstractVideoManager implements VideoManager {
+public class VideoManagerImpl implements VideoManager {
     private static final SecureRandom RAND = new SecureRandom();
 
     @PersistenceContext
@@ -50,13 +49,13 @@ public abstract class AbstractVideoManager implements VideoManager {
     }
 
     @Override
-    @Transactional(propagation = Propagation.MANDATORY)
+    @Transactional
     public Video refresh(final Video video) {
         return refresh(video, LockModeType.NONE);
     }
 
     @Override
-    @Transactional(propagation = Propagation.MANDATORY)
+    @Transactional
     public Video refresh(final Video video, final LockModeType lock) {
         return video != null ? this.em.find(Video.class, video.getId(), lock) : null;
     }

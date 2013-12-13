@@ -36,9 +36,7 @@
     <property name="courseManager" ref="courseManager" />
   </bean>
 
-  <bean id="videoManager" class="org.ccci.gto.servicemix.ekko.cloudvideo.AwsVideoManagerImpl">
-    <property name="credentials" ref="aws.credentials" />
-  </bean>
+  <bean id="videoManager" class="org.ccci.gto.servicemix.ekko.cloudvideo.VideoManagerImpl" />
 
   <!-- JPA/DB configuration -->
   <bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource" destroy-method="close">

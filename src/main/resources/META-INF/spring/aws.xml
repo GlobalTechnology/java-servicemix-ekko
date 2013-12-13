@@ -5,4 +5,20 @@
     <constructor-arg index="0" value="${aws.accessKey}" />
     <constructor-arg index="1" value="${aws.secretKey}" />
   </bean>
+
+  <bean id="aws.s3" class="com.amazonaws.services.s3.AmazonS3Client">
+    <constructor-arg index="0" ref="aws.credentials" />
+  </bean>
+
+  <bean id="aws.et" class="com.amazonaws.services.elastictranscoder.AmazonElasticTranscoderClient">
+    <constructor-arg index="0" ref="aws.credentials" />
+  </bean>
+
+  <bean id="aws.controller" class="org.ccci.gto.servicemix.ekko.cloudvideo.AwsController">
+    <property name="s3" ref="aws.s3" />
+    <property name="transcoder" ref="aws.et" />
+    <property name="awsS3KeyPrefix" value="${aws.s3.key.prefix:}" />
+    <property name="awsS3BucketMasters" value="${aws.s3.bucket.masters}" />
+    <property name="awsS3BucketEncoded" value="${aws.s3.bucket.encoded}" />
+  </bean>
 </beans>
