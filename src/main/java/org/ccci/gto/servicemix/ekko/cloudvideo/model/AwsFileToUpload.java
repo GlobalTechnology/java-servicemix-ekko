@@ -42,6 +42,7 @@ public class AwsFileToUpload {
     @Embedded
     private AwsFile file;
 
+    @Column(nullable = false)
     private boolean deleteSource = false;
 
     public AwsFileToUpload() {

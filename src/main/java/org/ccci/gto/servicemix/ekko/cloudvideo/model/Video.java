@@ -23,16 +23,12 @@ public class Video {
 
     @Embedded
     @AttributeOverrides({ @AttributeOverride(name = "bucket", column = @Column(name = "master_awsBucket")),
-            @AttributeOverride(name = "key", column = @Column(name = "master_awsKey")),
-            @AttributeOverride(name = "version", column = @Column(name = "master_awsVersion")),
-            @AttributeOverride(name = "stale", column = @Column(name = "master_stale")) })
+            @AttributeOverride(name = "key", column = @Column(name = "master_awsKey")), })
     private AwsFile master = null;
 
     @Embedded
     @AttributeOverrides({ @AttributeOverride(name = "bucket", column = @Column(name = "thumbnail_awsBucket")),
-            @AttributeOverride(name = "key", column = @Column(name = "thumbnail_awsKey")),
-            @AttributeOverride(name = "version", column = @Column(name = "thumbnail_awsVersion")),
-            @AttributeOverride(name = "stale", column = @Column(name = "thumbnail_stale")) })
+            @AttributeOverride(name = "key", column = @Column(name = "thumbnail_awsKey")), })
     private AwsFile thumbnail = null;
 
     @Column(nullable = false)

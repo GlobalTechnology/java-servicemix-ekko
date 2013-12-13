@@ -3,30 +3,21 @@ package org.ccci.gto.servicemix.ekko.cloudvideo.model;
 import javax.persistence.Column;
 import javax.persistence.Embeddable;
 
+import org.apache.commons.lang.StringUtils;
+
 @Embeddable
 public class AwsFile {
     @Column(name = "awsBucket", length = 255)
     private String bucket;
     @Column(name = "awsKey")
     private String key;
-    @Column(name = "awsVersion")
-    private String version;
-    private boolean stale = false;
 
     public AwsFile() {
     }
 
-    public AwsFile(final AwsFile file) {
-        this.bucket = file.bucket;
-        this.key = file.key;
-        this.version = file.version;
-        this.stale = file.stale;
-    }
-
-    public AwsFile(final String bucket, final String key, final String version) {
+    public AwsFile(final String bucket, final String key) {
         this.bucket = bucket;
         this.key = key;
-        this.version = version;
     }
 
     public final String getBucket() {
@@ -37,19 +28,28 @@ public class AwsFile {
         return this.key;
     }
 
-    public final String getVersion() {
-        return this.version;
-    }
-
     public final boolean exists() {
         return this.bucket != null && this.key != null;
     }
 
-    public final boolean isStale() {
-        return this.stale;
+    @Override
+    public int hashCode() {
+        int code = super.hashCode();
+        code = (code * 31) + (bucket != null ? bucket.hashCode() : 0);
+        code = (code * 31) + (key != null ? key.hashCode() : 0);
+        return code;
     }
 
-    public final void setStale(final boolean stale) {
-        this.stale = stale;
+    @Override
+    public boolean equals(final Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj instanceof AwsFile) {
+            final AwsFile file2 = (AwsFile) obj;
+            return StringUtils.equals(this.bucket, file2.bucket) && StringUtils.equals(this.key, file2.key);
+        }
+
+        return false;
     }
 }
