@@ -23,6 +23,8 @@ import javax.persistence.OneToMany;
 import javax.persistence.UniqueConstraint;
 import javax.persistence.Version;
 
+import org.apache.openjpa.persistence.jdbc.Index;
+import org.ccci.gto.servicemix.common.model.Client;
 import org.ccci.gto.servicemix.ekko.cloudvideo.model.AwsOutput.Type;
 
 @Entity
@@ -43,32 +45,36 @@ public class Video {
     @Column(nullable = false)
     private int version = 0;
 
+    @Index
+    @Column(name = "client_id", nullable = false)
+    private long clientId = -1;
+
     @Column(nullable = false)
     private boolean locked = false;
 
     @Column(nullable = false)
     private long lockTimestamp = 0L;
 
-    @Column(nullable = false)
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private State state = State.NEW;
 
     @Column(nullable = false)
     private String title = "";
 
-    @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "Video_jobs", joinColumns = @JoinColumn(name = "videoId", referencedColumnName = "id"), uniqueConstraints = @UniqueConstraint(columnNames = {
             "videoId", "jobId" }))
+    @ElementCollection(fetch = FetchType.LAZY)
     private List<AwsJob> jobs = new ArrayList<>();
 
-    @Embedded
     @AttributeOverrides({ @AttributeOverride(name = "bucket", column = @Column(name = "master_awsBucket")),
             @AttributeOverride(name = "key", column = @Column(name = "master_awsKey")), })
+    @Embedded
     private AwsFile master = null;
 
-    @Embedded
     @AttributeOverrides({ @AttributeOverride(name = "bucket", column = @Column(name = "thumbnail_awsBucket")),
             @AttributeOverride(name = "key", column = @Column(name = "thumbnail_awsKey")), })
+    @Embedded
     private AwsFile thumbnail = null;
 
     @Column(nullable = false)
@@ -76,6 +82,13 @@ public class Video {
 
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "video", cascade = CascadeType.REMOVE)
     private List<AwsOutput> outputs;
+
+    public Video() {
+    }
+
+    public Video(final Client client) {
+        this.clientId = client.getId();
+    }
 
     public final long getId() {
         return this.id;
@@ -87,6 +100,10 @@ public class Video {
 
     public final long getVersion() {
         return version;
+    }
+
+    public final long getClientId() {
+        return this.clientId;
     }
 
     public void setState(final State state) {
