@@ -9,9 +9,12 @@ import static org.ccci.gto.servicemix.ekko.model.Course.ENROLLMENT_OPEN;
 
 import java.security.SecureRandom;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 
+import org.ccci.gto.servicemix.common.model.Client;
 import org.ccci.gto.servicemix.ekko.cloudvideo.model.Video;
 import org.ccci.gto.servicemix.ekko.cloudvideo.model.Video.State;
 import org.ccci.gto.servicemix.ekko.model.Course;
@@ -79,17 +82,23 @@ public class TestUtils {
     }
 
     public static List<Video> generateVideos() {
+        return generateVideos(Collections.singleton(new Client(null, RAND.nextLong())));
+    }
+
+    public static List<Video> generateVideos(final Collection<Client> clients) {
         final List<Video> videos = new ArrayList<>();
         long id = RAND.nextLong();
 
-        for (final String title : new String[] { null, "title", }) {
-            for (final State state : EnumSet
-                    .of(State.NEW, State.NEW_MASTER, State.ENCODING, State.CHECK, State.ENCODED)) {
-                final Video video = new Video();
-                video.setId(++id);
-                video.setTitle(title != null ? title + "-" + Long.valueOf(id).toString() : title);
-                video.setState(state);
-                videos.add(video);
+        for (final Client client : clients) {
+            for (final String title : new String[] { null, "title", }) {
+                for (final State state : EnumSet.of(State.NEW, State.NEW_MASTER, State.ENCODING, State.CHECK,
+                        State.ENCODED)) {
+                    final Video video = new Video(client);
+                    video.setId(++id);
+                    video.setTitle(title != null ? title + "-" + Long.valueOf(id).toString() : title);
+                    video.setState(state);
+                    videos.add(video);
+                }
             }
         }
 

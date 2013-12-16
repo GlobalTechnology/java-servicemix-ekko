@@ -2,7 +2,9 @@ package org.ccci.gto.servicemix.ekko.cloudvideo.model;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map.Entry;
 
 import javax.persistence.AttributeOverride;
 import javax.persistence.AttributeOverrides;
@@ -12,6 +14,7 @@ import javax.persistence.Column;
 import javax.persistence.ElementCollection;
 import javax.persistence.Embedded;
 import javax.persistence.Entity;
+import javax.persistence.EntityManager;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
@@ -20,8 +23,13 @@ import javax.persistence.JoinColumn;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
+import javax.persistence.TypedQuery;
 import javax.persistence.UniqueConstraint;
 import javax.persistence.Version;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Predicate;
+import javax.persistence.criteria.Root;
 
 import org.apache.openjpa.persistence.jdbc.Index;
 import org.ccci.gto.servicemix.common.model.Client;
@@ -226,5 +234,98 @@ public class Video {
 
     public void releaseLock() {
         this.locked = false;
+    }
+
+    public static class VideoQuery {
+        // limit values
+        private int start = 0;
+        private int limit = 0;
+
+        // where parameters (they are and-ed together)
+        private Long id = null;
+        private Long clientId = null;
+
+        public VideoQuery id(final Long id) {
+            this.id = id;
+            return this;
+        }
+
+        public VideoQuery client(final Client client) {
+            this.clientId = client != null ? client.getId() : null;
+            return this;
+        }
+
+        public VideoQuery start(final int start) {
+            this.start = start;
+            return this;
+        }
+
+        public VideoQuery limit(final int limit) {
+            this.limit = limit;
+            return this;
+        }
+
+        private TypedQuery<Video> compile(final EntityManager em) {
+            // generate base query
+            final CriteriaBuilder cb = em.getCriteriaBuilder();
+            final CriteriaQuery<Video> cq = cb.createQuery(Video.class);
+            final Root<Video> c = cq.from(Video.class);
+            cq.select(c);
+            cq.distinct(true);
+
+            // capture various parts of query for assembly later
+            final ArrayList<Predicate> where = new ArrayList<Predicate>();
+            final HashMap<String, Object> params = new HashMap<String, Object>();
+
+            // generate where clauses
+            if (this.id != null) {
+                where.add(cb.equal(c.get("id"), cb.parameter(Long.class, "id")));
+                params.put("id", this.id);
+            }
+            if (this.clientId != null) {
+                where.add(cb.equal(c.get("clientId"), cb.parameter(Long.class, "client_id")));
+                params.put("client_id", this.clientId);
+            }
+
+            // generate where clause
+            if (where.size() > 1) {
+                cq.where(where.toArray(new Predicate[where.size()]));
+            } else if (where.size() == 1) {
+                cq.where(where.get(0));
+            }
+
+            // compile query
+            final TypedQuery<Video> query = em.createQuery(cq);
+
+            // bind parameters
+            for (final Entry<String, Object> entry : params.entrySet()) {
+                query.setParameter(entry.getKey(), entry.getValue());
+            }
+
+            // set limits for this query
+            query.setFirstResult(this.start);
+            if (this.limit > 0) {
+                query.setMaxResults(this.limit);
+            }
+
+            // return the query
+            return query;
+        }
+
+        public List<Video> execute(final EntityManager em) {
+            return this.compile(em).getResultList();
+        }
+
+        @Override
+        public VideoQuery clone() {
+            final VideoQuery newObj = new VideoQuery();
+            newObj.start = this.start;
+            newObj.limit = this.limit;
+
+            newObj.id = this.id;
+            newObj.clientId = this.clientId;
+
+            return newObj;
+        }
     }
 }
