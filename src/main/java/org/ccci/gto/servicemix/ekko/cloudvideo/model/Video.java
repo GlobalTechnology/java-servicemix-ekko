@@ -22,6 +22,8 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
+import javax.persistence.NoResultException;
+import javax.persistence.NonUniqueResultException;
 import javax.persistence.OneToMany;
 import javax.persistence.TypedQuery;
 import javax.persistence.UniqueConstraint;
@@ -32,6 +34,7 @@ import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 
 import org.apache.openjpa.persistence.jdbc.Index;
+import org.ccci.gto.persistence.FoundRowsList;
 import org.ccci.gto.servicemix.common.model.Client;
 import org.ccci.gto.servicemix.ekko.cloudvideo.model.AwsOutput.Type;
 
@@ -56,6 +59,9 @@ public class Video {
     @Index
     @Column(name = "client_id", nullable = false)
     private long clientId = -1;
+
+    @Column(name = "grouping")
+    private String grouping;
 
     @Column(nullable = false)
     private boolean locked = false;
@@ -132,6 +138,14 @@ public class Video {
 
     public final void setTitle(final String title) {
         this.title = title != null ? title : "";
+    }
+
+    public final String getGrouping() {
+        return this.grouping;
+    }
+
+    public final void setGrouping(final String grouping) {
+        this.grouping = grouping;
     }
 
     public void addJob(final String jobId) {
@@ -244,16 +258,10 @@ public class Video {
         // where parameters (they are and-ed together)
         private Long id = null;
         private Long clientId = null;
+        private String grouping = null;
 
-        public VideoQuery id(final Long id) {
-            this.id = id;
-            return this;
-        }
-
-        public VideoQuery client(final Client client) {
-            this.clientId = client != null ? client.getId() : null;
-            return this;
-        }
+        // flags
+        private boolean calcFoundRows = false;
 
         public VideoQuery start(final int start) {
             this.start = start;
@@ -265,42 +273,77 @@ public class Video {
             return this;
         }
 
-        private TypedQuery<Video> compile(final EntityManager em) {
-            // generate base query
-            final CriteriaBuilder cb = em.getCriteriaBuilder();
-            final CriteriaQuery<Video> cq = cb.createQuery(Video.class);
-            final Root<Video> c = cq.from(Video.class);
-            cq.select(c);
-            cq.distinct(true);
+        public VideoQuery id(final Long id) {
+            this.id = id;
+            return this;
+        }
 
-            // capture various parts of query for assembly later
+        public VideoQuery client(final Client client) {
+            this.clientId = client != null ? client.getId() : null;
+            return this;
+        }
+
+        public VideoQuery grouping(final String grouping) {
+            this.grouping = grouping;
+            return this;
+        }
+
+        public VideoQuery calcFoundRows(final boolean enabled) {
+            this.calcFoundRows = enabled;
+            return this;
+        }
+
+        private HashMap<String, Object> whereClause(final CriteriaBuilder cb, final CriteriaQuery<?> cq,
+                final Root<Video> v) {
             final ArrayList<Predicate> where = new ArrayList<Predicate>();
             final HashMap<String, Object> params = new HashMap<String, Object>();
 
-            // generate where clauses
+            // generate where predicates
             if (this.id != null) {
-                where.add(cb.equal(c.get("id"), cb.parameter(Long.class, "id")));
+                where.add(cb.equal(v.get("id"), cb.parameter(Long.class, "id")));
                 params.put("id", this.id);
             }
             if (this.clientId != null) {
-                where.add(cb.equal(c.get("clientId"), cb.parameter(Long.class, "client_id")));
+                where.add(cb.equal(v.get("clientId"), cb.parameter(Long.class, "client_id")));
                 params.put("client_id", this.clientId);
             }
+            if (this.grouping != null) {
+                where.add(cb.equal(v.get("grouping"), cb.parameter(String.class, "grouping")));
+                params.put("grouping", this.grouping);
+            }
 
-            // generate where clause
+            // attach where clause
             if (where.size() > 1) {
                 cq.where(where.toArray(new Predicate[where.size()]));
             } else if (where.size() == 1) {
                 cq.where(where.get(0));
             }
 
-            // compile query
-            final TypedQuery<Video> query = em.createQuery(cq);
+            // return any params to bind
+            return params;
+        }
 
+        private void bindParams(final TypedQuery<?> query, final HashMap<String, Object> params) {
             // bind parameters
             for (final Entry<String, Object> entry : params.entrySet()) {
                 query.setParameter(entry.getKey(), entry.getValue());
             }
+        }
+
+        private TypedQuery<Video> compile(final EntityManager em) {
+            // generate base query
+            final CriteriaBuilder cb = em.getCriteriaBuilder();
+            final CriteriaQuery<Video> cq = cb.createQuery(Video.class);
+            final Root<Video> v = cq.from(Video.class);
+            cq.select(v);
+            cq.distinct(true);
+
+            // generate where clauses
+            final HashMap<String, Object> params = this.whereClause(cb, cq, v);
+
+            // compile query & bind params
+            final TypedQuery<Video> query = em.createQuery(cq);
+            this.bindParams(query, params);
 
             // set limits for this query
             query.setFirstResult(this.start);
@@ -312,8 +355,34 @@ public class Video {
             return query;
         }
 
+        private TypedQuery<Long> compileFoundRows(final EntityManager em) {
+            // generate base query
+            final CriteriaBuilder cb = em.getCriteriaBuilder();
+            final CriteriaQuery<Long> cq = cb.createQuery(Long.class);
+            final Root<Video> v = cq.from(Video.class);
+            cq.select(cb.countDistinct(v));
+
+            // generate where clauses
+            final HashMap<String, Object> params = this.whereClause(cb, cq, v);
+
+            // compile query & bind params
+            final TypedQuery<Long> query = em.createQuery(cq);
+            this.bindParams(query, params);
+
+            // return the query
+            return query;
+        }
+
         public List<Video> execute(final EntityManager em) {
-            return this.compile(em).getResultList();
+            final List<Video> results = this.compile(em).getResultList();
+            if (this.calcFoundRows) {
+                try {
+                    final long foundRows = this.compileFoundRows(em).getSingleResult();
+                    return new FoundRowsList<Video>(results, foundRows);
+                } catch (final NoResultException | NonUniqueResultException ignored) {
+                }
+            }
+            return results;
         }
 
         @Override
@@ -324,6 +393,9 @@ public class Video {
 
             newObj.id = this.id;
             newObj.clientId = this.clientId;
+            newObj.grouping = this.grouping;
+
+            newObj.calcFoundRows = this.calcFoundRows;
 
             return newObj;
         }

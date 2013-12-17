@@ -17,6 +17,7 @@ import java.util.Set;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 
+import org.ccci.gto.persistence.FoundRowsList;
 import org.ccci.gto.servicemix.common.model.Client;
 import org.ccci.gto.servicemix.ekko.TestAssemblyUtils;
 import org.ccci.gto.servicemix.ekko.cloudvideo.model.Video.VideoQuery;
@@ -137,13 +138,17 @@ public class VideoQueryTest {
         em.flush();
         em.clear();
 
-        // fetch matching courses
-        final List<Video> courses = query.clone().execute(em);
+        // fetch matching videos
+        final List<Video> results = query.calcFoundRows(true).clone().execute(em);
         em.flush();
         em.clear();
 
-        // check to see if the correct courses were returned
-        assertValidVideos(courses, positive, negative);
+        // check that found rows was correctly calculated
+        assertTrue(results instanceof FoundRowsList);
+        assertEquals(positive.size(), ((FoundRowsList<Video>) results).getFoundRows());
+
+        // check to see if the correct videos were returned
+        assertValidVideos(results, positive, negative);
 
         // don't save db changes
         em.getTransaction().rollback();
