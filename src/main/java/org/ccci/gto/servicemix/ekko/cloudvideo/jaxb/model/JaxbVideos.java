@@ -15,6 +15,8 @@ public abstract class JaxbVideos {
     private int start = 0;
     @XmlAttribute
     private int limit = 0;
+    @XmlAttribute
+    private long total = 0;
 
     public void addVideo(final JaxbVideo video) {
         this.videos.add(video);
@@ -37,5 +39,9 @@ public abstract class JaxbVideos {
 
     public void setLimit(final int limit) {
         this.limit = limit;
+    }
+
+    public void setTotal(final long total) {
+        this.total = total;
     }
 }

@@ -34,6 +34,7 @@ public class JaxbVideosTest {
     private <T extends JaxbVideos> T populateJaxbVideos(final T jaxbVideos, final List<Video> videos) {
         jaxbVideos.setStart(0);
         jaxbVideos.setLimit(videos.size());
+        jaxbVideos.setTotal(videos.size() * 2);
         for (final Video video : videos) {
             jaxbVideos.addVideo(new JaxbVideo(video));
         }
@@ -50,6 +51,7 @@ public class JaxbVideosTest {
         // test generated json
         assertEquals(0, json.getInt("start"));
         assertEquals(videos.size(), json.getInt("limit"));
+        assertEquals(videos.size() * 2, json.getInt("total"));
 
         // test for videos in the generated json
         assertEquals(videos.size(), json.getInt("videos.size()"));
@@ -69,6 +71,7 @@ public class JaxbVideosTest {
         // test generated xml
         assertEquals(0, xml.getInt("videos.@start"));
         assertEquals(videos.size(), xml.getInt("videos.@limit"));
+        assertEquals(videos.size() * 2, xml.getInt("videos.@total"));
 
         // test for videos in the generated xml
         assertEquals(videos.size(), xml.getInt("videos.video.size()"));
