@@ -5,7 +5,6 @@ import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import static org.ccci.gto.servicemix.common.jaxrs.api.Constants.PATH_API_KEY;
 import static org.ccci.gto.servicemix.ekko.cloudvideo.jaxrs.api.Constants.PARAM_S3_BUCKET;
 import static org.ccci.gto.servicemix.ekko.cloudvideo.jaxrs.api.Constants.PARAM_S3_KEY;
-import static org.ccci.gto.servicemix.ekko.cloudvideo.jaxrs.api.Constants.PARAM_VIDEO;
 import static org.ccci.gto.servicemix.ekko.cloudvideo.jaxrs.api.Constants.PATH_VIDEO;
 
 import javax.ws.rs.FormParam;
@@ -18,7 +17,6 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
 
-import org.ccci.gto.servicemix.common.jaxrs.api.ClientAwareApi;
 import org.ccci.gto.servicemix.common.model.Client;
 import org.ccci.gto.servicemix.ekko.cloudvideo.AwsController;
 import org.ccci.gto.servicemix.ekko.cloudvideo.VideoManager;
@@ -28,7 +26,7 @@ import org.ccci.gto.servicemix.ekko.cloudvideo.model.Video;
 import org.springframework.beans.factory.annotation.Autowired;
 
 @Path(PATH_API_KEY + "/videos/" + PATH_VIDEO)
-public class VideoApi extends ClientAwareApi {
+public class VideoApi extends AbstractApi {
     @Autowired
     private VideoManager manager;
 
@@ -46,7 +44,7 @@ public class VideoApi extends ClientAwareApi {
         }
 
         // short-circuit if this is an invalid video
-        final Video video = this.getVideo(client, uri);
+        final Video video = this.manager.getVideo(this.getVideoQuery(client, uri));
         if (video == null) {
             return Response.status(Status.NOT_FOUND).build();
         }
@@ -65,19 +63,11 @@ public class VideoApi extends ClientAwareApi {
             return unauthorized(uri).build();
         }
 
-        final Video video = this.getVideo(client, uri);
+        final Video video = this.manager.getVideo(this.getVideoQuery(client, uri));
         if (video == null) {
             return Response.status(Status.NOT_FOUND).build();
         }
 
         return Response.ok(new JaxbVideo(video)).build();
-    }
-
-    private Video getVideo(final Client client, final UriInfo uri) {
-        return this.manager.getVideo(this.getVideoId(uri));
-    }
-
-    private Long getVideoId(final UriInfo uri) {
-        return Long.valueOf(uri.getPathParameters().getFirst(PARAM_VIDEO));
     }
 }
