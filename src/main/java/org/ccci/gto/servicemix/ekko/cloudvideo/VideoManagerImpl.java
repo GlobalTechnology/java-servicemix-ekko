@@ -52,6 +52,13 @@ public class VideoManagerImpl implements VideoManager {
 
     @Override
     @Transactional(readOnly = true)
+    public Video getVideo(final VideoQuery query) {
+        final List<Video> videos = this.getVideos(query.clone().limit(1));
+        return videos.size() > 0 ? videos.get(0) : null;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public List<Video> getVideos(final VideoQuery query) {
         return query.execute(this.em);
     }

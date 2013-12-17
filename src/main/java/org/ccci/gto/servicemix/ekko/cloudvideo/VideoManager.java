@@ -12,6 +12,8 @@ public interface VideoManager {
 
     Video getVideo(long id);
 
+    Video getVideo(VideoQuery query);
+
     List<Video> getVideos(VideoQuery query);
 
     Video refresh(Video video);
