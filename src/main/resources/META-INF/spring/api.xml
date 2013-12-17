@@ -19,6 +19,10 @@
       <ref local="api.courses" />
       <ref local="api.course" />
       <ref local="api.resources" />
+
+      <!-- Ekko Cloud Videos -->
+      <ref local="api.videos" />
+      <ref local="api.video" />
     </jaxrs:serviceBeans>
   </jaxrs:server>
 
@@ -37,6 +41,10 @@
       <ref local="api.courses" />
       <ref local="api.course" />
       <ref local="api.resources" />
+
+      <!-- Ekko Cloud Videos -->
+      <ref local="api.videos" />
+      <ref local="api.video" />
     </jaxrs:serviceBeans>
   </jaxrs:server>
 
@@ -63,4 +71,8 @@
   </bean>
 
   <bean id="api.resources" parent="api.cas.base" class="org.ccci.gto.servicemix.ekko.jaxrs.api.ResourcesApi" />
+
+  <!-- Ekko Cloud Videos -->
+  <bean id="api.videos" parent="api.base" class="org.ccci.gto.servicemix.ekko.cloudvideo.jaxrs.api.VideosApi" />
+  <bean id="api.video" parent="api.base" class="org.ccci.gto.servicemix.ekko.cloudvideo.jaxrs.api.VideoApi" />
 </beans>
