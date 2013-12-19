@@ -375,13 +375,16 @@ public class Video {
 
         public List<Video> execute(final EntityManager em) {
             final List<Video> results = this.compile(em).getResultList();
-            if (this.calcFoundRows) {
+            final int count = results.size();
+            if ((this.start == 0 || count > 0) && (this.limit == 0 || count < this.limit)) {
+                return new FoundRowsList<Video>(results, this.start + count);
+            } else if (this.calcFoundRows) {
                 try {
-                    final long foundRows = this.compileFoundRows(em).getSingleResult();
-                    return new FoundRowsList<Video>(results, foundRows);
+                    return new FoundRowsList<Video>(results, this.compileFoundRows(em).getSingleResult());
                 } catch (final NoResultException | NonUniqueResultException ignored) {
                 }
             }
+
             return results;
         }
 

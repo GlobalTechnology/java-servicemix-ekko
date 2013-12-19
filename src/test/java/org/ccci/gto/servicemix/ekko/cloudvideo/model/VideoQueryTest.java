@@ -112,6 +112,50 @@ public class VideoQueryTest {
         }
     }
 
+    @Test
+    public void testFoundRows() {
+        em.getTransaction().begin();
+
+        // create a bunch of videos
+        final List<Video> videos = generateVideos(Arrays.asList(CLIENTS));
+        for (final Video video : videos) {
+            em.persist(video);
+        }
+        em.flush();
+        em.clear();
+
+        final int total = videos.size();
+
+        // test queries that can be correctly calculated
+        for (final VideoQuery query : new VideoQuery[] { new VideoQuery(), // no start or limit
+                new VideoQuery().start(1), // start < total
+                new VideoQuery().start(total - 1), // start < total
+                new VideoQuery().limit(total + 1), // limit > total
+                new VideoQuery().start(1).limit(total), // start + limit > total
+                new VideoQuery().limit(1).calcFoundRows(true), // force calculation
+        }) {
+            final List<Video> results = query.execute(em);
+            assertTrue(results instanceof FoundRowsList);
+            assertEquals(total, ((FoundRowsList<Video>) results).getFoundRows());
+        }
+
+        // test queries that can't be calculated
+        for (final VideoQuery query : new VideoQuery[] { new VideoQuery().start(total), // start > total
+                new VideoQuery().limit(1), // limit < total
+                new VideoQuery().limit(total - 1), // limit < total
+                new VideoQuery().limit(total), // limit = total
+                new VideoQuery().start(1).limit(1), // start + limit < total
+                new VideoQuery().start(1).limit(total - 2), // start + limit < total
+                new VideoQuery().start(1).limit(total - 1), // start + limit = total
+        }) {
+            final List<Video> results = query.execute(em);
+            assertFalse(results instanceof FoundRowsList);
+        }
+
+        // don't save db changes
+        em.getTransaction().rollback();
+    }
+
     private void testCondition(final VideoQuery query, final Condition condition) {
         testCondition(generateVideos(Arrays.asList(CLIENTS)), query, condition);
     }
