@@ -845,6 +845,7 @@ public class AwsController {
         // find the extension for the output
         final String ext;
         switch (type) {
+        case MP4_720P:
         case MP4_480P_16_9:
             ext = "mp4";
             break;

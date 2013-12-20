@@ -31,8 +31,9 @@ import org.apache.openjpa.persistence.jdbc.ForeignKeyAction;
 public class AwsOutput {
     private static final String PRESET_HLS_1M = "1351620000001-200030";
     private static final String PRESET_MP4_480P_16_9 = "1351620000001-000020";
+    private static final String PRESET_MP4_720P = "1351620000001-000010";
     public enum Type {
-        UNKNOWN(null), HLS_1M(PRESET_HLS_1M), MP4_480P_16_9(PRESET_MP4_480P_16_9);
+        UNKNOWN(null), MP4_480P_16_9(PRESET_MP4_480P_16_9), MP4_720P(PRESET_MP4_720P), HLS_1M(PRESET_HLS_1M);
 
         public final String preset;
 
@@ -47,6 +48,8 @@ public class AwsOutput {
                     return HLS_1M;
                 case PRESET_MP4_480P_16_9:
                     return MP4_480P_16_9;
+                case PRESET_MP4_720P:
+                    return MP4_720P;
                 }
             }
 
@@ -54,7 +57,7 @@ public class AwsOutput {
         }
     }
 
-    public static final Set<Type> REQUIRED_TYPES = Collections.unmodifiableSet(EnumSet.of(Type.MP4_480P_16_9));
+    public static final Set<Type> REQUIRED_TYPES = Collections.unmodifiableSet(EnumSet.of(Type.MP4_720P));
 
     @EmbeddedId
     private PrimaryKey key;
