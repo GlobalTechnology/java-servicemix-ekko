@@ -200,20 +200,20 @@ public class Video {
         this.master = master;
     }
 
-    public final boolean isStaleThumbnail() {
-        return this.staleThumbnail;
-    }
-
-    public final void setStaleThumbnail(final boolean staleThumbnail) {
-        this.staleThumbnail = staleThumbnail;
-    }
-
     public AwsFile getThumbnail() {
         return this.thumbnail;
     }
 
     public void setThumbnail(final AwsFile thumbnail) {
         this.thumbnail = thumbnail;
+    }
+
+    public final boolean isStaleThumbnail() {
+        return this.staleThumbnail;
+    }
+
+    public final void setStaleThumbnail(final boolean staleThumbnail) {
+        this.staleThumbnail = staleThumbnail;
     }
 
     public final AwsOutput getOutput(final Type type) {

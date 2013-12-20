@@ -625,7 +625,7 @@ public class AwsController {
                             final List<CreateJobOutput> outputs = new ArrayList<>();
                             for (final Type type : types) {
                                 if (!existingOutputs.contains(type)) {
-                                    final CreateJobOutput output = createJobOutput(master, type);
+                                    final CreateJobOutput output = createJobOutput(type, master);
                                     if (output != null) {
                                         outputs.add(output);
                                     }
@@ -880,7 +880,7 @@ public class AwsController {
         return key;
     }
 
-    private static CreateJobOutput createJobOutput(final AwsFile master, final Type type) {
+    private static CreateJobOutput createJobOutput(final Type type, final AwsFile master) {
         final CreateJobOutput output = new CreateJobOutput().withPresetId(type.preset);
 
         // find the extension for the output
