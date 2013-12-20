@@ -91,7 +91,7 @@ public class TestUtils {
 
         for (final Client client : clients) {
             for (final String title : new String[] { null, "title", }) {
-                for (final State state : EnumSet.of(State.NEW, State.NEW_MASTER, State.ENCODING, State.CHECK,
+                for (final State state : EnumSet.of(State.NEW, State.ENCODING, State.CHECK,
                         State.ENCODED)) {
                     final Video video = new Video(client);
                     video.setId(++id);

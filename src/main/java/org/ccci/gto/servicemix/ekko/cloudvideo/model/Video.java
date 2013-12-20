@@ -45,7 +45,7 @@ import org.ccci.gto.servicemix.ekko.cloudvideo.model.AwsOutput.Type;
         @NamedQuery(name = "Video.findByOldJobs", query = "SELECT DISTINCT v FROM Video v JOIN v.jobs j WHERE j.lastChecked < :date"), })
 public class Video {
     public enum State {
-        NEW, NEW_MASTER, ENCODING, CHECK, ENCODED
+        NEW, CHECK, ENCODING, ENCODED
     }
 
     @Id

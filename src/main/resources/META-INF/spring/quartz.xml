@@ -6,7 +6,6 @@
     <property name="triggers">
       <list>
         <ref local="trigger.processUploads" />
-        <ref local="trigger.processCheckEncodes" />
         <ref local="trigger.processStartEncodes" />
         <ref local="trigger.processOldEncodingJobs" />
         <ref local="trigger.processDeletions" />
@@ -49,15 +48,6 @@
       <bean parent="job.base">
         <property name="name" value="processOldEncodingJobs" />
         <property name="targetMethod" value="processOldEncodingJobs" />
-      </bean>
-    </property>
-  </bean>
-
-  <bean id="trigger.processCheckEncodes" parent="trigger.base">
-    <property name="jobDetail">
-      <bean parent="job.base">
-        <property name="name" value="processCheckEncodes" />
-        <property name="targetMethod" value="processCheckEncodes" />
       </bean>
     </property>
   </bean>

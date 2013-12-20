@@ -228,47 +228,6 @@ public class AwsController {
     }
 
     public void processStartEncodes() {
-        // fetch a list of videos that need encoding jobs created for them
-        final List<Video> pending;
-        try {
-            pending = this.txService.inReadOnlyTransaction(new Callable<List<Video>>() {
-                @Override
-                public List<Video> call() throws Exception {
-                    final TypedQuery<Video> query = em.createNamedQuery("Video.findByState", Video.class);
-                    query.setParameter("state", State.NEW_MASTER);
-                    query.setMaxResults(START_ENCODE_SLICE_SIZE);
-                    return query.getResultList();
-                }
-            });
-        } catch (final Exception e) {
-            LOG.error("error retrieving videos in NEW_MASTER state", e);
-            return;
-        }
-
-        // process any videos needing an encode
-        for (final Video video : pending) {
-            // lock the video for processing in the NEW_MASTER state
-            if (!this.acquireLockInState(video, State.NEW_MASTER)) {
-                LOG.debug("Unable to lock video {}", video.getId());
-                continue;
-            }
-
-            try {
-                createEncodingJobs(video, AwsOutput.REQUIRED_TYPES);
-            } catch (final Exception ignored) {
-            } finally {
-                // release the video lock
-                try {
-                    this.releaseLock(video);
-                } catch (final Exception e) {
-                    // log exception, but don't propagate it
-                    LOG.error("error trying to clear video lock", e);
-                }
-            }
-        }
-    }
-
-    public void processCheckEncodes() {
         // fetch a list of videos in the check state
         final List<Video> videos;
         try {
@@ -310,7 +269,7 @@ public class AwsController {
                 }
                 // there are still outputs to be generated
                 else {
-                    this.createEncodingJobs(video, types);
+                    this.createEncodingJob(video, types);
                 }
             } catch (final Exception ignored) {
             } finally {
@@ -503,9 +462,6 @@ public class AwsController {
                     // store new master
                     video.setMaster(master);
 
-                    // transition to the new_master state
-                    video.setState(State.NEW_MASTER);
-
                     // mark any pending encodes as stale
                     for (final AwsJob job : video.getJobs()) {
                         job.setStale(true);
@@ -518,6 +474,9 @@ public class AwsController {
                     for (final AwsOutput output : video.getOutputs()) {
                         output.setStale(true);
                     }
+
+                    // transition to the CHECK state
+                    video.setState(State.CHECK);
                 }
             });
         } catch (final Exception e1) {
@@ -598,7 +557,7 @@ public class AwsController {
         });
     }
 
-    private void createEncodingJobs(final Video orig, final Collection<Type> types) {
+    private void createEncodingJob(final Video orig, final Collection<Type> types) {
         // short-circuit if we don't have a valid video object
         if (orig == null) {
             return;
