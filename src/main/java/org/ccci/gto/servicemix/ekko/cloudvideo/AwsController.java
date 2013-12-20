@@ -47,12 +47,18 @@ import com.amazonaws.services.elastictranscoder.model.ReadJobResult;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.CopyObjectRequest;
 import com.amazonaws.services.s3.model.CopyObjectResult;
+import com.amazonaws.services.s3.model.DeleteObjectsRequest;
+import com.amazonaws.services.s3.model.DeleteObjectsResult;
+import com.amazonaws.services.s3.model.DeleteObjectsResult.DeletedObject;
+import com.amazonaws.services.s3.model.MultiObjectDeleteException;
 
 public class AwsController {
     private static final Logger LOG = LoggerFactory.getLogger(AwsController.class);
 
     private static final String TRIGGERS_GROUP = "AwsJobController_TRIGGERS";
 
+    private static final int DELETIONS_BUCKETS_SLICE_SIZE = 1;
+    private static final int DELETIONS_FILES_SLICE_SIZE = 1000;
     private static final int UPLOADS_SLICE_SIZE = 100;
     private static final int START_ENCODE_SLICE_SIZE = 100;
     private static final int CHECK_ENCODES_SLICE_SIZE = 100;
@@ -211,9 +217,6 @@ public class AwsController {
                     LOG.error("error trying to clear video lock", e);
                 }
             }
-
-            // schedule processDeletions
-            this.scheduleProcessDeletions();
         }
     }
 
@@ -322,7 +325,83 @@ public class AwsController {
     }
 
     public void processDeletions() {
-        // TODO
+        // fetch a list of buckets with files to be deleted
+        final List<String> buckets;
+        try {
+            buckets = this.txService.inReadOnlyTransaction(new Callable<List<String>>() {
+                @Override
+                public List<String> call() throws Exception {
+                    final TypedQuery<String> query = em.createNamedQuery("AwsFileToDelete.bucketsWithPendingDeletions",
+                            String.class);
+                    query.setMaxResults(DELETIONS_BUCKETS_SLICE_SIZE);
+                    return query.getResultList();
+                }
+            });
+        } catch (final Exception e) {
+            LOG.error("error retrieving buckets with pending deletions for processDeletions", e);
+            return;
+        }
+
+        // delete all files in deletion queue
+        for (final String bucket : buckets) {
+            // fetch a list of files to delete in this bucket
+            final List<AwsFileToDelete> items;
+            try {
+                items = this.txService.inReadOnlyTransaction(new Callable<List<AwsFileToDelete>>() {
+                    @Override
+                    public List<AwsFileToDelete> call() throws Exception {
+                        final TypedQuery<AwsFileToDelete> query = em.createNamedQuery(
+                                "AwsFileToDelete.pendingDeletionsForBucket", AwsFileToDelete.class);
+                        query.setParameter("bucket", bucket);
+                        query.setMaxResults(DELETIONS_FILES_SLICE_SIZE);
+                        return query.getResultList();
+                    }
+                });
+            } catch (final Exception e) {
+                LOG.error("error retrieving files to be delete in bucket {}", bucket, e);
+                continue;
+            }
+
+            // generate list of keys to be deleted from this bucket
+            final List<String> keys = new ArrayList<>();
+            for (final AwsFileToDelete item : items) {
+                final AwsFile file = item.getFile();
+                if (file != null && file.exists()) {
+                    keys.add(file.getKey());
+                }
+            }
+
+            // issue batch deletion request
+            List<DeletedObject> deleted = null;
+            try {
+                final DeleteObjectsResult result = this.s3.deleteObjects(new DeleteObjectsRequest(bucket).withKeys(keys
+                        .toArray(new String[keys.size()])));
+                deleted = result.getDeletedObjects();
+            } catch (final MultiObjectDeleteException e) {
+                deleted = e.getDeletedObjects();
+            } catch (final Exception e) {
+                LOG.error("Unhandled exception in S3->deleteObjects", e);
+                continue;
+            }
+
+            // process response in set of files deleted
+            final Set<AwsFile> files = new HashSet<>();
+            for (final DeletedObject object : deleted) {
+                files.add(new AwsFile(bucket, object.getKey()));
+            }
+
+            // remove queued deletions for all files that were successfully deleted
+            this.txService.inTransaction(new Runnable() {
+                @Override
+                public void run() {
+                    for (final AwsFileToDelete item : items) {
+                        if (files.contains(item.getFile())) {
+                            em.remove(em.merge(item));
+                        }
+                    }
+                }
+            });
+        }
     }
 
     private boolean updateMaster(final Video orig, final AwsFile source) {
@@ -801,10 +880,6 @@ public class AwsController {
 
     public void scheduleProcessUploads() {
         this.scheduleJob("processUploads", 10000);
-    }
-
-    public void scheduleProcessDeletions() {
-        this.scheduleJob("processDeletions", 60000);
     }
 
     public void scheduleProcessStartEncodes() {
