@@ -79,6 +79,7 @@ public class AwsController {
     private AmazonElasticTranscoder transcoder = null;
 
     /* AWS configuration */
+    private String awsETPipelineId;
     private String awsS3BucketMasters;
     private String awsS3BucketEncoded;
     private String awsS3KeyPrefix = null;
@@ -90,6 +91,10 @@ public class AwsController {
 
     public final void setTranscoder(final AmazonElasticTranscoder transcoder) {
         this.transcoder = transcoder;
+    }
+
+    public final void setAwsETPipelineId(final String awsETPipelineId) {
+        this.awsETPipelineId = awsETPipelineId;
     }
 
     public final void setAwsS3BucketMasters(final String bucket) {
@@ -573,7 +578,7 @@ public class AwsController {
 
                             if (outputs.size() > 0) {
                                 // outputs, so return a CreateJobRequest
-                                return new CreateJobRequest().withPipelineId("1384892596663-h616xp")
+                                return new CreateJobRequest().withPipelineId(awsETPipelineId)
                                         .withInput(new JobInput().withKey(master.getKey()))
                                         .withOutputKeyPrefix(awsKeyPrefix(video)).withOutputs(outputs);
                             } else {

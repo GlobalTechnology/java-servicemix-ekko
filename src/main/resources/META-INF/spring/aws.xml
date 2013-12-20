@@ -17,6 +17,7 @@
   <bean id="aws.controller" class="org.ccci.gto.servicemix.ekko.cloudvideo.AwsController">
     <property name="s3" ref="aws.s3" />
     <property name="transcoder" ref="aws.et" />
+    <property name="awsETPipelineId" value="${aws.et.pipeline}" />
     <property name="awsS3KeyPrefix" value="${aws.s3.key.prefix:}" />
     <property name="awsS3BucketMasters" value="${aws.s3.bucket.masters}" />
     <property name="awsS3BucketEncoded" value="${aws.s3.bucket.encoded}" />
