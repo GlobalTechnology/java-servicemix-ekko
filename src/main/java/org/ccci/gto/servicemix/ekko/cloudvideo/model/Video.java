@@ -60,7 +60,7 @@ public class Video {
     @Column(name = "client_id", nullable = false)
     private long clientId = -1;
 
-    @Column(name = "grouping")
+    @Column
     private String grouping;
 
     @Column(nullable = false)

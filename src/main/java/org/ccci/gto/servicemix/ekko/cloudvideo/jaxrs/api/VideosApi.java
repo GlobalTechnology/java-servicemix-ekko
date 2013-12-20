@@ -3,7 +3,7 @@ package org.ccci.gto.servicemix.ekko.cloudvideo.jaxrs.api;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import static org.ccci.gto.servicemix.common.jaxrs.api.Constants.PATH_API_KEY;
-import static org.ccci.gto.servicemix.ekko.cloudvideo.jaxrs.api.Constants.PARAM_GROUPING;
+import static org.ccci.gto.servicemix.ekko.cloudvideo.jaxrs.api.Constants.PARAM_GROUP;
 import static org.ccci.gto.servicemix.ekko.cloudvideo.jaxrs.api.Constants.PARAM_LIMIT;
 import static org.ccci.gto.servicemix.ekko.cloudvideo.jaxrs.api.Constants.PARAM_START;
 import static org.ccci.gto.servicemix.ekko.cloudvideo.jaxrs.api.Constants.PARAM_TITLE;
@@ -45,7 +45,7 @@ public class VideosApi extends AbstractApi {
 
         // create a new video object
         final Video tmp = new Video(client);
-        tmp.setGrouping(form.getFirst(PARAM_GROUPING));
+        tmp.setGrouping(form.getFirst(PARAM_GROUP));
         tmp.setTitle(form.getFirst(PARAM_TITLE));
         final Video video = this.manager.createVideo(tmp);
 
@@ -93,7 +93,7 @@ public class VideosApi extends AbstractApi {
         }
 
         // fetch the videos being requested
-        final VideoQuery query = this.getVideoQuery(client).grouping(this.getGrouping(uri)).start(start).limit(limit)
+        final VideoQuery query = this.getVideoQuery(client).grouping(this.getGroup(uri)).start(start).limit(limit)
                 .calcFoundRows(true);
         final List<Video> videos = this.manager.getVideos(query);
 
