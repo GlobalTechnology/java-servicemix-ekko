@@ -3,7 +3,9 @@ package org.ccci.gto.servicemix.ekko.cloudvideo.model;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 
 import javax.persistence.CollectionTable;
 import javax.persistence.Column;
@@ -51,6 +53,8 @@ public class AwsOutput {
             return UNKNOWN;
         }
     }
+
+    public static final Set<Type> REQUIRED_TYPES = Collections.unmodifiableSet(EnumSet.of(Type.MP4_480P_16_9));
 
     @EmbeddedId
     private PrimaryKey key;

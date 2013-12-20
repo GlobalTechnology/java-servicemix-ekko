@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -60,8 +61,9 @@ public class AwsController {
     private static final int DELETIONS_BUCKETS_SLICE_SIZE = 1;
     private static final int DELETIONS_FILES_SLICE_SIZE = 1000;
     private static final int UPLOADS_SLICE_SIZE = 100;
-    private static final int START_ENCODE_SLICE_SIZE = 100;
     private static final int CHECK_ENCODES_SLICE_SIZE = 100;
+    private static final int START_ENCODE_SLICE_SIZE = 100;
+    private static final int OLD_ENCODES_SLICE_SIZE = 100;
 
     @Autowired(required = false)
     private SchedulerFactoryBean scheduler;
@@ -252,7 +254,7 @@ public class AwsController {
             }
 
             try {
-                createEncodingJobs(video);
+                createEncodingJobs(video, AwsOutput.REQUIRED_TYPES);
             } catch (final Exception ignored) {
             } finally {
                 // release the video lock
@@ -266,26 +268,80 @@ public class AwsController {
         }
     }
 
-    public void processCheckEncoding() {
-        final Date oldDate = new Date(System.currentTimeMillis() - (24 * 60 * 60 * 1000));
-
-        // fetch a list of jobs that are encoding
-        final List<Video> encoding;
+    public void processCheckEncodes() {
+        // fetch a list of videos in the check state
+        final List<Video> videos;
         try {
-            encoding = this.txService.inReadOnlyTransaction(new Callable<List<Video>>() {
+            videos = this.txService.inReadOnlyTransaction(new Callable<List<Video>>() {
                 @Override
                 public List<Video> call() throws Exception {
                     final TypedQuery<Video> query = em.createNamedQuery("Video.findByState", Video.class);
-                    // final TypedQuery<Video> query =
-                    // em.createNamedQuery("Video.findByOldJobs", Video.class);
-                    // query.setParameter("date", oldDate);
-                    query.setParameter("state", State.ENCODING);
+                    query.setParameter("state", State.CHECK);
                     query.setMaxResults(CHECK_ENCODES_SLICE_SIZE);
                     return query.getResultList();
                 }
             });
         } catch (final Exception e) {
-            LOG.error("error retrieving videos in ENCODING state", e);
+            LOG.error("error retrieving videos in CHECK state", e);
+            return;
+        }
+
+        // process all found videos
+        for (final Video video : videos) {
+            // lock the video for processing
+            if (!this.acquireLockInState(video, State.CHECK)) {
+                LOG.debug("unable to get lock for video {}", video.getId());
+                continue;
+            }
+
+            try {
+                // get the needed output types
+                final Set<Type> types = this.getNeededOutputTypes(video);
+
+                // we have no needed types, so mark video as encoded
+                if (types.isEmpty()) {
+                    txService.inTransaction(new Runnable() {
+                        @Override
+                        public void run() {
+                            final Video fresh = manager.refresh(video);
+                            fresh.setState(State.ENCODED);
+                        }
+                    });
+                }
+                // there are still outputs to be generated
+                else {
+                    this.createEncodingJobs(video, types);
+                }
+            } catch (final Exception ignored) {
+            } finally {
+                // release the video lock
+                try {
+                    this.releaseLock(video);
+                } catch (final Exception e) {
+                    // log exception, but don't propagate it
+                    LOG.error("error trying to clear video lock", e);
+                }
+            }
+        }
+    }
+
+    public void processOldEncodingJobs() {
+        final Date oldDate = new Date(System.currentTimeMillis() - (24 * 60 * 60 * 1000));
+
+        // fetch a list of old jobs that are still "encoding"
+        final List<Video> encoding;
+        try {
+            encoding = this.txService.inReadOnlyTransaction(new Callable<List<Video>>() {
+                @Override
+                public List<Video> call() throws Exception {
+                    final TypedQuery<Video> query = em.createNamedQuery("Video.findByOldJobs", Video.class);
+                    query.setParameter("date", oldDate);
+                    query.setMaxResults(OLD_ENCODES_SLICE_SIZE);
+                    return query.getResultList();
+                }
+            });
+        } catch (final Exception e) {
+            LOG.error("error retrieving videos with old encoding jobs", e);
             return;
         }
 
@@ -542,7 +598,7 @@ public class AwsController {
         });
     }
 
-    private void createEncodingJobs(final Video orig) {
+    private void createEncodingJobs(final Video orig, final Collection<Type> types) {
         // short-circuit if we don't have a valid video object
         if (orig == null) {
             return;
@@ -567,7 +623,7 @@ public class AwsController {
 
                             // create job outputs
                             final List<CreateJobOutput> outputs = new ArrayList<>();
-                            for (final Type type : new Type[] { Type.HLS_1M, Type.MP4_480P_16_9 }) {
+                            for (final Type type : types) {
                                 if (!existingOutputs.contains(type)) {
                                     final CreateJobOutput output = createJobOutput(master, type);
                                     if (output != null) {
@@ -723,6 +779,30 @@ public class AwsController {
         } catch (Exception e) {
             LOG.debug("updating output error", e);
             return false;
+        }
+    }
+
+    private Set<Type> getNeededOutputTypes(final Video orig) {
+        try {
+            return this.txService.inReadOnlyTransaction(new Callable<Set<Type>>() {
+                @Override
+                public Set<Type> call() throws Exception {
+                    final Video video = manager.refresh(orig);
+
+                    // determine the required types that are still needed
+                    final EnumSet<Type> types = EnumSet.noneOf(Type.class);
+                    for (final Type type : AwsOutput.REQUIRED_TYPES) {
+                        final AwsOutput output = video.getOutput(type);
+                        if (output == null || output.isStale()) {
+                            types.add(type);
+                        }
+                    }
+
+                    return types;
+                }
+            });
+        } catch (final Exception e) {
+            return null;
         }
     }
 
