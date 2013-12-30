@@ -16,6 +16,7 @@ import javax.persistence.PersistenceContext;
 import javax.persistence.PersistenceException;
 import javax.persistence.TypedQuery;
 
+import org.apache.commons.lang.StringUtils;
 import org.ccci.gto.persistence.tx.TransactionService;
 import org.ccci.gto.servicemix.ekko.cloudvideo.model.AwsFile;
 import org.ccci.gto.servicemix.ekko.cloudvideo.model.AwsFileToDelete;
@@ -52,6 +53,8 @@ import com.amazonaws.services.s3.model.DeleteObjectsRequest;
 import com.amazonaws.services.s3.model.DeleteObjectsResult;
 import com.amazonaws.services.s3.model.DeleteObjectsResult.DeletedObject;
 import com.amazonaws.services.s3.model.MultiObjectDeleteException;
+import com.amazonaws.services.s3.model.ObjectListing;
+import com.amazonaws.services.s3.model.S3ObjectSummary;
 
 public class AwsController {
     private static final Logger LOG = LoggerFactory.getLogger(AwsController.class);
@@ -655,6 +658,33 @@ public class AwsController {
             return false;
         }
 
+        // fetch a couple common values used for processing
+        final String status = etJob.getStatus();
+        final String keyPrefix = etJob.getOutputKeyPrefix();
+
+        // get a list of all thumbnails for the current job
+        final List<AwsFile> thumbnails = new ArrayList<>();
+        if ("Complete".equals(status) || "Canceled".equals(status) || "Error".equals(status)) {
+            // fetch any thumbnails that will be needed for processing
+            try {
+                ObjectListing result = this.s3.listObjects(awsS3BucketEncoded, keyPrefix + "thumbnails/");
+                while (true) {
+                    for (final S3ObjectSummary obj : result.getObjectSummaries()) {
+                        thumbnails.add(new AwsFile(obj.getBucketName(), obj.getKey()));
+                    }
+
+                    if (!result.isTruncated()) {
+                        break;
+                    }
+
+                    result = this.s3.listNextBatchOfObjects(result);
+                }
+            } catch (final Exception e) {
+                LOG.debug("error retrieving thumbnails from S3", e);
+                return false;
+            }
+        }
+
         // update Video record with current state of Job
         try {
             return this.txService.inTransaction(new Callable<Boolean>() {
@@ -668,31 +698,62 @@ public class AwsController {
                         job.updateLastChecked();
 
                         // process based on status
-                        final String status = etJob.getStatus();
                         if (status != null) {
-                            final String keyPrefix = etJob.getOutputKeyPrefix();
                             switch (status) {
                             case "Complete":
                                 // only record complete jobs that are not stale
                                 if (!job.isStale()) {
+                                    // capture a thumbnail we might use
+                                    AwsFile thumbnail = null;
+
                                     for (final JobOutput jobOutput : etJob.getOutputs()) {
                                         // generate AwsOutput object
                                         final Type type = Type.fromPreset(jobOutput.getPresetId());
                                         final AwsOutput output = new AwsOutput(video, type);
                                         output.setFile(new AwsFile(awsS3BucketEncoded, keyPrefix + jobOutput.getKey()));
 
+                                        // attach any thumbnails for this output
+                                        if (StringUtils.isNotBlank(jobOutput.getThumbnailPattern())) {
+                                            final String thumbPrefix = keyPrefix + "thumbnails/" + type + "/";
+                                            for (final AwsFile thumb : thumbnails) {
+                                                if (thumb != null && thumb.exists()
+                                                        && thumb.getKey().startsWith(thumbPrefix)) {
+                                                    output.addThumbnail(thumb);
+
+                                                    if (thumbnail == null) {
+                                                        thumbnail = thumb;
+                                                    }
+                                                }
+                                            }
+
+                                            // remove any thumbnails we are storing in this output
+                                            thumbnails.removeAll(output.getThumbnails());
+                                        }
+
                                         // remove old output (protecting files that are in the new output)
                                         final AwsOutput oldOutput = video.getOutput(type);
                                         if (oldOutput != null) {
                                             final Set<AwsFile> protectedFiles = new HashSet<>();
+                                            protectedFiles.addAll(thumbnails);
+                                            protectedFiles.add(video.getThumbnail());
                                             protectedFiles.add(output.getFile());
                                             protectedFiles.addAll(output.getFiles());
+                                            protectedFiles.addAll(output.getThumbnails());
+
                                             delete(oldOutput, protectedFiles);
                                             em.flush();
                                         }
 
                                         // save the new output
                                         em.persist(output);
+                                        em.flush();
+                                    }
+
+                                    // XXX: thumbnails should now be empty, should we check this?
+
+                                    // should we replace the thumbnail?
+                                    if (thumbnail != null && video.isStaleThumbnail()) {
+                                        replaceThumbnail(video, thumbnail);
                                     }
                                 }
                             case "Canceled":
@@ -704,11 +765,14 @@ public class AwsController {
                                     for (final JobOutput jobOutput : etJob.getOutputs()) {
                                         files.add(new AwsFile(awsS3BucketEncoded, keyPrefix + jobOutput.getKey()));
                                     }
+                                    files.addAll(thumbnails);
 
                                     // prevent deletion of any files currently being used
+                                    files.remove(video.getThumbnail());
                                     for (final AwsOutput output : video.getOutputs()) {
                                         files.remove(output.getFile());
                                         files.removeAll(output.getFiles());
+                                        files.removeAll(output.getThumbnails());
                                     }
 
                                     // delete any remaining files
@@ -843,9 +907,11 @@ public class AwsController {
         final CreateJobOutput output = new CreateJobOutput().withPresetId(type.preset);
 
         // find the extension for the output
+        boolean thumbnails = false;
         final String ext;
         switch (type) {
         case MP4_720P:
+            thumbnails = true;
         case MP4_480P_16_9:
             ext = "mp4";
             break;
@@ -864,6 +930,11 @@ public class AwsController {
             name = name.substring(0, i);
         }
         output.setKey("output/" + type + "/" + name + "." + ext);
+
+        // generate thumbnails if needed
+        if (thumbnails) {
+            output.setThumbnailPattern("thumbnails/" + type + "/thumbnail-{count}");
+        }
 
         // return the generated output
         return output;
@@ -901,6 +972,7 @@ public class AwsController {
         final Set<AwsFile> files = new HashSet<>();
         files.add(output.getFile());
         files.addAll(output.getFiles());
+        files.addAll(output.getThumbnails());
 
         // protected the specified files
         if (protectedFiles != null) {
@@ -921,6 +993,28 @@ public class AwsController {
         }
 
         this.em.remove(upload);
+    }
+
+    @Transactional(propagation = Propagation.MANDATORY)
+    private void replaceThumbnail(final Video video, final AwsFile thumb) {
+        // remove old thumbnail first
+        final AwsFile old = video.getThumbnail();
+        if (old != null && old.exists()) {
+            // gather all available thumbnails for this file
+            final Set<AwsFile> thumbs = new HashSet<>();
+            for (final AwsOutput output : video.getOutputs()) {
+                thumbs.addAll(output.getThumbnails());
+            }
+
+            // make sure the thumbnail isn't referenced elsewhere
+            if (!thumbs.contains(old)) {
+                delete(old);
+            }
+        }
+
+        // set new thumbnail and clear stale flag
+        video.setThumbnail(thumb);
+        video.setStaleThumbnail(false);
     }
 
     public void scheduleProcessUploads() {

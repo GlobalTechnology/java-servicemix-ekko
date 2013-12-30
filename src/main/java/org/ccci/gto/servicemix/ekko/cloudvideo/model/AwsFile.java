@@ -6,7 +6,7 @@ import javax.persistence.Embeddable;
 import org.apache.commons.lang.StringUtils;
 
 @Embeddable
-public class AwsFile {
+public class AwsFile implements Comparable<AwsFile> {
     @Column(name = "awsBucket", length = 255)
     private String bucket;
     @Column(name = "awsKey")
@@ -51,5 +51,20 @@ public class AwsFile {
         }
 
         return false;
+    }
+
+    @Override
+    public int compareTo(final AwsFile o) {
+        // compare the bucket first
+        int result = this.bucket == null ? (o.bucket != null ? -1 : 0) : (o.bucket == null ? 1 : this.bucket
+                .compareTo(o.bucket));
+
+        // compare the key if the buckets match
+        if (result == 0) {
+            result = this.key == null ? (o.key != null ? -1 : 0) : (o.key == null ? 1 : this.key.compareTo(o.key));
+        }
+
+        // return the comparison value
+        return result;
     }
 }

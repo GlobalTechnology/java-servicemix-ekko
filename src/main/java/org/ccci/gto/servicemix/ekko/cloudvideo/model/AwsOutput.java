@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -81,6 +82,13 @@ public class AwsOutput {
             "videoId", "type", "awsBucket", "awsKey" }))
     private List<AwsFile> files = new ArrayList<>();
 
+    @ElementCollection(fetch = FetchType.LAZY)
+    @CollectionTable(name = "EncodedVideos_thumbnails", joinColumns = {
+            @JoinColumn(name = "videoId", referencedColumnName = "videoId"),
+            @JoinColumn(name = "type", referencedColumnName = "type") }, uniqueConstraints = @UniqueConstraint(columnNames = {
+            "videoId", "type", "awsBucket", "awsKey" }))
+    private Set<AwsFile> thumbnails;
+
     public AwsOutput() {
         this(new PrimaryKey());
     }
@@ -123,6 +131,25 @@ public class AwsOutput {
 
     public final List<AwsFile> getFiles() {
         return this.files != null ? Collections.unmodifiableList(this.files) : Collections.<AwsFile> emptyList();
+    }
+
+    public void addThumbnail(final AwsFile file) {
+        if (this.thumbnails == null) {
+            this.thumbnails = new HashSet<>();
+        }
+
+        this.thumbnails.add(file);
+    }
+
+    public final Set<AwsFile> getThumbnails() {
+        return this.thumbnails != null ? Collections.unmodifiableSet(this.thumbnails) : Collections
+                .<AwsFile> emptySet();
+    }
+
+    public final void removeThumbnail(final AwsFile file) {
+        if (this.thumbnails != null) {
+            this.thumbnails.remove(file);
+        }
     }
 
     public boolean isHls() {
