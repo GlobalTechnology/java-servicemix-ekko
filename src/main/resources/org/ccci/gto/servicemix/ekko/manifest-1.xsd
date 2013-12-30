@@ -89,13 +89,11 @@
   </xs:complexType>
 
   <xs:complexType name="resourceType">
-    <!-- <xs:choice minOccurs="0" maxOccurs="unbounded"> -->
-    <!-- <xs:element name="resource" type="ekko:resourceType" /> -->
-    <!-- </xs:choice> -->
     <xs:attribute name="id" type="xs:string" use="required" />
     <xs:attribute name="type" use="required">
       <xs:simpleType>
         <xs:restriction base="xs:string">
+          <xs:enumeration value="ecv" />
           <xs:enumeration value="file" />
           <xs:enumeration value="uri" />
           <!-- <xs:enumeration value="dynamic" /> -->
@@ -106,6 +104,7 @@
     <xs:attribute name="sha1" type="xs:string" use="optional" />
     <xs:attribute name="size" type="xs:int" use="optional" />
     <xs:attribute name="file" type="xs:string" use="optional" />
+    <xs:attribute name="videoId" type="xs:long" use="optional" />
     <xs:attribute name="uri" type="xs:anyURI" use="optional" />
     <xs:attribute name="provider" use="optional">
       <xs:simpleType>

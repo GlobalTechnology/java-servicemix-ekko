@@ -6,7 +6,7 @@ import org.junit.Test;
 import org.w3c.dom.Document;
 
 public class DomUtilsTest {
-    final String[] MANIFESTS_V1_VALID = { "manifest/v1/valid/sample_1.xml" };
+    final String[] MANIFESTS_V1_VALID = { "manifest/v1/valid/sample_1.xml", "manifest/v1/valid/ecv.xml" };
     final String[] MANIFESTS_V1_INVALID = { "manifest/v1/invalid/duplicate_id.xml",
             "manifest/v1/invalid/missing_resource.xml", "manifest/v1/invalid/wrong_schema_version.xml" };
 
