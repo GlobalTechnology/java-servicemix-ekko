@@ -111,37 +111,16 @@
       <artifactId>hsqldb</artifactId>
       <scope>test</scope>
     </dependency>
-    <!-- replace groovy with groovy-all because of varying versions of asm -->
-    <!-- TODO: this is temporary until OpenJPA is >= 2.3.0 which solves conflicting dependency versions of asm -->
-    <dependency>
-      <groupId>org.codehaus.groovy</groupId>
-      <artifactId>groovy-all</artifactId>
-      <version>2.1.2</version>
-      <scope>test</scope>
-    </dependency>
     <dependency>
       <groupId>com.jayway.restassured</groupId>
       <artifactId>json-path</artifactId>
-      <version>1.8.1</version>
-      <exclusions>
-        <exclusion>
-          <groupId>org.codehaus.groovy</groupId>
-          <artifactId>groovy</artifactId>
-        </exclusion>
-      </exclusions>
+      <version>2.1.0</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>com.jayway.restassured</groupId>
       <artifactId>xml-path</artifactId>
-      <version>1.8.1</version>
-      <exclusions>
-        <!-- replace groovy with groovy-all because of varying versions of asm -->
-        <exclusion>
-          <groupId>org.codehaus.groovy</groupId>
-          <artifactId>groovy</artifactId>
-        </exclusion>
-      </exclusions>
+      <version>2.1.0</version>
       <scope>test</scope>
     </dependency>
     <dependency>
