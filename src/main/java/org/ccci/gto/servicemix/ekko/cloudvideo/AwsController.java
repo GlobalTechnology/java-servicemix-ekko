@@ -1,5 +1,6 @@
 package org.ccci.gto.servicemix.ekko.cloudvideo;
 
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -67,6 +68,8 @@ public class AwsController {
     private static final int CHECK_ENCODES_SLICE_SIZE = 100;
     private static final int START_ENCODE_SLICE_SIZE = 100;
     private static final int OLD_ENCODES_SLICE_SIZE = 100;
+
+    private static final long DEFAULT_PRESIGNED_URL_MIN_AGE = 6 * 60 * 60 * 1000;
 
     @Autowired(required = false)
     private SchedulerFactoryBean scheduler;
@@ -803,6 +806,24 @@ public class AwsController {
             LOG.debug("updating output error", e);
             return false;
         }
+    }
+
+    public URL getSignedUrl(final AwsFile file) {
+        if (file != null && file.exists()) {
+            // calculate next expiration time
+            long expiration = System.currentTimeMillis();
+            expiration += ((DEFAULT_PRESIGNED_URL_MIN_AGE / 2) - (expiration % (DEFAULT_PRESIGNED_URL_MIN_AGE / 2)));
+            expiration += DEFAULT_PRESIGNED_URL_MIN_AGE;
+
+            try {
+                return this.s3.generatePresignedUrl(file.getBucket(), file.getKey(), new Date(expiration));
+            } catch (final Exception e) {
+                // log error, but suppress it
+                LOG.error("error generating presigned url", e);
+            }
+        }
+
+        return null;
     }
 
     private Set<Type> getNeededOutputTypes(final Video orig) {

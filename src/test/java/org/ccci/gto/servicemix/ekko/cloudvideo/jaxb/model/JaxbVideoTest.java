@@ -1,16 +1,19 @@
 package org.ccci.gto.servicemix.ekko.cloudvideo.jaxb.model;
 
 import static org.ccci.gto.servicemix.ekko.TestUtils.generateVideos;
+import static org.ccci.gto.servicemix.ekko.TestUtils.getXmlString;
 import static org.junit.Assert.assertEquals;
 
 import java.io.ByteArrayOutputStream;
 import java.lang.annotation.Annotation;
+import java.net.URL;
 
 import javax.ws.rs.core.MediaType;
 
 import org.apache.cxf.jaxrs.impl.MetadataMap;
 import org.apache.cxf.jaxrs.provider.JAXBElementProvider;
 import org.apache.cxf.jaxrs.provider.json.JSONProvider;
+import org.ccci.gto.servicemix.ekko.cloudvideo.model.AwsFile;
 import org.ccci.gto.servicemix.ekko.cloudvideo.model.Video;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -34,10 +37,13 @@ public class JaxbVideoTest {
     public void testJsonMarshalling() throws Exception {
         // test json generation for multiple video variations
         for (final Video video : generateVideos()) {
-            final JsonPath json = toJson(new JaxbVideo(video));
+            final AwsFile thumb = video.getThumbnail();
+            final String thumbUrl = thumb != null && thumb.exists() ? "https://example.com/" + video.getId() : null;
+            final JsonPath json = toJson(new JaxbVideo(video, thumbUrl != null ? new URL(thumbUrl) : null));
             assertEquals(video.getId(), json.getLong("id"));
             assertEquals(video.getTitle(), json.getString("title"));
             assertEquals(video.getState().name(), json.getString("state"));
+            assertEquals(thumbUrl, json.getString("thumbnail"));
         }
     }
 
@@ -45,10 +51,13 @@ public class JaxbVideoTest {
     public void testXmlMarshalling() throws Exception {
         // test xml generation for multiple video variations
         for (final Video video : generateVideos()) {
-            final XmlPath xml = toXml(new JaxbVideo(video));
+            final AwsFile thumb = video.getThumbnail();
+            final String thumbUrl = thumb != null && thumb.exists() ? "https://example.com/" + video.getId() : null;
+            final XmlPath xml = toXml(new JaxbVideo(video, thumbUrl != null ? new URL(thumbUrl) : null));
             assertEquals(video.getId(), xml.getLong("video.@id"));
-            assertEquals(video.getTitle(), xml.getString("settings.@title"));
-            assertEquals(video.getState().name(), xml.getString("settings.@state"));
+            assertEquals(video.getTitle(), getXmlString(xml, "video.@title"));
+            assertEquals(video.getState().name(), xml.getString("video.@state"));
+            assertEquals(thumbUrl, getXmlString(xml, "video.@thumbnail"));
         }
     }
 

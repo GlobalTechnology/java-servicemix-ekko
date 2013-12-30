@@ -21,20 +21,15 @@ import javax.ws.rs.core.UriInfo;
 
 import org.ccci.gto.persistence.FoundRowsList;
 import org.ccci.gto.servicemix.common.model.Client;
-import org.ccci.gto.servicemix.ekko.cloudvideo.VideoManager;
 import org.ccci.gto.servicemix.ekko.cloudvideo.jaxb.model.JaxbVideo;
 import org.ccci.gto.servicemix.ekko.cloudvideo.jaxb.model.JaxbVideos;
 import org.ccci.gto.servicemix.ekko.cloudvideo.jaxb.model.JaxbVideosJson;
 import org.ccci.gto.servicemix.ekko.cloudvideo.jaxb.model.JaxbVideosXml;
 import org.ccci.gto.servicemix.ekko.cloudvideo.model.Video;
 import org.ccci.gto.servicemix.ekko.cloudvideo.model.Video.VideoQuery;
-import org.springframework.beans.factory.annotation.Autowired;
 
 @Path(PATH_API_KEY + "/videos")
 public class VideosApi extends AbstractApi {
-    @Autowired
-    private VideoManager manager;
-
     @POST
     @Produces({ APPLICATION_XML, APPLICATION_JSON })
     public Response createVideo(@Context final UriInfo uri, final MultivaluedMap<String, String> form) {
@@ -50,7 +45,7 @@ public class VideosApi extends AbstractApi {
         final Video video = this.manager.createVideo(tmp);
 
         // return the new video object
-        return Response.ok(new JaxbVideo(video)).build();
+        return Response.ok(new JaxbVideo(video, this.awsController)).build();
     }
 
     @GET
@@ -103,7 +98,7 @@ public class VideosApi extends AbstractApi {
         jaxbVideos.setLimit(limit);
         jaxbVideos.setTotal(videos instanceof FoundRowsList ? ((FoundRowsList<Video>) videos).getFoundRows() : -1);
         for (final Video video : videos) {
-            jaxbVideos.addVideo(new JaxbVideo(video));
+            jaxbVideos.addVideo(new JaxbVideo(video, this.awsController));
         }
 
         // return the response

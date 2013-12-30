@@ -18,21 +18,12 @@ import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
 
 import org.ccci.gto.servicemix.common.model.Client;
-import org.ccci.gto.servicemix.ekko.cloudvideo.AwsController;
-import org.ccci.gto.servicemix.ekko.cloudvideo.VideoManager;
 import org.ccci.gto.servicemix.ekko.cloudvideo.jaxb.model.JaxbVideo;
 import org.ccci.gto.servicemix.ekko.cloudvideo.model.AwsFile;
 import org.ccci.gto.servicemix.ekko.cloudvideo.model.Video;
-import org.springframework.beans.factory.annotation.Autowired;
 
 @Path(PATH_API_KEY + "/videos/" + PATH_VIDEO)
 public class VideoApi extends AbstractApi {
-    @Autowired
-    private VideoManager manager;
-
-    @Autowired
-    private AwsController awsController;
-
     @POST
     @Path("storeS3")
     @Produces({ APPLICATION_XML, APPLICATION_JSON })
@@ -52,7 +43,7 @@ public class VideoApi extends AbstractApi {
         this.awsController.enqueueUpload(video, new AwsFile(srcBucket, srcKey), false);
         this.awsController.scheduleProcessUploads();
 
-        return Response.ok(new JaxbVideo(video)).build();
+        return Response.ok(new JaxbVideo(video, this.awsController)).build();
     }
 
     @GET
@@ -68,6 +59,6 @@ public class VideoApi extends AbstractApi {
             return Response.status(Status.NOT_FOUND).build();
         }
 
-        return Response.ok(new JaxbVideo(video)).build();
+        return Response.ok(new JaxbVideo(video, this.awsController)).build();
     }
 }

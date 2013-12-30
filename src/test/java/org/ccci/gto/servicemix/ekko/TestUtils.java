@@ -15,9 +15,12 @@ import java.util.EnumSet;
 import java.util.List;
 
 import org.ccci.gto.servicemix.common.model.Client;
+import org.ccci.gto.servicemix.ekko.cloudvideo.model.AwsFile;
 import org.ccci.gto.servicemix.ekko.cloudvideo.model.Video;
 import org.ccci.gto.servicemix.ekko.cloudvideo.model.Video.State;
 import org.ccci.gto.servicemix.ekko.model.Course;
+
+import com.jayway.restassured.path.xml.XmlPath;
 
 public class TestUtils {
     private static final SecureRandom RAND = new SecureRandom();
@@ -93,15 +96,27 @@ public class TestUtils {
             for (final String title : new String[] { null, "title", }) {
                 for (final State state : EnumSet.of(State.NEW, State.ENCODING, State.CHECK,
                         State.ENCODED)) {
-                    final Video video = new Video(client);
-                    video.setId(++id);
-                    video.setTitle(title != null ? title + "-" + Long.valueOf(id).toString() : title);
-                    video.setState(state);
-                    videos.add(video);
+                    for (final AwsFile thumb : new AwsFile[] { null, new AwsFile(null, null),
+                            new AwsFile("bucket", null), new AwsFile(null, "key"), new AwsFile("bucket", "key") }) {
+                        final Video video = new Video(client);
+                        video.setId(++id);
+                        video.setTitle(title != null ? title + "-" + Long.valueOf(id).toString() : title);
+                        video.setState(state);
+                        video.setThumbnail(thumb);
+                        videos.add(video);
+                    }
                 }
             }
         }
 
         return videos;
+    }
+
+    public static String getXmlString(final XmlPath xml, final String path) {
+        if (xml.getList(path).isEmpty()) {
+            return null;
+        } else {
+            return xml.getString(path);
+        }
     }
 }
