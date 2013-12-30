@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ekko:course xmlns:ekko="https://ekkoproject.org/manifest" id="2878268247788965825" schemaVersion="0">
+  <ekko:meta>
+    <ekko:title>Welcome to Ekko</ekko:title>
+    <ekko:author>
+      <ekko:name>mikew</ekko:name>
+      <ekko:email>mike.waid@ccci.org</ekko:email>
+      <ekko:url />
+    </ekko:author>
+    <ekko:banner resource="459d438e-84c3-468d-9377-f398d339a922" />
+    <ekko:description>A short demonstration of the Ekko features</ekko:description>
+    <ekko:copyright>2013</ekko:copyright>
+  </ekko:meta>
+
+  <ekko:content>
+    <ekko:lesson id="40c85bce-04f4-4988-ab28-011be42c0f6a" title="Lesson 1">
+      <ekko:media id="8c802ba0-9f9a-4e75-81ef-6e448fc77ca6" resource="1e27bff5-870c-405e-bed7-947adc67407f"
+        thumbnail="ca126908-68c0-473d-b5cd-475eee81becc" type="video" />
+      <ekko:text id="ec58e534-2093-4928-bf1e-8dbfdebd6ef2-0"><![CDATA[<p><strong>Learn</strong> and <strong>Grow</strong> from others!&nbsp;</p><p>Tap on the above video image to watch how.</p>]]></ekko:text>
+    </ekko:lesson>
+  </ekko:content>
+
+  <ekko:complete>
+    <ekko:message><![CDATA[<p>Start learning from the many couses available on the <a href="http://ekkomobile.com">Ekko</a> app</p>]]></ekko:message>
+  </ekko:complete>
+
+  <ekko:resources>
+    <ekko:resource file="Intro-Banner.jpg" id="459d438e-84c3-468d-9377-f398d339a922" mimeType="image/jpeg"
+      sha1="e5f0bfb5c4f81acdf69b5834f332dfe8b16570bf" size="201926" type="file" />
+    <ekko:resource file="EKKO-Lesson-1.m4v" id="1e27bff5-870c-405e-bed7-947adc67407f" mimeType="video/mp4"
+      sha1="1aa0c4b1c8387613f94578c26e4243dd4e790365" size="5540244" type="file" />
+    <ekko:resource file="Lesson-1-1.jpg" id="ca126908-68c0-473d-b5cd-475eee81becc" mimeType="image/jpeg"
+      sha1="f043a43e00ca4c47152fa0cd7edd25b3b6734d51" size="59667" type="file" />
+  </ekko:resources>
+</ekko:course>
