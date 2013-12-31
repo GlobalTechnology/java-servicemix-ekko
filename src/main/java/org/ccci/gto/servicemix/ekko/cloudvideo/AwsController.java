@@ -750,12 +750,16 @@ public class AwsController {
                                         // save the new output
                                         em.persist(output);
                                         em.flush();
+                                        em.refresh(video);
                                     }
 
                                     // XXX: thumbnails should now be empty, should we check this?
 
                                     // should we replace the thumbnail?
-                                    if (thumbnail != null && video.isStaleThumbnail()) {
+                                    final AwsFile oldThumb;
+                                    if (thumbnail != null
+                                            && (video.isStaleThumbnail() || (oldThumb = video.getThumbnail()) == null || !oldThumb
+                                                    .exists())) {
                                         replaceThumbnail(video, thumbnail);
                                     }
                                 }
