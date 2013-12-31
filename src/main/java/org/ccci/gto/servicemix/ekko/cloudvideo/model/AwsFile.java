@@ -34,7 +34,7 @@ public class AwsFile implements Comparable<AwsFile> {
 
     @Override
     public int hashCode() {
-        int code = super.hashCode();
+        int code = 0;
         code = (code * 31) + (bucket != null ? bucket.hashCode() : 0);
         code = (code * 31) + (key != null ? key.hashCode() : 0);
         return code;

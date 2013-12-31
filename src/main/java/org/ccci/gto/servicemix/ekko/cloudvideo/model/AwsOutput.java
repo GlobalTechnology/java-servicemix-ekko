@@ -185,7 +185,7 @@ public class AwsOutput {
 
         @Override
         public int hashCode() {
-            int hash = super.hashCode();
+            int hash = 0;
             hash = (hash * 31) + Long.valueOf(this.videoId).hashCode();
             hash = (hash * 31) + (this.type != null ? this.type.hashCode() : 0);
             return hash;
