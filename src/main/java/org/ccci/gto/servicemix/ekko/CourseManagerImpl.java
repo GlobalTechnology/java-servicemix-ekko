@@ -18,7 +18,6 @@ import javax.persistence.PersistenceContext;
 import org.ccci.gto.servicemix.ekko.model.Course;
 import org.ccci.gto.servicemix.ekko.model.Course.CourseQuery;
 import org.ccci.gto.servicemix.ekko.model.Resource;
-import org.ccci.gto.servicemix.ekko.model.ResourcePrimaryKey;
 import org.springframework.transaction.annotation.Transactional;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -330,7 +329,7 @@ public class CourseManagerImpl implements CourseManager {
 
     @Transactional
     @Override
-    public Resource getResource(final ResourcePrimaryKey key) {
+    public Resource getResource(final Resource.PrimaryKey key) {
         return this.em.find(Resource.class, key);
     }
 

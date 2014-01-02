@@ -4,7 +4,7 @@
   <persistence-unit name="org.ccci.gto.servicemix.ekko">
     <class>org.ccci.gto.servicemix.ekko.model.Course</class>
     <class>org.ccci.gto.servicemix.ekko.model.Resource</class>
-    <class>org.ccci.gto.servicemix.ekko.model.ResourcePrimaryKey</class>
+    <class>org.ccci.gto.servicemix.ekko.model.Resource$PrimaryKey</class>
     <exclude-unlisted-classes>true</exclude-unlisted-classes>
   </persistence-unit>
 </persistence>

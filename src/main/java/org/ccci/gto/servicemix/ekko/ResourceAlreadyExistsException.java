@@ -1,11 +1,11 @@
 package org.ccci.gto.servicemix.ekko;
 
-import org.ccci.gto.servicemix.ekko.model.ResourcePrimaryKey;
+import org.ccci.gto.servicemix.ekko.model.Resource;
 
 public final class ResourceAlreadyExistsException extends ResourceException {
-    private static final long serialVersionUID = -3042183162575703771L;
+    private static final long serialVersionUID = -7818732603419781759L;
 
-    private final ResourcePrimaryKey resourceKey;
+    private final Resource.PrimaryKey resourceKey;
 
     public ResourceAlreadyExistsException() {
         this.resourceKey = null;
@@ -26,17 +26,17 @@ public final class ResourceAlreadyExistsException extends ResourceException {
         this.resourceKey = null;
     }
 
-    public ResourceAlreadyExistsException(final String message, final ResourcePrimaryKey resourceKey) {
+    public ResourceAlreadyExistsException(final String message, final Resource.PrimaryKey resourceKey) {
         super(message);
         this.resourceKey = resourceKey;
     }
 
-    public ResourceAlreadyExistsException(final Throwable cause, final ResourcePrimaryKey resourceKey) {
+    public ResourceAlreadyExistsException(final Throwable cause, final Resource.PrimaryKey resourceKey) {
         super(cause);
         this.resourceKey = resourceKey;
     }
 
-    public ResourcePrimaryKey getResourceKey() {
+    public Resource.PrimaryKey getResourceKey() {
         return this.resourceKey;
     }
 }

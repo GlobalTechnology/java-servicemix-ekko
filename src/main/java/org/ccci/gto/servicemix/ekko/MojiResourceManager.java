@@ -19,7 +19,6 @@ import org.apache.commons.io.output.CountingOutputStream;
 import org.apache.commons.lang.StringUtils;
 import org.ccci.gto.servicemix.ekko.model.Course;
 import org.ccci.gto.servicemix.ekko.model.Resource;
-import org.ccci.gto.servicemix.ekko.model.ResourcePrimaryKey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -328,7 +327,7 @@ public class MojiResourceManager implements ResourceManager {
     }
 
     private void renameMojiFile(final MojiFile file, final Resource resource) throws IOException {
-        final ResourcePrimaryKey key = resource.getKey();
+        final Resource.PrimaryKey key = resource.getKey();
         final String newName = "course/" + key.getCourseId() + "/resource/" + key.getSha1();
         new MojiCommand<Object>(file) {
             @Override

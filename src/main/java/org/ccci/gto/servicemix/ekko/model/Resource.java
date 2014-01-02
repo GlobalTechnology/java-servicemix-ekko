@@ -1,6 +1,9 @@
 package org.ccci.gto.servicemix.ekko.model;
 
+import java.io.Serializable;
+
 import javax.persistence.Column;
+import javax.persistence.Embeddable;
 import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -14,7 +17,7 @@ import org.apache.openjpa.persistence.jdbc.ForeignKeyAction;
 @Entity
 public class Resource {
     @EmbeddedId
-    private ResourcePrimaryKey key;
+    private PrimaryKey key;
 
     @MapsId("courseId")
     @ManyToOne(fetch = FetchType.LAZY)
@@ -37,22 +40,22 @@ public class Resource {
     private boolean metaResource = false;
 
     public Resource() {
-        this(new ResourcePrimaryKey());
+        this(new PrimaryKey());
     }
 
     public Resource(final Course course, final String sha1) {
-        this(new ResourcePrimaryKey(course, sha1));
+        this(new PrimaryKey(course, sha1));
     }
 
     public Resource(final Long courseId, final String sha1) {
-        this(new ResourcePrimaryKey(courseId, sha1));
+        this(new PrimaryKey(courseId, sha1));
     }
 
-    public Resource(final ResourcePrimaryKey key) {
+    public Resource(final PrimaryKey key) {
         this.key = key;
     }
 
-    public ResourcePrimaryKey getKey() {
+    public PrimaryKey getKey() {
         return this.key;
     }
 
@@ -115,5 +118,56 @@ public class Resource {
     public boolean isVisibleTo(final String guid) {
         return this.course.isAdmin(guid) || (this.isPublished() && this.course.isContentVisibleTo(guid))
                 || (this.isMetaResource() && this.course.isVisibleTo(guid));
+    }
+
+    @Embeddable
+    public static class PrimaryKey implements Serializable {
+        private static final long serialVersionUID = -4982314934999687938L;
+
+        private long courseId;
+        @Column(length = 40)
+        private String sha1 = null;
+
+        public PrimaryKey() {
+        }
+
+        public PrimaryKey(final Course course, final String sha1) {
+            this(course.getId(), sha1);
+        }
+
+        protected PrimaryKey(final long courseId, final String sha1) {
+            this.courseId = courseId;
+            if (sha1 != null) {
+                this.sha1 = sha1.toLowerCase();
+            }
+        }
+
+        public long getCourseId() {
+            return this.courseId;
+        }
+
+        /**
+         * @return the code
+         */
+        public String getSha1() {
+            return this.sha1;
+        }
+
+        @Override
+        public int hashCode() {
+            int hash = 0;
+            hash = (hash * 31) + Long.valueOf(this.courseId).hashCode();
+            hash = (hash * 31) + this.sha1.hashCode();
+            return hash;
+        }
+
+        @Override
+        public boolean equals(final Object obj) {
+            if (obj == null || !(obj instanceof PrimaryKey)) {
+                return false;
+            }
+            final PrimaryKey key2 = (PrimaryKey) obj;
+            return (this.courseId == key2.courseId) && (this.sha1.equals(key2.sha1));
+        }
     }
 }

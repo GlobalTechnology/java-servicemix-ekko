@@ -34,7 +34,6 @@ import org.ccci.gto.servicemix.ekko.jaxb.model.JaxbResource;
 import org.ccci.gto.servicemix.ekko.jaxb.model.JaxbResources;
 import org.ccci.gto.servicemix.ekko.model.Course;
 import org.ccci.gto.servicemix.ekko.model.Resource;
-import org.ccci.gto.servicemix.ekko.model.ResourcePrimaryKey;
 import org.springframework.beans.factory.annotation.Autowired;
 
 @Path(PATH_SESSION + "/courses/" + PATH_COURSE + "/resources")
@@ -77,7 +76,7 @@ public class ResourcesApi extends AbstractApi {
             final ResponseBuilder response = Response.status(Status.FORBIDDEN).entity("Resource already exists");
 
             // attach the location of the resource to the response
-            final ResourcePrimaryKey key = e.getResourceKey();
+            final Resource.PrimaryKey key = e.getResourceKey();
             if (key != null) {
                 response.contentLocation(this.getRequestUriBuilder(uri).path(key.getSha1()).replaceQuery(null).build());
             }

@@ -6,7 +6,6 @@ import java.util.List;
 import org.ccci.gto.servicemix.ekko.model.Course;
 import org.ccci.gto.servicemix.ekko.model.Course.CourseQuery;
 import org.ccci.gto.servicemix.ekko.model.Resource;
-import org.ccci.gto.servicemix.ekko.model.ResourcePrimaryKey;
 
 public interface CourseManager {
     Course createCourse(Course course);
@@ -36,7 +35,7 @@ public interface CourseManager {
 
     boolean deleteCourse(CourseQuery query) throws CourseNotFoundException;
 
-    Resource getResource(ResourcePrimaryKey key);
+    Resource getResource(Resource.PrimaryKey key);
 
     Resource storeResource(Course course, Resource resource);
 
