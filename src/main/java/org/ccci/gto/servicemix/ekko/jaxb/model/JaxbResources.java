@@ -10,13 +10,13 @@ import javax.xml.bind.annotation.XmlRootElement;
 @XmlRootElement(name = "resources")
 public class JaxbResources {
     @XmlElementRef
-    private List<JaxbAbstractResource> resources = new ArrayList<>();
+    private List<JaxbResource> resources = new ArrayList<>();
 
-    public void addResource(final JaxbAbstractResource resource) {
+    public void addResource(final JaxbResource resource) {
         this.resources.add(resource);
     }
 
-    public void setResources(final Collection<JaxbAbstractResource> resources) {
+    public void setResources(final Collection<JaxbResource> resources) {
         this.resources.clear();
         if (resources != null) {
             this.resources.addAll(resources);

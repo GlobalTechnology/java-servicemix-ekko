@@ -4,7 +4,7 @@ import javax.persistence.Column;
 import javax.persistence.MappedSuperclass;
 
 @MappedSuperclass
-public abstract class AbstractResource {
+public abstract class Resource {
     @Column(nullable = false)
     private boolean published = false;
     @Column(nullable = false)

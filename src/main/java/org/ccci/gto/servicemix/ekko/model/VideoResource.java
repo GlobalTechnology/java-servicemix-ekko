@@ -17,7 +17,7 @@ import org.ccci.gto.servicemix.ekko.cloudvideo.model.Video;
 
 @Entity
 @Table(name = "Course_videos")
-public class VideoResource extends AbstractResource {
+public class VideoResource extends Resource {
     @EmbeddedId
     private PrimaryKey key;
 

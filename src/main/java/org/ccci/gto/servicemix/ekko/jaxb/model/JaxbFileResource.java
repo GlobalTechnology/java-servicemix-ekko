@@ -13,7 +13,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 import org.ccci.gto.servicemix.ekko.model.FileResource;
 
 @XmlRootElement(name = "file")
-public class JaxbFileResource extends JaxbAbstractResource {
+public class JaxbFileResource extends JaxbResource {
     @XmlAttribute(name = "sha1")
     private String sha1;
 

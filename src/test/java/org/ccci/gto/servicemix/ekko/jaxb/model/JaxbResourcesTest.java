@@ -15,8 +15,8 @@ import javax.ws.rs.core.MediaType;
 import org.apache.cxf.jaxrs.impl.MetadataMap;
 import org.apache.cxf.jaxrs.provider.JAXBElementProvider;
 import org.apache.cxf.jaxrs.provider.json.JSONProvider;
-import org.ccci.gto.servicemix.ekko.model.AbstractResource;
 import org.ccci.gto.servicemix.ekko.model.FileResource;
+import org.ccci.gto.servicemix.ekko.model.Resource;
 import org.ccci.gto.servicemix.ekko.model.VideoResource;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -36,9 +36,9 @@ public class JaxbResourcesTest {
     @Autowired
     JAXBElementProvider<JaxbResources> xmlProvider = null;
 
-    private JaxbResources createJaxbResources(final List<AbstractResource> resources) {
+    private JaxbResources createJaxbResources(final List<Resource> resources) {
         final JaxbResources jaxbResources = new JaxbResources();
-        for (final AbstractResource resource : resources) {
+        for (final Resource resource : resources) {
             if (resource instanceof FileResource) {
                 jaxbResources.addResource(new JaxbFileResource((FileResource) resource));
             } else if (resource instanceof VideoResource) {
@@ -51,7 +51,7 @@ public class JaxbResourcesTest {
 
     // TODO: @Test
     public void testJsonMarshalling() throws Exception {
-        final List<AbstractResource> resources = generateResources();
+        final List<Resource> resources = generateResources();
         final JaxbResources jaxbResources = createJaxbResources(resources);
         final JsonPath json = toJson(jaxbResources);
 
@@ -60,7 +60,7 @@ public class JaxbResourcesTest {
 
     @Test
     public void testXmlMarshalling() throws Exception {
-        final List<AbstractResource> resources = generateResources();
+        final List<Resource> resources = generateResources();
         Collections.shuffle(resources);
         final JaxbResources jaxbResources = createJaxbResources(resources);
         final XmlPath xml = toXml(jaxbResources);
@@ -73,7 +73,7 @@ public class JaxbResourcesTest {
         xml.setRoot(base);
         assertEquals(resources.size(), xml.getInt("size()"));
         for (int i = 0; i < resources.size(); i++) {
-            final AbstractResource resource = resources.get(i);
+            final Resource resource = resources.get(i);
             xml.setRoot(base + "[" + i + "]");
             assertEquals(resource.isPublished(), xml.getBoolean("@published"));
             if (resource instanceof FileResource) {

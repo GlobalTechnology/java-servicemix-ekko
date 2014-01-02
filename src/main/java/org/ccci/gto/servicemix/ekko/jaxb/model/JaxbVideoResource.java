@@ -6,7 +6,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 import org.ccci.gto.servicemix.ekko.model.VideoResource;
 
 @XmlRootElement(name = "video")
-public class JaxbVideoResource extends JaxbAbstractResource {
+public class JaxbVideoResource extends JaxbResource {
     @XmlAttribute(name = "id")
     private long id;
 

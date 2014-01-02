@@ -18,7 +18,7 @@ import org.ccci.gto.servicemix.common.model.Client;
 import org.ccci.gto.servicemix.ekko.cloudvideo.model.AwsFile;
 import org.ccci.gto.servicemix.ekko.cloudvideo.model.Video;
 import org.ccci.gto.servicemix.ekko.cloudvideo.model.Video.State;
-import org.ccci.gto.servicemix.ekko.model.AbstractResource;
+import org.ccci.gto.servicemix.ekko.model.Resource;
 import org.ccci.gto.servicemix.ekko.model.Course;
 import org.ccci.gto.servicemix.ekko.model.FileResource;
 import org.ccci.gto.servicemix.ekko.model.VideoResource;
@@ -87,14 +87,14 @@ public class TestUtils {
         return courses;
     }
 
-    public static List<AbstractResource> generateResources() {
+    public static List<Resource> generateResources() {
         final Course course = new Course();
         course.setId(RAND.nextLong());
         return generateResources(Collections.singletonList(course));
     }
 
-    public static List<AbstractResource> generateResources(final List<Course> courses) {
-        final List<AbstractResource> resources = new ArrayList<>();
+    public static List<Resource> generateResources(final List<Course> courses) {
+        final List<Resource> resources = new ArrayList<>();
         resources.addAll(generateFileResources(courses));
         resources.addAll(generateVideoResources(courses));
         return resources;

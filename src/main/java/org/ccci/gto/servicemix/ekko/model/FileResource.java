@@ -17,7 +17,7 @@ import org.apache.openjpa.persistence.jdbc.ForeignKeyAction;
 
 @Entity
 @Table(name = "Resource")
-public class FileResource extends AbstractResource {
+public class FileResource extends Resource {
     @EmbeddedId
     private PrimaryKey key;
 
