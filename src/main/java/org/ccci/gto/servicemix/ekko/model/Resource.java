@@ -15,7 +15,7 @@ import org.apache.openjpa.persistence.jdbc.ForeignKey;
 import org.apache.openjpa.persistence.jdbc.ForeignKeyAction;
 
 @Entity
-public class Resource {
+public class Resource extends AbstractResource {
     @EmbeddedId
     private PrimaryKey key;
 
@@ -34,10 +34,6 @@ public class Resource {
 
     @Column(nullable = false, updatable = false)
     private long size = 0;
-    @Column(nullable = false)
-    private boolean published = false;
-    @Column(nullable = false)
-    private boolean metaResource = false;
 
     public Resource() {
         this(new PrimaryKey());
@@ -83,14 +79,6 @@ public class Resource {
         return this.crc32;
     }
 
-    public boolean isPublished() {
-        return this.published;
-    }
-
-    public boolean isMetaResource() {
-        return this.metaResource;
-    }
-
     public void setMogileFsKey(final String key) {
         this.mogileFsKey = key;
     }
@@ -105,14 +93,6 @@ public class Resource {
 
     public void setCrc32(final Long crc32) {
         this.crc32 = crc32;
-    }
-
-    public void setPublished(final boolean published) {
-        this.published = published;
-    }
-
-    public void setMetaResource(final boolean metaResource) {
-        this.metaResource = metaResource;
     }
 
     public boolean isVisibleTo(final String guid) {

@@ -18,8 +18,10 @@ import org.ccci.gto.servicemix.common.model.Client;
 import org.ccci.gto.servicemix.ekko.cloudvideo.model.AwsFile;
 import org.ccci.gto.servicemix.ekko.cloudvideo.model.Video;
 import org.ccci.gto.servicemix.ekko.cloudvideo.model.Video.State;
+import org.ccci.gto.servicemix.ekko.model.AbstractResource;
 import org.ccci.gto.servicemix.ekko.model.Course;
 import org.ccci.gto.servicemix.ekko.model.Resource;
+import org.ccci.gto.servicemix.ekko.model.VideoResource;
 
 import com.jayway.restassured.path.xml.XmlPath;
 
@@ -85,13 +87,26 @@ public class TestUtils {
         return courses;
     }
 
-    public static List<Resource> generateResources() {
+    public static List<AbstractResource> generateResources() {
         final Course course = new Course();
         course.setId(RAND.nextLong());
         return generateResources(Collections.singletonList(course));
     }
 
-    public static List<Resource> generateResources(final List<Course> courses) {
+    public static List<AbstractResource> generateResources(final List<Course> courses) {
+        final List<AbstractResource> resources = new ArrayList<>();
+        resources.addAll(generateFileResources(courses));
+        resources.addAll(generateVideoResources(courses));
+        return resources;
+    }
+
+    public static List<Resource> generateFileResources() {
+        final Course course = new Course();
+        course.setId(RAND.nextLong());
+        return generateFileResources(Collections.singletonList(course));
+    }
+
+    public static List<Resource> generateFileResources(final List<Course> courses) {
         final List<Resource> resources = new ArrayList<>();
         for (final Course course : courses) {
             for (final int size : new int[] { 0, 1024, 1024 * 1024 }) {
@@ -102,6 +117,30 @@ public class TestUtils {
                         resource.setPublished(published);
                         resources.add(resource);
                     }
+                }
+            }
+        }
+
+        return resources;
+    }
+
+    public static List<VideoResource> generateVideoResources() {
+        final Course course = new Course();
+        course.setId(RAND.nextLong());
+        return generateVideoResources(Collections.singletonList(course));
+    }
+
+    public static List<VideoResource> generateVideoResources(final List<Course> courses) {
+        final List<VideoResource> resources = new ArrayList<>();
+        long id = RAND.nextLong();
+
+        for (final Course course : courses) {
+            for (final boolean published : new boolean[] { true, false }) {
+                for (final boolean metaResource : new boolean[] { true, false }) {
+                    final VideoResource resource = new VideoResource(course, id++);
+                    resource.setMetaResource(metaResource);
+                    resource.setPublished(published);
+                    resources.add(resource);
                 }
             }
         }

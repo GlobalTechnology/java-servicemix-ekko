@@ -1,6 +1,6 @@
 package org.ccci.gto.servicemix.ekko.jaxb.model;
 
-import static org.ccci.gto.servicemix.ekko.TestUtils.generateResources;
+import static org.ccci.gto.servicemix.ekko.TestUtils.generateFileResources;
 import static org.ccci.gto.servicemix.ekko.TestUtils.getXmlString;
 import static org.junit.Assert.assertEquals;
 
@@ -34,7 +34,7 @@ public class JaxbResourceTest {
     // TODO: @Test
     public void testJsonMarshalling() throws Exception {
         // test xml generation for multiple resource variations
-        for (final Resource resource : generateResources()) {
+        for (final Resource resource : generateFileResources()) {
             final JsonPath json = toJson(new JaxbResource(resource));
             assertEquals(resource.getSha1(), json.getString("resource.@sha1"));
             assertEquals(resource.getSize(), json.getLong("resource.@size"));
@@ -46,8 +46,9 @@ public class JaxbResourceTest {
     @Test
     public void testXmlMarshalling() throws Exception {
         // test xml generation for multiple resource variations
-        for (final Resource resource : generateResources()) {
+        for (final Resource resource : generateFileResources()) {
             final XmlPath xml = toXml(new JaxbResource(resource));
+            assertEquals("resource", xml.getString("resource.name()"));
             assertEquals(resource.getSha1(), getXmlString(xml, "resource.@sha1"));
             assertEquals(resource.getSize(), xml.getLong("resource.@size"));
             assertEquals(resource.isPublished(), xml.getBoolean("resource.@published"));

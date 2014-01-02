@@ -2,7 +2,6 @@ package org.ccci.gto.servicemix.ekko.model;
 
 import java.io.Serializable;
 
-import javax.persistence.Column;
 import javax.persistence.Embeddable;
 import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
@@ -18,7 +17,7 @@ import org.ccci.gto.servicemix.ekko.cloudvideo.model.Video;
 
 @Entity
 @Table(name = "Course_videos")
-public class VideoResource {
+public class VideoResource extends AbstractResource {
     @EmbeddedId
     private PrimaryKey key;
 
@@ -34,13 +33,11 @@ public class VideoResource {
     @ForeignKey(updateAction = ForeignKeyAction.CASCADE, deleteAction = ForeignKeyAction.RESTRICT)
     private Video video;
 
-    @Column(nullable = false)
-    private boolean published = false;
-
-    @Column(nullable = false)
-    private boolean metaResource = false;
-
     public VideoResource() {
+    }
+
+    public VideoResource(final Course course, final long videoId) {
+        this(new PrimaryKey(course, videoId));
     }
 
     public VideoResource(final PrimaryKey key) {
@@ -61,22 +58,6 @@ public class VideoResource {
 
     public final Video getVideo() {
         return this.video;
-    }
-
-    public final boolean isPublished() {
-        return this.published;
-    }
-
-    public final boolean isMetaResource() {
-        return this.metaResource;
-    }
-
-    public final void setPublished(final boolean published) {
-        this.published = published;
-    }
-
-    public final void setMetaResource(final boolean metaResource) {
-        this.metaResource = metaResource;
     }
 
     @Embeddable

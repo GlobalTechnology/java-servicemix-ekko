@@ -13,15 +13,12 @@ import javax.xml.bind.annotation.XmlRootElement;
 import org.ccci.gto.servicemix.ekko.model.Resource;
 
 @XmlRootElement(name = "resource")
-public class JaxbResource {
+public class JaxbResource extends JaxbAbstractResource {
     @XmlAttribute(name = "sha1")
     private String sha1;
 
     @XmlAttribute(name = "size")
     private long size = 0;
-
-    @XmlAttribute(name = "published")
-    private boolean published = false;
 
     @XmlAttribute(name = "uri")
     private URI uri;
@@ -34,9 +31,9 @@ public class JaxbResource {
     }
 
     public JaxbResource(final Resource resource, final UriBuilder uri, final Map<String, Object> uriValues) {
+        super(resource);
         this.sha1 = resource.getSha1();
         this.size = resource.getSize();
-        this.published = resource.isPublished();
 
         if (uri != null) {
             final Map<String, Object> values = new HashMap<String, Object>();
