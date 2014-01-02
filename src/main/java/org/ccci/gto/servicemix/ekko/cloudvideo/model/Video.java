@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 
 import javax.persistence.AttributeOverride;
@@ -20,6 +21,7 @@ import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
+import javax.persistence.MapKeyColumn;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.NoResultException;
@@ -37,6 +39,7 @@ import org.apache.openjpa.persistence.jdbc.Index;
 import org.ccci.gto.persistence.FoundRowsList;
 import org.ccci.gto.servicemix.common.model.Client;
 import org.ccci.gto.servicemix.ekko.cloudvideo.model.AwsOutput.Type;
+import org.ccci.gto.servicemix.ekko.model.VideoResource;
 
 @Entity
 @NamedQueries({
@@ -94,8 +97,12 @@ public class Video {
     @Column(nullable = false)
     private boolean staleThumbnail = false;
 
-    @OneToMany(fetch = FetchType.LAZY, mappedBy = "video", cascade = CascadeType.REMOVE)
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "video", cascade = { CascadeType.REFRESH, CascadeType.REMOVE })
     private List<AwsOutput> outputs;
+
+    @OneToMany(mappedBy = "video", fetch = FetchType.LAZY, cascade = { CascadeType.REFRESH })
+    @MapKeyColumn(name = "courseId")
+    private Map<Long, VideoResource> courses = new HashMap<>();
 
     public Video() {
     }

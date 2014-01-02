@@ -5,6 +5,8 @@
     <class>org.ccci.gto.servicemix.ekko.model.Course</class>
     <class>org.ccci.gto.servicemix.ekko.model.Resource</class>
     <class>org.ccci.gto.servicemix.ekko.model.Resource$PrimaryKey</class>
+    <class>org.ccci.gto.servicemix.ekko.model.VideoResource</class>
+    <class>org.ccci.gto.servicemix.ekko.model.VideoResource$PrimaryKey</class>
     <class>org.ccci.gto.servicemix.ekko.cloudvideo.model.Video</class>
     <class>org.ccci.gto.servicemix.ekko.cloudvideo.model.AwsFile</class>
     <class>org.ccci.gto.servicemix.ekko.cloudvideo.model.AwsFileToDelete</class>

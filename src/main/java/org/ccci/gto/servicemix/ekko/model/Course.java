@@ -75,6 +75,10 @@ public class Course {
     @MapKeyColumn(name = "sha1")
     private Map<String, Resource> resources = new HashMap<String, Resource>();
 
+    @OneToMany(mappedBy = "course", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
+    @MapKeyColumn(name = "videoId")
+    private Map<Long, VideoResource> videoResources = new HashMap<>();
+
     @ElementCollection(fetch = FetchType.LAZY)
     @Column(name = "guid", nullable = false, length = 36)
     @CollectionTable(name = "Course_Admins", joinColumns = @JoinColumn(name = "courseId", nullable = false), uniqueConstraints = { @UniqueConstraint(columnNames = {
@@ -173,11 +177,19 @@ public class Course {
             return null;
         }
 
-        return this.resources.get(sha1.toLowerCase());
+        return this.resources != null ? this.resources.get(sha1.toLowerCase()) : null;
     }
 
     public Collection<Resource> getResources() {
         return Collections.unmodifiableCollection(this.resources.values());
+    }
+
+    public VideoResource getVideoResource(final long videoId) {
+        return this.videoResources != null ? this.videoResources.get(videoId) : null;
+    }
+
+    public Collection<VideoResource> getVideoResource() {
+        return Collections.unmodifiableCollection(this.videoResources.values());
     }
 
     public String getZipSha1() {
