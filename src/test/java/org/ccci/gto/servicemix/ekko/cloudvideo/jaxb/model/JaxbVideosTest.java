@@ -69,6 +69,7 @@ public class JaxbVideosTest {
         final XmlPath xml = toXml(populateJaxbVideos(new JaxbVideosXml(), videos));
 
         // test generated xml
+        assertEquals("videos", xml.getString("videos.name()"));
         assertEquals(0, xml.getInt("videos.@start"));
         assertEquals(videos.size(), xml.getInt("videos.@limit"));
         assertEquals(videos.size() * 2, xml.getInt("videos.@total"));

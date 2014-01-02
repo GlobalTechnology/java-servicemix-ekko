@@ -3,11 +3,16 @@ package org.ccci.gto.servicemix.ekko;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
 
 public class TestAssemblyUtils {
     private static final String PERSISTENCE_UNIT = "org.ccci.gto.servicemix.ekko";
+
+    private static final Object emfLock = new Object();
+    private static EntityManagerFactory emf = null;
+    private static int emfOpenDepth = 0;
 
     public static Map<String, String> getPersistenceProperties() {
         final Map<String, String> props = new HashMap<String, String>();
@@ -24,7 +29,39 @@ public class TestAssemblyUtils {
         return props;
     }
 
-    public static EntityManagerFactory getEntityManagerFactory() {
-        return Persistence.createEntityManagerFactory(PERSISTENCE_UNIT, getPersistenceProperties());
+    public static EntityManagerFactory openEntityManagerFactory() {
+        synchronized (emfLock) {
+            if (emf == null) {
+                emf = Persistence.createEntityManagerFactory(PERSISTENCE_UNIT, getPersistenceProperties());
+            }
+
+            // return the emf
+            emfOpenDepth++;
+            return emf;
+        }
+    }
+
+    public static void closeEntityManagerFactory() {
+        synchronized (emfLock) {
+            emfOpenDepth--;
+            if (emfOpenDepth <= 0) {
+                if (emf != null) {
+                    emf.close();
+                    emf = null;
+                }
+
+                emfOpenDepth = 0;
+            }
+        }
+    }
+
+    public static EntityManager getEntityManager() {
+        return emf.createEntityManager();
+    }
+
+    public static void closeEntityManager(final EntityManager em) {
+        if (em != null) {
+            em.close();
+        }
     }
 }

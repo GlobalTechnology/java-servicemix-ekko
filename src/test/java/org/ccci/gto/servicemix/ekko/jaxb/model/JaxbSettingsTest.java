@@ -46,6 +46,7 @@ public class JaxbSettingsTest {
         // test xml generation for multiple course variations
         for (final Course course : generateCourses()) {
             final XmlPath xml = toXml(new JaxbSettings(course));
+            assertEquals("settings", xml.getString("settings.name()"));
             assertEquals(course.getId(), xml.getLong("settings.@id"));
             assertEquals(course.isPublic(), xml.getBoolean("settings.public"));
             assertEquals(course.getEnrollment(), xml.getString("settings.enrollmentType"));

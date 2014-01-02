@@ -1,6 +1,8 @@
 package org.ccci.gto.servicemix.ekko.model;
 
 import static org.ccci.gto.servicemix.ekko.Constants.GUID_GUEST;
+import static org.ccci.gto.servicemix.ekko.TestAssemblyUtils.closeEntityManager;
+import static org.ccci.gto.servicemix.ekko.TestAssemblyUtils.getEntityManager;
 import static org.ccci.gto.servicemix.ekko.TestConstants.GUID1;
 import static org.ccci.gto.servicemix.ekko.TestConstants.GUID2;
 import static org.ccci.gto.servicemix.ekko.TestConstants.GUID3;
@@ -17,7 +19,6 @@ import java.util.List;
 import java.util.Set;
 
 import javax.persistence.EntityManager;
-import javax.persistence.EntityManagerFactory;
 
 import org.ccci.gto.servicemix.ekko.TestAssemblyUtils;
 import org.ccci.gto.servicemix.ekko.model.Course.CourseQuery;
@@ -28,25 +29,14 @@ import org.junit.Test;
 public class CourseQueryTest {
     private static final SecureRandom RAND = new SecureRandom();
 
-    private static EntityManagerFactory emf;
-    private static EntityManager em;
-
     @BeforeClass
-    public static void openEntityManager() {
-        emf = TestAssemblyUtils.getEntityManagerFactory();
-        em = emf.createEntityManager();
+    public static void openEntityManagerFactory() {
+        TestAssemblyUtils.openEntityManagerFactory();
     }
 
     @AfterClass
-    public static void closeEntityManager() {
-        if (em != null) {
-            em.close();
-            em = null;
-        }
-        if (emf != null) {
-            emf.close();
-            emf = null;
-        }
+    public static void closeEntityManagerFactory() {
+        TestAssemblyUtils.closeEntityManagerFactory();
     }
 
     private static Set<Long> extractIds(final Collection<Course> courses) {
@@ -79,6 +69,7 @@ public class CourseQueryTest {
     @Test
     public void testLoadEnrolled() {
         long id = RAND.nextLong();
+        final EntityManager em = getEntityManager();
 
         // test default usage
         {
@@ -213,10 +204,14 @@ public class CourseQueryTest {
             // increment id after usage
             id += 2;
         }
+
+        closeEntityManager(em);
     }
 
     @Test
     public void testPublished() {
+        final EntityManager em = getEntityManager();
+
         long id = RAND.nextLong();
 
         // test published course
@@ -277,63 +272,81 @@ public class CourseQueryTest {
         }
 
         // test a wide array of possible courses
-        testCondition(new CourseQuery().published(), new Condition() {
+        testCondition(em, new CourseQuery().published(), new Condition() {
             @Override
             public boolean test(final Course course) {
                 return course.isPublished();
             }
         });
+
+        closeEntityManager(em);
     }
 
     @Test
     public void testEnrolled() {
+        final EntityManager em = getEntityManager();
+
         for (final String guid : new String[] { GUID_GUEST, GUID1, GUID2, GUID3 }) {
-            testCondition(new CourseQuery().enrolled(guid), new Condition() {
+            testCondition(em, new CourseQuery().enrolled(guid), new Condition() {
                 @Override
                 public boolean test(final Course course) {
                     return course.isEnrolled(guid);
                 }
             });
         }
+
+        closeEntityManager(em);
     }
 
     @Test
     public void testPendingOrEnrolled() {
+        final EntityManager em = getEntityManager();
+
         for (final String guid : new String[] { GUID_GUEST, GUID1, GUID2, GUID3 }) {
-            testCondition(new CourseQuery().enrolled(guid).pending(guid), new Condition() {
+            testCondition(em, new CourseQuery().enrolled(guid).pending(guid), new Condition() {
                 @Override
                 public boolean test(final Course course) {
                     return course.isEnrolled(guid) || course.isPending(guid);
                 }
             });
         }
+
+        closeEntityManager(em);
     }
 
     @Test
     public void testVisibleTo() {
+        final EntityManager em = getEntityManager();
+
         for (final String guid : new String[] { GUID_GUEST, GUID1, GUID2, GUID3 }) {
-            testCondition(new CourseQuery().visibleTo(guid), new Condition() {
+            testCondition(em, new CourseQuery().visibleTo(guid), new Condition() {
                 @Override
                 public boolean test(final Course course) {
                     return course.isVisibleTo(guid);
                 }
             });
         }
+
+        closeEntityManager(em);
     }
 
     @Test
     public void testContentVisibleTo() {
+        final EntityManager em = getEntityManager();
+
         for (final String guid : new String[] { GUID_GUEST, GUID1, GUID2, GUID3 }) {
-            testCondition(new CourseQuery().contentVisibleTo(guid), new Condition() {
+            testCondition(em, new CourseQuery().contentVisibleTo(guid), new Condition() {
                 @Override
                 public boolean test(final Course course) {
                     return course.isContentVisibleTo(guid);
                 }
             });
         }
+
+        closeEntityManager(em);
     }
-    
-    private void testCondition(final CourseQuery query, final Condition condition) {
+
+    private void testCondition(final EntityManager em, final CourseQuery query, final Condition condition) {
         // generate several test courses
         final List<Course> positive = new ArrayList<Course>();
         final List<Course> negative = new ArrayList<Course>();
@@ -369,7 +382,7 @@ public class CourseQueryTest {
         // don't save db changes
         em.getTransaction().rollback();
     }
-    
+
     private interface Condition {
         boolean test(Course course);
     }

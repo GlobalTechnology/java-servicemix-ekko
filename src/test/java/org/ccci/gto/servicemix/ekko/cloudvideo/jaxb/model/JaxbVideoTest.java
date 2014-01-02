@@ -54,6 +54,7 @@ public class JaxbVideoTest {
             final AwsFile thumb = video.getThumbnail();
             final String thumbUrl = thumb != null && thumb.exists() ? "https://example.com/" + video.getId() : null;
             final XmlPath xml = toXml(new JaxbVideo(video, thumbUrl != null ? new URL(thumbUrl) : null));
+            assertEquals("video", xml.getString("video.name()"));
             assertEquals(video.getId(), xml.getLong("video.@id"));
             assertEquals(video.getTitle(), getXmlString(xml, "video.@title"));
             assertEquals(video.getState().name(), xml.getString("video.@state"));

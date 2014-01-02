@@ -1,4 +1,5 @@
 package org.ccci.gto.servicemix.ekko.model;
+
 import static org.ccci.gto.servicemix.ekko.Constants.GUID_GUEST;
 import static org.ccci.gto.servicemix.ekko.TestConstants.GUID1;
 import static org.ccci.gto.servicemix.ekko.TestConstants.GUID2;
@@ -14,7 +15,6 @@ import java.util.Collections;
 import org.junit.Test;
 
 public class CourseTest {
-
     @Test
     public void testEnrollment() {
         // test setting all enrollment states
