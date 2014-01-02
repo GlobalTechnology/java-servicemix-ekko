@@ -30,10 +30,10 @@ import org.ccci.gto.servicemix.ekko.ResourceAlreadyExistsException;
 import org.ccci.gto.servicemix.ekko.ResourceException;
 import org.ccci.gto.servicemix.ekko.ResourceManager;
 import org.ccci.gto.servicemix.ekko.ResourceNotFoundException;
-import org.ccci.gto.servicemix.ekko.jaxb.model.JaxbResource;
+import org.ccci.gto.servicemix.ekko.jaxb.model.JaxbFileResource;
 import org.ccci.gto.servicemix.ekko.jaxb.model.JaxbResources;
 import org.ccci.gto.servicemix.ekko.model.Course;
-import org.ccci.gto.servicemix.ekko.model.Resource;
+import org.ccci.gto.servicemix.ekko.model.FileResource;
 import org.springframework.beans.factory.annotation.Autowired;
 
 @Path(PATH_SESSION + "/courses/" + PATH_COURSE + "/resources")
@@ -68,7 +68,7 @@ public class ResourcesApi extends AbstractApi {
         }
 
         // store the uploaded file
-        final Resource resource;
+        final FileResource resource;
         try {
             // TODO use the Content-Type header
             resource = this.resourceManager.storeResource(course, mimeType, in);
@@ -76,7 +76,7 @@ public class ResourcesApi extends AbstractApi {
             final ResponseBuilder response = Response.status(Status.FORBIDDEN).entity("Resource already exists");
 
             // attach the location of the resource to the response
-            final Resource.PrimaryKey key = e.getResourceKey();
+            final FileResource.PrimaryKey key = e.getResourceKey();
             if (key != null) {
                 response.contentLocation(this.getRequestUriBuilder(uri).path(key.getSha1()).replaceQuery(null).build());
             }
@@ -86,7 +86,7 @@ public class ResourcesApi extends AbstractApi {
 
         // return a created response for the new file
         if (resource != null) {
-            final JaxbResource jaxbResource = new JaxbResource(resource, this.getResourceUriBuilder(uri),
+            final JaxbFileResource jaxbResource = new JaxbFileResource(resource, this.getResourceUriBuilder(uri),
                     this.getUriValues(uri));
             return Response.created(jaxbResource.getUri()).entity(jaxbResource).build();
         }
@@ -115,8 +115,8 @@ public class ResourcesApi extends AbstractApi {
         final UriBuilder resourceUri = this.getResourceUriBuilder(uri);
         final Map<String, Object> values = this.getUriValues(uri);
         final JaxbResources jaxbResources = new JaxbResources();
-        for (final Resource resource : course.getResources()) {
-            jaxbResources.addResource(new JaxbResource(resource, resourceUri, values));
+        for (final FileResource resource : course.getResources()) {
+            jaxbResources.addResource(new JaxbFileResource(resource, resourceUri, values));
         }
 
         // return the resources
@@ -135,13 +135,13 @@ public class ResourcesApi extends AbstractApi {
         // retrieve the requested resource, checking authorization in the
         // process
         final String guid = session.getGuid();
-        final Resource resource;
+        final FileResource resource;
         try {
-            resource = txService.inTransaction(new Callable<Resource>() {
+            resource = txService.inTransaction(new Callable<FileResource>() {
                 @Override
-                public Resource call() throws Exception {
+                public FileResource call() throws Exception {
                     final Course course;
-                    final Resource resource;
+                    final FileResource resource;
                     if ((course = courseManager.getCourse(getCourseId(uri))) != null && course.isVisibleTo(guid)
                             && (resource = course.getResource(getResourceSha1(uri))) != null
                             && resource.isVisibleTo(guid)) {
@@ -201,7 +201,7 @@ public class ResourcesApi extends AbstractApi {
         }
 
         // throw a 404 if the resource doesn't exist
-        final Resource resource = course.getResource(this.getResourceSha1(uri));
+        final FileResource resource = course.getResource(this.getResourceSha1(uri));
         if (resource == null) {
             return Response.status(Status.NOT_FOUND).build();
         }

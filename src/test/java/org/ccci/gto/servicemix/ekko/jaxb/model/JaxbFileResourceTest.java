@@ -12,7 +12,7 @@ import javax.ws.rs.core.MediaType;
 import org.apache.cxf.jaxrs.impl.MetadataMap;
 import org.apache.cxf.jaxrs.provider.JAXBElementProvider;
 import org.apache.cxf.jaxrs.provider.json.JSONProvider;
-import org.ccci.gto.servicemix.ekko.model.Resource;
+import org.ccci.gto.servicemix.ekko.model.FileResource;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,18 +24,18 @@ import com.jayway.restassured.path.xml.XmlPath;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(locations = { "classpath:META-INF/spring/jaxrs.xml" })
-public class JaxbResourceTest {
+public class JaxbFileResourceTest {
     @Autowired
-    JSONProvider<JaxbResource> jsonProvider = null;
+    JSONProvider<JaxbFileResource> jsonProvider = null;
 
     @Autowired
-    JAXBElementProvider<JaxbResource> xmlProvider = null;
+    JAXBElementProvider<JaxbFileResource> xmlProvider = null;
 
     // TODO: @Test
     public void testJsonMarshalling() throws Exception {
         // test xml generation for multiple resource variations
-        for (final Resource resource : generateFileResources()) {
-            final JsonPath json = toJson(new JaxbResource(resource));
+        for (final FileResource resource : generateFileResources()) {
+            final JsonPath json = toJson(new JaxbFileResource(resource));
             assertEquals(resource.getSha1(), json.getString("resource.@sha1"));
             assertEquals(resource.getSize(), json.getLong("resource.@size"));
             assertEquals(resource.isPublished(), json.getBoolean("resource.@published"));
@@ -46,26 +46,26 @@ public class JaxbResourceTest {
     @Test
     public void testXmlMarshalling() throws Exception {
         // test xml generation for multiple resource variations
-        for (final Resource resource : generateFileResources()) {
-            final XmlPath xml = toXml(new JaxbResource(resource));
-            assertEquals("resource", xml.getString("resource.name()"));
-            assertEquals(resource.getSha1(), getXmlString(xml, "resource.@sha1"));
-            assertEquals(resource.getSize(), xml.getLong("resource.@size"));
-            assertEquals(resource.isPublished(), xml.getBoolean("resource.@published"));
+        for (final FileResource resource : generateFileResources()) {
+            final XmlPath xml = toXml(new JaxbFileResource(resource));
+            assertEquals("file", xml.getString("file.name()"));
+            assertEquals(resource.getSha1(), getXmlString(xml, "file.@sha1"));
+            assertEquals(resource.getSize(), xml.getLong("file.@size"));
+            assertEquals(resource.isPublished(), xml.getBoolean("file.@published"));
             // TODO: test uri generation & output
         }
     }
 
-    private JsonPath toJson(final JaxbResource obj) throws Exception {
+    private JsonPath toJson(final JaxbFileResource obj) throws Exception {
         final ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        jsonProvider.writeTo(obj, JaxbResource.class, JaxbResource.class, new Annotation[0],
+        jsonProvider.writeTo(obj, JaxbFileResource.class, JaxbFileResource.class, new Annotation[0],
                 MediaType.APPLICATION_JSON_TYPE, new MetadataMap<String, Object>(), baos);
         return new JsonPath(baos.toString());
     }
 
-    private XmlPath toXml(final JaxbResource obj) throws Exception {
+    private XmlPath toXml(final JaxbFileResource obj) throws Exception {
         final ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        xmlProvider.writeTo(obj, JaxbResource.class, JaxbResource.class, new Annotation[0],
+        xmlProvider.writeTo(obj, JaxbFileResource.class, JaxbFileResource.class, new Annotation[0],
                 MediaType.APPLICATION_XML_TYPE, new MetadataMap<String, Object>(), baos);
         return new XmlPath(baos.toString());
     }

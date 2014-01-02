@@ -18,7 +18,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.output.CountingOutputStream;
 import org.apache.commons.lang.StringUtils;
 import org.ccci.gto.servicemix.ekko.model.Course;
-import org.ccci.gto.servicemix.ekko.model.Resource;
+import org.ccci.gto.servicemix.ekko.model.FileResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -47,7 +47,7 @@ public class MojiResourceManager implements ResourceManager {
     }
 
     @Override
-    public Resource storeResource(final Course course, String mimeType, final InputStream raw)
+    public FileResource storeResource(final Course course, String mimeType, final InputStream raw)
             throws ResourceAlreadyExistsException {
         try {
             // get temporary file
@@ -88,7 +88,7 @@ public class MojiResourceManager implements ResourceManager {
 
             // create new resource object
             final String sha1 = DatatypeConverter.printHexBinary(out.getMessageDigest().digest());
-            final Resource resource = new Resource(course, sha1);
+            final FileResource resource = new FileResource(course, sha1);
             resource.setMimeType(mimeType);
             resource.setSize(size);
 
@@ -145,7 +145,7 @@ public class MojiResourceManager implements ResourceManager {
     }
 
     @Override
-    public InputStream loadResource(final Resource resource) throws ResourceException {
+    public InputStream loadResource(final FileResource resource) throws ResourceException {
         try {
             // return an InputStream for the specified resource
             return new MojiInputStreamCommand(this.moji.getFile(resource.getMogileFsKey())).execute();
@@ -158,7 +158,7 @@ public class MojiResourceManager implements ResourceManager {
     }
 
     @Override
-    public void removeResource(final Resource resource) {
+    public void removeResource(final FileResource resource) {
         // get the MogileFS file for the specified resource
         final MojiFile file = this.moji.getFile(resource.getMogileFsKey());
 
@@ -177,7 +177,7 @@ public class MojiResourceManager implements ResourceManager {
     @Override
     public void removeUnpublishedResources(final Course course) {
         if (course != null) {
-            for (final Resource resource : course.getResources()) {
+            for (final FileResource resource : course.getResources()) {
                 if (!resource.isPublished()) {
                     this.removeResource(resource);
                 }
@@ -186,7 +186,7 @@ public class MojiResourceManager implements ResourceManager {
     }
 
     @Override
-    public Resource generateCourseZip(final Course course) {
+    public FileResource generateCourseZip(final Course course) {
         try {
             // get temporary file
             final MojiFile file = this.getTmpMojiFile(course);
@@ -216,7 +216,7 @@ public class MojiResourceManager implements ResourceManager {
                 // add all resources specified in the manifest
                 for (final Element node : DomUtils.getElements(manifest, "/ekko:course/ekko:resources/ekko:resource")) {
                     // find the specified resource
-                    final Resource resource = course.getResource(node.getAttribute("sha1"));
+                    final FileResource resource = course.getResource(node.getAttribute("sha1"));
 
                     // add zip entry for the current resource
                     final ZipEntry entry = new ZipEntry(node.getAttribute("file"));
@@ -259,7 +259,7 @@ public class MojiResourceManager implements ResourceManager {
             }
 
             // create resource entry for the zip file
-            final Resource resource = new Resource(course, DatatypeConverter.printHexBinary(digest.getMessageDigest()
+            final FileResource resource = new FileResource(course, DatatypeConverter.printHexBinary(digest.getMessageDigest()
                     .digest()));
             resource.setMimeType("application/zip");
             resource.setSize(size.getByteCount());
@@ -326,8 +326,8 @@ public class MojiResourceManager implements ResourceManager {
         }.execute();
     }
 
-    private void renameMojiFile(final MojiFile file, final Resource resource) throws IOException {
-        final Resource.PrimaryKey key = resource.getKey();
+    private void renameMojiFile(final MojiFile file, final FileResource resource) throws IOException {
+        final FileResource.PrimaryKey key = resource.getKey();
         final String newName = "course/" + key.getCourseId() + "/resource/" + key.getSha1();
         new MojiCommand<Object>(file) {
             @Override

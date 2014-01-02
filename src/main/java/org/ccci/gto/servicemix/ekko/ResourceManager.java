@@ -3,16 +3,16 @@ package org.ccci.gto.servicemix.ekko;
 import java.io.InputStream;
 
 import org.ccci.gto.servicemix.ekko.model.Course;
-import org.ccci.gto.servicemix.ekko.model.Resource;
+import org.ccci.gto.servicemix.ekko.model.FileResource;
 
 public interface ResourceManager {
-    Resource storeResource(Course course, String mimeType, InputStream in) throws ResourceAlreadyExistsException;
+    FileResource storeResource(Course course, String mimeType, InputStream in) throws ResourceAlreadyExistsException;
 
-    InputStream loadResource(Resource resource) throws ResourceException;
+    InputStream loadResource(FileResource resource) throws ResourceException;
 
-    void removeResource(Resource resource);
+    void removeResource(FileResource resource);
 
     void removeUnpublishedResources(Course course);
 
-    Resource generateCourseZip(Course course);
+    FileResource generateCourseZip(Course course);
 }

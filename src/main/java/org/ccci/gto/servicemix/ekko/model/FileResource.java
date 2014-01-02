@@ -10,12 +10,14 @@ import javax.persistence.FetchType;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.MapsId;
+import javax.persistence.Table;
 
 import org.apache.openjpa.persistence.jdbc.ForeignKey;
 import org.apache.openjpa.persistence.jdbc.ForeignKeyAction;
 
 @Entity
-public class Resource extends AbstractResource {
+@Table(name = "Resource")
+public class FileResource extends AbstractResource {
     @EmbeddedId
     private PrimaryKey key;
 
@@ -35,19 +37,19 @@ public class Resource extends AbstractResource {
     @Column(nullable = false, updatable = false)
     private long size = 0;
 
-    public Resource() {
+    public FileResource() {
         this(new PrimaryKey());
     }
 
-    public Resource(final Course course, final String sha1) {
+    public FileResource(final Course course, final String sha1) {
         this(new PrimaryKey(course, sha1));
     }
 
-    public Resource(final Long courseId, final String sha1) {
+    public FileResource(final Long courseId, final String sha1) {
         this(new PrimaryKey(courseId, sha1));
     }
 
-    public Resource(final PrimaryKey key) {
+    public FileResource(final PrimaryKey key) {
         this.key = key;
     }
 

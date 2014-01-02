@@ -10,10 +10,10 @@ import javax.ws.rs.core.UriBuilder;
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlRootElement;
 
-import org.ccci.gto.servicemix.ekko.model.Resource;
+import org.ccci.gto.servicemix.ekko.model.FileResource;
 
-@XmlRootElement(name = "resource")
-public class JaxbResource extends JaxbAbstractResource {
+@XmlRootElement(name = "file")
+public class JaxbFileResource extends JaxbAbstractResource {
     @XmlAttribute(name = "sha1")
     private String sha1;
 
@@ -23,14 +23,14 @@ public class JaxbResource extends JaxbAbstractResource {
     @XmlAttribute(name = "uri")
     private URI uri;
 
-    public JaxbResource() {
+    public JaxbFileResource() {
     }
 
-    public JaxbResource(final Resource resource) {
+    public JaxbFileResource(final FileResource resource) {
         this(resource, null, null);
     }
 
-    public JaxbResource(final Resource resource, final UriBuilder uri, final Map<String, Object> uriValues) {
+    public JaxbFileResource(final FileResource resource, final UriBuilder uri, final Map<String, Object> uriValues) {
         super(resource);
         this.sha1 = resource.getSha1();
         this.size = resource.getSize();

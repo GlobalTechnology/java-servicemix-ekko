@@ -16,7 +16,7 @@ import org.apache.cxf.jaxrs.impl.MetadataMap;
 import org.apache.cxf.jaxrs.provider.JAXBElementProvider;
 import org.apache.cxf.jaxrs.provider.json.JSONProvider;
 import org.ccci.gto.servicemix.ekko.model.AbstractResource;
-import org.ccci.gto.servicemix.ekko.model.Resource;
+import org.ccci.gto.servicemix.ekko.model.FileResource;
 import org.ccci.gto.servicemix.ekko.model.VideoResource;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -39,8 +39,8 @@ public class JaxbResourcesTest {
     private JaxbResources createJaxbResources(final List<AbstractResource> resources) {
         final JaxbResources jaxbResources = new JaxbResources();
         for (final AbstractResource resource : resources) {
-            if (resource instanceof Resource) {
-                jaxbResources.addResource(new JaxbResource((Resource) resource));
+            if (resource instanceof FileResource) {
+                jaxbResources.addResource(new JaxbFileResource((FileResource) resource));
             } else if (resource instanceof VideoResource) {
                 jaxbResources.addResource(new JaxbVideoResource((VideoResource) resource));
             }
@@ -56,7 +56,6 @@ public class JaxbResourcesTest {
         final JsonPath json = toJson(jaxbResources);
 
         fail("json test not implemented yet!!!!!");
-
     }
 
     @Test
@@ -70,17 +69,17 @@ public class JaxbResourcesTest {
         assertEquals("resources", xml.getString("resources.name()"));
 
         // test resources in the generated xml
-        final String base = "resources.'*'.findAll { it.name() == 'resource' || it.name() == 'video' }";
+        final String base = "resources.'*'.findAll { it.name() == 'file' || it.name() == 'video' }";
         xml.setRoot(base);
         assertEquals(resources.size(), xml.getInt("size()"));
         for (int i = 0; i < resources.size(); i++) {
             final AbstractResource resource = resources.get(i);
             xml.setRoot(base + "[" + i + "]");
             assertEquals(resource.isPublished(), xml.getBoolean("@published"));
-            if (resource instanceof Resource) {
-                assertEquals("resource", xml.getString("name()"));
-                assertEquals(((Resource) resource).getSha1(), getXmlString(xml, "@sha1"));
-                assertEquals(((Resource) resource).getSize(), xml.getLong("@size"));
+            if (resource instanceof FileResource) {
+                assertEquals("file", xml.getString("name()"));
+                assertEquals(((FileResource) resource).getSha1(), getXmlString(xml, "@sha1"));
+                assertEquals(((FileResource) resource).getSize(), xml.getLong("@size"));
             } else if (resource instanceof VideoResource) {
                 assertEquals("video", xml.getString("name()"));
                 assertEquals(((VideoResource) resource).getVideoId(), xml.getLong("@id"));

@@ -17,7 +17,7 @@ import javax.persistence.PersistenceContext;
 
 import org.ccci.gto.servicemix.ekko.model.Course;
 import org.ccci.gto.servicemix.ekko.model.Course.CourseQuery;
-import org.ccci.gto.servicemix.ekko.model.Resource;
+import org.ccci.gto.servicemix.ekko.model.FileResource;
 import org.springframework.transaction.annotation.Transactional;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -123,7 +123,7 @@ public class CourseManagerImpl implements CourseManager {
 
         // reset published state of all resources
         // XXX OPTIMIZATION: reset all flags with single update query
-        for (final Resource resource : course.getResources()) {
+        for (final FileResource resource : course.getResources()) {
             resource.setPublished(false);
             resource.setMetaResource(false);
         }
@@ -131,7 +131,7 @@ public class CourseManagerImpl implements CourseManager {
         // mark published resources
         for (final Element element : DomUtils.getElements(manifest,
                 "/ekko:course/ekko:resources//ekko:resource[@type='file']")) {
-            final Resource resource = course.getResource(element.getAttribute("sha1"));
+            final FileResource resource = course.getResource(element.getAttribute("sha1"));
             if (resource != null) {
                 resource.setPublished(true);
             }
@@ -141,7 +141,7 @@ public class CourseManagerImpl implements CourseManager {
         for (final Element element : DomUtils.getElements(manifest,
                 "/ekko:course/ekko:resources//ekko:resource[@id=/ekko:course/ekko:meta//@resource]"
                         + "/descendant-or-self::ekko:resource[@type='file']")) {
-            final Resource resource = course.getResource(element.getAttribute("sha1"));
+            final FileResource resource = course.getResource(element.getAttribute("sha1"));
             if (resource != null) {
                 resource.setMetaResource(true);
             }
@@ -182,7 +182,7 @@ public class CourseManagerImpl implements CourseManager {
 
         // reset published state of all resources
         // XXX OPTIMIZATION: reset all flags with single update query
-        for (final Resource resource : course.getResources()) {
+        for (final FileResource resource : course.getResources()) {
             resource.setPublished(false);
             resource.setMetaResource(false);
         }
@@ -329,13 +329,13 @@ public class CourseManagerImpl implements CourseManager {
 
     @Transactional
     @Override
-    public Resource getResource(final Resource.PrimaryKey key) {
-        return this.em.find(Resource.class, key);
+    public FileResource getResource(final FileResource.PrimaryKey key) {
+        return this.em.find(FileResource.class, key);
     }
 
     @Transactional
     @Override
-    public Resource storeCourseZip(final Course course, final Resource resource) {
+    public FileResource storeCourseZip(final Course course, final FileResource resource) {
         final Course dbCourse = this.em.find(Course.class, course.getId());
 
         if (dbCourse.getZipSha1() == null) {
@@ -349,14 +349,14 @@ public class CourseManagerImpl implements CourseManager {
 
     @Transactional
     @Override
-    public Resource storeResource(final Course course, final Resource resource) {
+    public FileResource storeResource(final Course course, final FileResource resource) {
         this.em.persist(resource);
         return resource;
     }
 
     @Transactional
     @Override
-    public void removeResource(final Resource resource) {
+    public void removeResource(final FileResource resource) {
         this.em.remove(this.em.merge(resource));
     }
 

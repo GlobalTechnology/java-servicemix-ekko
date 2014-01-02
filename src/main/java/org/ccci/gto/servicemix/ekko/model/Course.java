@@ -73,7 +73,7 @@ public class Course {
 
     @OneToMany(mappedBy = "course", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
     @MapKeyColumn(name = "sha1")
-    private Map<String, Resource> resources = new HashMap<String, Resource>();
+    private Map<String, FileResource> resources = new HashMap<String, FileResource>();
 
     @OneToMany(mappedBy = "course", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
     @MapKeyColumn(name = "videoId")
@@ -172,7 +172,7 @@ public class Course {
         }
     }
 
-    public Resource getResource(final String sha1) {
+    public FileResource getResource(final String sha1) {
         if (sha1 == null) {
             return null;
         }
@@ -180,7 +180,7 @@ public class Course {
         return this.resources != null ? this.resources.get(sha1.toLowerCase()) : null;
     }
 
-    public Collection<Resource> getResources() {
+    public Collection<FileResource> getResources() {
         return Collections.unmodifiableCollection(this.resources.values());
     }
 
@@ -196,11 +196,11 @@ public class Course {
         return this.zipSha1;
     }
 
-    public Resource getZip() {
+    public FileResource getZip() {
         return this.getResource(this.zipSha1);
     }
 
-    public void setZip(final Resource zip) {
+    public void setZip(final FileResource zip) {
         if (zip == null) {
             this.zipSha1 = null;
         } else if (this.id == zip.getKey().getCourseId()) {

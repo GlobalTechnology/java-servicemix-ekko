@@ -4,8 +4,8 @@
   <persistence-unit name="org.ccci.gto.servicemix.ekko">
     <class>org.ccci.gto.servicemix.ekko.model.Course</class>
     <class>org.ccci.gto.servicemix.ekko.model.AbstractResource</class>
-    <class>org.ccci.gto.servicemix.ekko.model.Resource</class>
-    <class>org.ccci.gto.servicemix.ekko.model.Resource$PrimaryKey</class>
+    <class>org.ccci.gto.servicemix.ekko.model.FileResource</class>
+    <class>org.ccci.gto.servicemix.ekko.model.FileResource$PrimaryKey</class>
     <class>org.ccci.gto.servicemix.ekko.model.VideoResource</class>
     <class>org.ccci.gto.servicemix.ekko.model.VideoResource$PrimaryKey</class>
     <class>org.ccci.gto.servicemix.ekko.cloudvideo.model.Video</class>

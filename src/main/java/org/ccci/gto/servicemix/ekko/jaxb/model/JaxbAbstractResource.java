@@ -7,7 +7,7 @@ import javax.xml.bind.annotation.XmlSeeAlso;
 import org.ccci.gto.servicemix.ekko.model.AbstractResource;
 
 @XmlRootElement
-@XmlSeeAlso({ JaxbResource.class, JaxbVideoResource.class })
+@XmlSeeAlso({ JaxbFileResource.class, JaxbVideoResource.class })
 public abstract class JaxbAbstractResource {
     @XmlAttribute(name = "published")
     private boolean published = false;
