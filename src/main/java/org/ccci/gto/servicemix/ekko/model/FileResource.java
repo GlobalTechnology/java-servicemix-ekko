@@ -57,7 +57,8 @@ public class FileResource extends Resource {
         return this.key;
     }
 
-    public Course getCourse() {
+    @Override
+    public final Course getCourse() {
         return this.course;
     }
 
@@ -95,11 +96,6 @@ public class FileResource extends Resource {
 
     public void setCrc32(final Long crc32) {
         this.crc32 = crc32;
-    }
-
-    public boolean isVisibleTo(final String guid) {
-        return this.course.isAdmin(guid) || (this.isPublished() && this.course.isContentVisibleTo(guid))
-                || (this.isMetaResource() && this.course.isVisibleTo(guid));
     }
 
     @Embeddable

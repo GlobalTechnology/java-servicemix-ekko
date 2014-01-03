@@ -10,6 +10,8 @@ public abstract class Resource {
     @Column(nullable = false)
     private boolean metaResource = false;
 
+    public abstract Course getCourse();
+
     public boolean isPublished() {
         return this.published;
     }
@@ -24,5 +26,11 @@ public abstract class Resource {
 
     public void setMetaResource(final boolean metaResource) {
         this.metaResource = metaResource;
+    }
+
+    public boolean isVisibleTo(final String guid) {
+        final Course course = this.getCourse();
+        return course.isAdmin(guid) || (this.isPublished() && course.isContentVisibleTo(guid))
+                || (this.isMetaResource() && course.isVisibleTo(guid));
     }
 }

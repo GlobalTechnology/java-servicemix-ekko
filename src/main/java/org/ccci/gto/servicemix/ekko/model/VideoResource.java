@@ -52,6 +52,7 @@ public class VideoResource extends Resource {
         return this.key.courseId;
     }
 
+    @Override
     public final Course getCourse() {
         return this.course;
     }

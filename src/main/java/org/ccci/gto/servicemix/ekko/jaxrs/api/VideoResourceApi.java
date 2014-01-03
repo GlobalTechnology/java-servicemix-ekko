@@ -23,13 +23,15 @@ import org.ccci.gto.servicemix.ekko.cloudvideo.model.AwsFile;
 import org.ccci.gto.servicemix.ekko.cloudvideo.model.AwsOutput;
 import org.ccci.gto.servicemix.ekko.cloudvideo.model.AwsOutput.Type;
 import org.ccci.gto.servicemix.ekko.cloudvideo.model.Video;
+import org.ccci.gto.servicemix.ekko.model.Course;
+import org.ccci.gto.servicemix.ekko.model.VideoResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 @Path(PATH_SESSION + "/courses/" + PATH_COURSE + "/resources/" + PATH_VIDEO)
-public class VideoApi extends AbstractApi {
-    private static final Logger LOG = LoggerFactory.getLogger(VideoApi.class);
+public class VideoResourceApi extends AbstractApi {
+    private static final Logger LOG = LoggerFactory.getLogger(VideoResourceApi.class);
 
     @Autowired
     private AwsController awsController;
@@ -56,7 +58,7 @@ public class VideoApi extends AbstractApi {
                 @Override
                 public AwsOutput call() throws Exception {
                     // find the video
-                    final Video video = getVideo(uri);
+                    final Video video = getVideo(uri, session.getGuid());
                     if (video == null) {
                         return null;
                     }
@@ -101,7 +103,7 @@ public class VideoApi extends AbstractApi {
         }
 
         // get the video
-        final Video video = this.getVideo(uri);
+        final Video video = this.getVideo(uri, session.getGuid());
         if (video != null) {
             final URL thumbUrl = this.awsController.getSignedUrl(video.getThumbnail());
             if (thumbUrl != null) {
@@ -115,8 +117,27 @@ public class VideoApi extends AbstractApi {
         return Response.status(Status.NOT_FOUND).build();
     }
 
-    private Video getVideo(final UriInfo uri) {
-        // TODO: filter video based on course id & access
-        return this.videoManager.getVideo(Long.valueOf(uri.getPathParameters().getFirst(PARAM_VIDEO)));
+    private Video getVideo(final UriInfo uri, final String guid) {
+        try {
+            return this.txService.inTransaction(new Callable<Video>() {
+                @Override
+                public Video call() throws Exception {
+                    // first find the Course & VideoResource
+                    final Course course = courseManager.getCourse(getCourseQuery(uri));
+                    final VideoResource resource = course != null ? course.getVideoResource(Long.parseLong(uri
+                            .getPathParameters().getFirst(PARAM_VIDEO))) : null;
+
+                    // return the video if it exists and the user is authorized to see it
+                    if (resource != null && resource.isVisibleTo(guid)) {
+                        return resource.getVideo();
+                    }
+
+                    return null;
+                }
+            });
+        } catch (final Exception ignored) {
+        }
+
+        return null;
     }
 }
