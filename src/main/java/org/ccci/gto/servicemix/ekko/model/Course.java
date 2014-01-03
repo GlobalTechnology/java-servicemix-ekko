@@ -188,7 +188,7 @@ public class Course {
         return this.videoResources != null ? this.videoResources.get(videoId) : null;
     }
 
-    public Collection<VideoResource> getVideoResource() {
+    public Collection<VideoResource> getVideoResources() {
         return Collections.unmodifiableCollection(this.videoResources.values());
     }
 

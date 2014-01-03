@@ -32,8 +32,10 @@ import org.ccci.gto.servicemix.ekko.ResourceManager;
 import org.ccci.gto.servicemix.ekko.ResourceNotFoundException;
 import org.ccci.gto.servicemix.ekko.jaxb.model.JaxbFileResource;
 import org.ccci.gto.servicemix.ekko.jaxb.model.JaxbResources;
+import org.ccci.gto.servicemix.ekko.jaxb.model.JaxbVideoResource;
 import org.ccci.gto.servicemix.ekko.model.Course;
 import org.ccci.gto.servicemix.ekko.model.FileResource;
+import org.ccci.gto.servicemix.ekko.model.VideoResource;
 import org.springframework.beans.factory.annotation.Autowired;
 
 @Path(PATH_SESSION + "/courses/" + PATH_COURSE + "/resources")
@@ -64,7 +66,7 @@ public class ResourcesApi extends AbstractApi {
         // validate the specified course
         final Course course = this.courseManager.getCourse(this.getCourseQuery(uri).admin(session.getGuid()));
         if (course == null) {
-            return ResponseUtils.unauthorized().build();
+            return Response.status(Status.NOT_FOUND).build();
         }
 
         // store the uploaded file
@@ -105,18 +107,38 @@ public class ResourcesApi extends AbstractApi {
         }
 
         // load the course
-        final Course course = this.courseManager.getCourse(this.getCourseQuery(uri).admin(session.getGuid())
-                .loadResources(true));
+        final Course course;
+        try {
+            course = this.txService.inReadOnlyTransaction(new Callable<Course>() {
+                @Override
+                public Course call() throws Exception {
+                    final Course course = courseManager.getCourse(getCourseQuery(uri).admin(session.getGuid()));
+
+                    // load the file and video resources for this course
+                    if (course != null) {
+                        course.getResources();
+                        course.getVideoResources();
+                    }
+
+                    return course;
+                }
+            });
+        } catch (final Exception e) {
+            return Response.status(Status.NOT_FOUND).build();
+        }
         if (course == null) {
-            return ResponseUtils.unauthorized().build();
+            return Response.status(Status.NOT_FOUND).build();
         }
 
         // generate JAXB objects
         final UriBuilder resourceUri = this.getResourceUriBuilder(uri);
         final Map<String, Object> values = this.getUriValues(uri);
         final JaxbResources jaxbResources = new JaxbResources();
-        for (final FileResource resource : course.getResources()) {
-            jaxbResources.addResource(new JaxbFileResource(resource, resourceUri, values));
+        for (final FileResource file : course.getResources()) {
+            jaxbResources.addResource(new JaxbFileResource(file, resourceUri, values));
+        }
+        for (final VideoResource video : course.getVideoResources()) {
+            jaxbResources.addResource(new JaxbVideoResource(video));
         }
 
         // return the resources

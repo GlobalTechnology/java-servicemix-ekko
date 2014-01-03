@@ -40,6 +40,10 @@ public class VideoResource extends Resource {
         this(new PrimaryKey(course, videoId));
     }
 
+    public VideoResource(final long courseId, final long videoId) {
+        this(new PrimaryKey(courseId, videoId));
+    }
+
     public VideoResource(final PrimaryKey key) {
         this.key = key;
     }
@@ -79,7 +83,7 @@ public class VideoResource extends Resource {
             this(course.getId(), videoId);
         }
 
-        protected PrimaryKey(final long courseId, final long videoId) {
+        public PrimaryKey(final long courseId, final long videoId) {
             this.courseId = courseId;
             this.videoId = videoId;
         }

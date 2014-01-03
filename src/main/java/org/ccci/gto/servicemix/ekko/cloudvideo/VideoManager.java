@@ -1,5 +1,6 @@
 package org.ccci.gto.servicemix.ekko.cloudvideo;
 
+import java.util.Collection;
 import java.util.List;
 
 import javax.persistence.LockModeType;
@@ -19,4 +20,6 @@ public interface VideoManager {
     Video refresh(Video video);
 
     Video refresh(Video video, LockModeType lock);
+
+    void updateCourses(Video video, Collection<Long> toAdd, Collection<Long> toRemove);
 }
