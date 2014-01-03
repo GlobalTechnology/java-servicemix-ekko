@@ -323,9 +323,8 @@ public class CourseApi extends AbstractApi {
         }
 
         // publish the specified course
-        final Course course;
         try {
-            course = this.courseManager.publishCourse(this.getCourseQuery(uri).admin(session.getGuid()));
+            this.courseManager.publishCourse(this.getCourseQuery(uri).admin(session.getGuid()));
         } catch (final CourseNotFoundException e) {
             return ResponseUtils.unauthorized().build();
         } catch (final MultipleManifestExceptions e) {
@@ -337,10 +336,6 @@ public class CourseApi extends AbstractApi {
             errors.addError(e);
             return Response.status(Status.CONFLICT).entity(errors).build();
         }
-
-        // generate a zip file for the published course
-        // TODO: this should be moved to a background thread
-        this.resourceManager.generateCourseZip(course);
 
         // TODO finish implementation
         return Response.ok().build();
