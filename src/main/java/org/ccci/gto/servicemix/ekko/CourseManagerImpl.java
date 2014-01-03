@@ -7,9 +7,7 @@ import static org.ccci.gto.servicemix.ekko.model.Course.ENROLLMENT_OPEN;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import javax.persistence.EntityExistsException;
 import javax.persistence.EntityManager;
@@ -18,6 +16,7 @@ import javax.persistence.PersistenceContext;
 import org.ccci.gto.servicemix.ekko.model.Course;
 import org.ccci.gto.servicemix.ekko.model.Course.CourseQuery;
 import org.ccci.gto.servicemix.ekko.model.FileResource;
+import org.ccci.gto.servicemix.ekko.model.Resource;
 import org.springframework.transaction.annotation.Transactional;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -123,15 +122,30 @@ public class CourseManagerImpl implements CourseManager {
 
         // reset published state of all resources
         // XXX OPTIMIZATION: reset all flags with single update query
-        for (final FileResource resource : course.getResources()) {
+        for (final Resource resource : course.getResources()) {
+            resource.setPublished(false);
+            resource.setMetaResource(false);
+        }
+        for (final Resource resource : course.getVideoResources()) {
             resource.setPublished(false);
             resource.setMetaResource(false);
         }
 
         // mark published resources
         for (final Element element : DomUtils.getElements(manifest,
-                "/ekko:course/ekko:resources//ekko:resource[@type='file']")) {
-            final FileResource resource = course.getResource(element.getAttribute("sha1"));
+                "/ekko:course/ekko:resources//ekko:resource[@type='file' or @type='ecv']")) {
+            final Resource resource;
+            switch (element.getAttribute("type")) {
+            case "file":
+                resource = course.getResource(element.getAttribute("sha1"));
+                break;
+            case "ecv":
+                resource = course.getVideoResource(Long.valueOf(element.getAttribute("videoId")));
+                break;
+            default:
+                continue;
+            }
+
             if (resource != null) {
                 resource.setPublished(true);
             }
@@ -140,8 +154,19 @@ public class CourseManagerImpl implements CourseManager {
         // mark meta resources
         for (final Element element : DomUtils.getElements(manifest,
                 "/ekko:course/ekko:resources//ekko:resource[@id=/ekko:course/ekko:meta//@resource]"
-                        + "/descendant-or-self::ekko:resource[@type='file']")) {
-            final FileResource resource = course.getResource(element.getAttribute("sha1"));
+                        + "/descendant-or-self::ekko:resource[@type='file' or @type='ecv']")) {
+            final Resource resource;
+            switch (element.getAttribute("type")) {
+            case "file":
+                resource = course.getResource(element.getAttribute("sha1"));
+                break;
+            case "ecv":
+                resource = course.getVideoResource(Long.valueOf(element.getAttribute("videoId")));
+                break;
+            default:
+                continue;
+            }
+
             if (resource != null) {
                 resource.setMetaResource(true);
             }
@@ -182,7 +207,11 @@ public class CourseManagerImpl implements CourseManager {
 
         // reset published state of all resources
         // XXX OPTIMIZATION: reset all flags with single update query
-        for (final FileResource resource : course.getResources()) {
+        for (final Resource resource : course.getResources()) {
+            resource.setPublished(false);
+            resource.setMetaResource(false);
+        }
+        for (final Resource resource : course.getVideoResources()) {
             resource.setPublished(false);
             resource.setMetaResource(false);
         }
@@ -374,30 +403,48 @@ public class CourseManagerImpl implements CourseManager {
 
         // validate all resources
         final List<Element> resources = DomUtils.getElements(manifest, "/ekko:course/ekko:resources//ekko:resource");
-        final Set<String> ids = new HashSet<String>();
         for (final Element resource : resources) {
             final String type = resource.getAttribute("type");
-            if ("dynamic".equals(type)) {
-                // make sure multi resources have at least 1 bundled resource
-                if (resource.getElementsByTagNameNS(XMLNS_EKKO, "resource").getLength() == 0) {
-                    // TODO: specific exception?
-                    exceptions.add(new ManifestException("Dynamic resource has no bundled resources"));
+            if (type != null) {
+                switch (type) {
+                case "dynamic":
+                    // make sure multi resources have at least 1 bundled resource
+                    if (resource.getElementsByTagNameNS(XMLNS_EKKO, "resource").getLength() == 0) {
+                        // TODO: specific exception?
+                        exceptions.add(new ManifestException("Dynamic resource has no bundled resources"));
+                    }
+                    break;
+                case "file":
+                    // ensure standard resources have been uploaded to the course
+                    final String sha1 = resource.getAttribute("sha1");
+                    if (course.getResource(sha1) == null) {
+                        exceptions.add(new MissingFileResourceManifestException(sha1));
+                    }
+                    break;
+                case "ecv":
+                    // ensure we have a valid videoId
+                    final String rawId = resource.getAttribute("videoId");
+                    final long videoId;
+                    try {
+                        videoId = Long.parseLong(rawId);
+                    } catch (final NumberFormatException e) {
+                        exceptions.add(new ManifestException("Invalid videoId format: " + rawId));
+                        break;
+                    }
+
+                    if (course.getVideoResource(videoId) == null) {
+                        exceptions.add(new MissingVideoResourceManifestException(videoId));
+                    }
+                    break;
+                case "uri":
+                    // TODO
+                    break;
+                default:
+                    exceptions.add(new ManifestException("unrecognized resource type"));
+                    break;
                 }
-            } else if ("file".equals(type)) {
-                // ensure standard resources have been uploaded to the course
-                final String sha1 = resource.getAttribute("sha1");
-                if (course.getResource(sha1) == null) {
-                    exceptions.add(new MissingResourceManifestException(sha1));
-                }
-            } else if ("uri".equals(type)) {
-                // TODO
             } else {
                 exceptions.add(new ManifestException("unrecognized resource type"));
-            }
-
-            // store the resource id
-            if (resource.hasAttribute("id")) {
-                ids.add(resource.getAttribute("id"));
             }
         }
 
