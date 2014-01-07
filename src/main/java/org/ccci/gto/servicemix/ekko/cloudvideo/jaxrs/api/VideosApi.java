@@ -35,7 +35,7 @@ public class VideosApi extends AbstractApi {
     public Response createVideo(@Context final UriInfo uri, final MultivaluedMap<String, String> form) {
         final Client client = this.getClient(uri);
         if (client == null) {
-            return unauthorized(uri).build();
+            return unauthorized().build();
         }
 
         // create a new video object
@@ -63,7 +63,7 @@ public class VideosApi extends AbstractApi {
     private Response getVideos(@Context final UriInfo uri, final boolean json) {
         final Client client = this.getClient(uri);
         if (client == null) {
-            return unauthorized(uri).build();
+            return unauthorized().build();
         }
 
         // parse & sanitize start and limit

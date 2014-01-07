@@ -25,6 +25,7 @@ import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
+import org.apache.cxf.jaxrs.ext.MessageContext;
 import org.ccci.gto.servicemix.common.model.Session;
 import org.ccci.gto.servicemix.ekko.DomUtils;
 import org.ccci.gto.servicemix.ekko.jaxb.model.JaxbCourse;
@@ -38,11 +39,11 @@ public class CoursesApi extends AbstractApi {
     @POST
     @Consumes(APPLICATION_XML)
     @Produces(APPLICATION_XML)
-    public Response createCourse(@Context final UriInfo uri, final InputStream in) {
+    public Response createCourse(@Context final MessageContext cxt, @Context final UriInfo uri, final InputStream in) {
         // validate the session
         final Session session = this.getSession(uri);
         if (session == null || session.isExpired() || session.isGuest()) {
-            return this.unauthorized(uri).build();
+            return this.unauthorized(cxt, uri).build();
         }
 
         // parse manifest
@@ -62,7 +63,7 @@ public class CoursesApi extends AbstractApi {
         final Map<String, Object> values = new HashMap<String, Object>();
         values.putAll(this.getUriValues(uri));
         values.put(PARAM_COURSE, course.getId());
-        final URI courseUri = this.getCourseUriBuilder(uri).buildFromMap(values);
+        final URI courseUri = this.getCourseUriBuilder(cxt, uri).buildFromMap(values);
         return Response.created(courseUri).entity(new JaxbCourse(course, false, null)).build();
     }
 
@@ -74,12 +75,13 @@ public class CoursesApi extends AbstractApi {
      */
     @GET
     @Produces(APPLICATION_XML)
-    public Response getCourses(@Context final UriInfo uri, @QueryParam(PARAM_START) @DefaultValue("0") int start,
+    public Response getCourses(@Context final MessageContext cxt, @Context final UriInfo uri,
+            @QueryParam(PARAM_START) @DefaultValue("0") int start,
             @QueryParam(PARAM_LIMIT) @DefaultValue("10") int limit) {
         // validate the session
         final Session session = this.getSession(uri);
         if (session == null || session.isExpired()) {
-            return this.unauthorized(uri).build();
+            return this.unauthorized(cxt, uri).build();
         }
 
         // sanitize start and limit
@@ -104,7 +106,7 @@ public class CoursesApi extends AbstractApi {
         jaxbCourses.setStart(start);
         jaxbCourses.setLimit(limit);
         if (size > limit) {
-            final UriBuilder moreUri = this.getRequestUriBuilder(uri);
+            final UriBuilder moreUri = this.getRequestUriBuilder(cxt, uri);
             moreUri.replaceQueryParam(PARAM_START, start + limit).replaceQueryParam(PARAM_LIMIT, limit);
             jaxbCourses.setMoreUri(moreUri.build());
         }

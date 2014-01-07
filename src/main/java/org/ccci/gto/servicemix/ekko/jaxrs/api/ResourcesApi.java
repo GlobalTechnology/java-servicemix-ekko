@@ -23,6 +23,7 @@ import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
+import org.apache.cxf.jaxrs.ext.MessageContext;
 import org.ccci.gto.persistence.tx.TransactionService;
 import org.ccci.gto.servicemix.common.model.Session;
 import org.ccci.gto.servicemix.common.util.ResponseUtils;
@@ -55,12 +56,12 @@ public class ResourcesApi extends AbstractApi {
     }
 
     @POST
-    public Response storeResource(@Context final UriInfo uri, @HeaderParam("Content-Type") final String mimeType,
-            final InputStream in) {
+    public Response storeResource(@Context final MessageContext cxt, @Context final UriInfo uri,
+            @HeaderParam("Content-Type") final String mimeType, final InputStream in) {
         // validate the session
         final Session session = this.getSession(uri);
         if (session == null || session.isExpired() || session.isGuest()) {
-            return this.unauthorized(uri).build();
+            return this.unauthorized(cxt, uri).build();
         }
 
         // validate the specified course
@@ -80,7 +81,8 @@ public class ResourcesApi extends AbstractApi {
             // attach the location of the resource to the response
             final FileResource.PrimaryKey key = e.getResourceKey();
             if (key != null) {
-                response.contentLocation(this.getRequestUriBuilder(uri).path(key.getSha1()).replaceQuery(null).build());
+                response.contentLocation(this.getRequestUriBuilder(cxt, uri).path(key.getSha1()).replaceQuery(null)
+                        .build());
             }
 
             return response.build();
@@ -88,7 +90,7 @@ public class ResourcesApi extends AbstractApi {
 
         // return a created response for the new file
         if (resource != null) {
-            final JaxbFileResource jaxbResource = new JaxbFileResource(resource, this.getResourceUriBuilder(uri),
+            final JaxbFileResource jaxbResource = new JaxbFileResource(resource, this.getResourceUriBuilder(cxt, uri),
                     this.getUriValues(uri));
             return Response.created(jaxbResource.getUri()).entity(jaxbResource).build();
         }
@@ -99,11 +101,11 @@ public class ResourcesApi extends AbstractApi {
 
     @GET
     @Produces(APPLICATION_XML)
-    public Response getResources(@Context final UriInfo uri) {
+    public Response getResources(@Context final MessageContext cxt, @Context final UriInfo uri) {
         // validate the session
         final Session session = this.getSession(uri);
         if (session == null || session.isExpired() || session.isGuest()) {
-            return this.unauthorized(uri).build();
+            return this.unauthorized(cxt, uri).build();
         }
 
         // load the course
@@ -131,7 +133,7 @@ public class ResourcesApi extends AbstractApi {
         }
 
         // generate JAXB objects
-        final UriBuilder resourceUri = this.getResourceUriBuilder(uri);
+        final UriBuilder resourceUri = this.getResourceUriBuilder(cxt, uri);
         final Map<String, Object> values = this.getUriValues(uri);
         final JaxbResources jaxbResources = new JaxbResources();
         for (final FileResource file : course.getResources()) {
@@ -147,15 +149,14 @@ public class ResourcesApi extends AbstractApi {
 
     @GET
     @Path(PATH_RESOURCE_SHA1)
-    public Response getResourceBySha1(@Context final UriInfo uri) {
+    public Response getResourceBySha1(@Context final MessageContext cxt, @Context final UriInfo uri) {
         // validate the session
         final Session session = this.getSession(uri);
         if (session == null || session.isExpired()) {
-            return this.unauthorized(uri).build();
+            return this.unauthorized(cxt, uri).build();
         }
 
-        // retrieve the requested resource, checking authorization in the
-        // process
+        // retrieve the requested resource, checking authorization in the process
         final String guid = session.getGuid();
         final FileResource resource;
         try {
@@ -208,11 +209,11 @@ public class ResourcesApi extends AbstractApi {
 
     @DELETE
     @Path(PATH_RESOURCE_SHA1)
-    public Response deleteResourceBySha1(@Context final UriInfo uri) {
+    public Response deleteResourceBySha1(@Context final MessageContext cxt, @Context final UriInfo uri) {
         // validate the session
         final Session session = this.getSession(uri);
         if (session == null || session.isExpired() || session.isGuest()) {
-            return this.unauthorized(uri).build();
+            return this.unauthorized(cxt, uri).build();
         }
 
         // validate the specified course

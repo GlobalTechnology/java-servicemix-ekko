@@ -10,6 +10,7 @@ import java.util.Map;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
+import org.apache.cxf.jaxrs.ext.MessageContext;
 import org.ccci.gto.servicemix.common.jaxrs.api.CasSessionAwareApi;
 import org.ccci.gto.servicemix.ekko.CourseManager;
 import org.ccci.gto.servicemix.ekko.model.Course.CourseQuery;
@@ -23,12 +24,12 @@ public abstract class AbstractApi extends CasSessionAwareApi {
         this.courseManager = courseManager;
     }
 
-    protected UriBuilder getCourseUriBuilder(final UriInfo uri) {
-        return this.getBaseUriBuilder(uri).path(CourseApi.class);
+    protected UriBuilder getCourseUriBuilder(final MessageContext cxt, final UriInfo uri) {
+        return this.getBaseUriBuilder(cxt, uri).path(CourseApi.class);
     }
 
-    protected UriBuilder getResourceUriBuilder(final UriInfo uri) {
-        return this.getBaseUriBuilder(uri).path(ResourcesApi.class).path(ResourcesApi.class, "getResourceBySha1");
+    protected UriBuilder getResourceUriBuilder(final MessageContext cxt, final UriInfo uri) {
+        return this.getBaseUriBuilder(cxt, uri).path(ResourcesApi.class).path(ResourcesApi.class, "getResourceBySha1");
     }
 
     protected Map<String, Object> getUriValues(final UriInfo uri) {

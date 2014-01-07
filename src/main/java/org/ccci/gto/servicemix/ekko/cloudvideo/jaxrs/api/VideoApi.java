@@ -38,7 +38,7 @@ public class VideoApi extends AbstractApi {
             @FormParam(PARAM_S3_KEY) final String srcKey) {
         final Client client = this.getClient(uri);
         if (client == null) {
-            return unauthorized(uri).build();
+            return unauthorized().build();
         }
 
         // short-circuit if this is an invalid video
@@ -58,7 +58,7 @@ public class VideoApi extends AbstractApi {
     public Response getVideo(@Context final UriInfo uri) {
         final Client client = this.getClient(uri);
         if (client == null) {
-            return unauthorized(uri).build();
+            return unauthorized().build();
         }
 
         final Video video = this.manager.getVideo(this.getVideoQuery(client, uri));
@@ -75,7 +75,7 @@ public class VideoApi extends AbstractApi {
     public Response updateCourses(@Context final UriInfo uri, final MultivaluedMap<String, String> form) {
         final Client client = this.getClient(uri);
         if (client == null) {
-            return unauthorized(uri).build();
+            return unauthorized().build();
         }
 
         // generate toAdd and toRemove Sets

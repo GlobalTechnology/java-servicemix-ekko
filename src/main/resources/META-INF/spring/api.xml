@@ -5,7 +5,7 @@
                       http://cxf.apache.org/jaxrs http://cxf.apache.org/schemas/jaxrs.xsd">
 
   <!-- Current Endpoints -->
-  <jaxrs:server address="${url.servicemix:}/ekko">
+  <jaxrs:server address="${url.servicemix:}/ekko" publishedEndpointUrl="${ekko.base.uri}">
     <jaxrs:providers>
       <ref bean="jaxbProvider" />
       <ref bean="jsonProvider" />
@@ -28,7 +28,7 @@
   </jaxrs:server>
 
   <!-- Versioned Endpoints -->
-  <jaxrs:server address="${url.servicemix:}/ekko/v1">
+  <jaxrs:server address="${url.servicemix:}/ekko/v1" publishedEndpointUrl="${ekko.base.uri}v1/">
     <jaxrs:providers>
       <ref bean="jaxbProvider" />
       <ref bean="jsonProvider" />
@@ -52,7 +52,6 @@
 
   <bean id="api.base" abstract="true" class="org.ccci.gto.servicemix.common.jaxrs.api.AbstractApi">
     <property name="authRealm" value="ekko" />
-    <property name="baseUri" value="${ekko.base.uri}" />
     <property name="apiGroup" value="${api.group:ekko}" />
   </bean>
 

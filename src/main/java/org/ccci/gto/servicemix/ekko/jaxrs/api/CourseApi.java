@@ -28,6 +28,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
 
+import org.apache.cxf.jaxrs.ext.MessageContext;
 import org.ccci.gto.persistence.tx.TransactionService;
 import org.ccci.gto.servicemix.common.model.Session;
 import org.ccci.gto.servicemix.common.util.ResponseUtils;
@@ -84,11 +85,11 @@ public class CourseApi extends AbstractApi {
      */
     @GET
     @Produces(APPLICATION_XML)
-    public Response getCourse(@Context final UriInfo uri) {
+    public Response getCourse(@Context final MessageContext cxt, @Context final UriInfo uri) {
         // validate the session
         final Session session = this.getSession(uri);
         if (session == null || session.isExpired()) {
-            return this.unauthorized(uri).build();
+            return this.unauthorized(cxt, uri).build();
         }
 
         // retrieve course
@@ -106,11 +107,11 @@ public class CourseApi extends AbstractApi {
     @GET
     @Path("settings")
     @Produces({ APPLICATION_XML, APPLICATION_JSON })
-    public Response getSettings(@Context final UriInfo uri) {
+    public Response getSettings(@Context final MessageContext cxt, @Context final UriInfo uri) {
         // validate the session
         final Session session = this.getSession(uri);
         if (session == null || session.isExpired() || session.isGuest()) {
-            return this.unauthorized(uri).build();
+            return this.unauthorized(cxt, uri).build();
         }
 
         final Course course = this.courseManager.getCourse(this.getCourseQuery(uri).admin(session.getGuid()));
@@ -124,11 +125,12 @@ public class CourseApi extends AbstractApi {
     @POST
     @Path("settings")
     @Produces({ APPLICATION_XML, APPLICATION_JSON })
-    public Response updateSettings(@Context final UriInfo uri, final MultivaluedMap<String, String> form) {
+    public Response updateSettings(@Context final MessageContext cxt, @Context final UriInfo uri,
+            final MultivaluedMap<String, String> form) {
         // validate the session
         final Session session = this.getSession(uri);
         if (session == null || session.isExpired() || session.isGuest()) {
-            return this.unauthorized(uri).build();
+            return this.unauthorized(cxt, uri).build();
         }
 
         try {
@@ -165,11 +167,11 @@ public class CourseApi extends AbstractApi {
     @POST
     @Path("enroll")
     @Produces(APPLICATION_XML)
-    public Response enroll(@Context final UriInfo uri) {
+    public Response enroll(@Context final MessageContext cxt, @Context final UriInfo uri) {
         // validate the session
         final Session session = this.getSession(uri);
         if (session == null || session.isExpired() || session.isGuest()) {
-            return this.unauthorized(uri).build();
+            return this.unauthorized(cxt, uri).build();
         }
 
         // generate the CourseQuery
@@ -192,11 +194,11 @@ public class CourseApi extends AbstractApi {
     @POST
     @Path("unenroll")
     @Produces(APPLICATION_XML)
-    public Response unenroll(@Context final UriInfo uri) {
+    public Response unenroll(@Context final MessageContext cxt, @Context final UriInfo uri) {
         // validate the session
         final Session session = this.getSession(uri);
         if (session == null || session.isExpired() || session.isGuest()) {
-            return this.unauthorized(uri).build();
+            return this.unauthorized(cxt, uri).build();
         }
 
         // generate the CourseQuery
@@ -213,7 +215,7 @@ public class CourseApi extends AbstractApi {
         // return success response
         // return the course xml if we can still see it
         final Response response;
-        if ((response = this.getCourse(uri)) != null && response.getStatus() == 200) {
+        if ((response = this.getCourse(cxt, uri)) != null && response.getStatus() == 200) {
             return response;
         }
         // otherwise return a simple OK response
@@ -223,11 +225,11 @@ public class CourseApi extends AbstractApi {
     }
 
     @DELETE
-    public Response deleteCourse(@Context final UriInfo uri) {
+    public Response deleteCourse(@Context final MessageContext cxt, @Context final UriInfo uri) {
         // validate the session
         final Session session = this.getSession(uri);
         if (session == null || session.isExpired() || session.isGuest()) {
-            return this.unauthorized(uri).build();
+            return this.unauthorized(cxt, uri).build();
         }
 
         // generate the CourseQuery
@@ -257,11 +259,11 @@ public class CourseApi extends AbstractApi {
     @GET
     @Path("manifest")
     @Produces(APPLICATION_XML)
-    public Response getManifest(@Context final UriInfo uri) {
+    public Response getManifest(@Context final MessageContext cxt, @Context final UriInfo uri) {
         // validate the session
         final Session session = this.getSession(uri);
         if (session == null || session.isExpired()) {
-            return this.unauthorized(uri).build();
+            return this.unauthorized(cxt, uri).build();
         }
 
         // retrieve course
@@ -289,11 +291,11 @@ public class CourseApi extends AbstractApi {
     @PUT
     @Path("manifest")
     @Consumes(APPLICATION_XML)
-    public Response updateManifest(@Context final UriInfo uri, final InputStream in) {
+    public Response updateManifest(@Context final MessageContext cxt, @Context final UriInfo uri, final InputStream in) {
         // validate the session
         final Session session = this.getSession(uri);
         if (session == null || session.isExpired() || session.isGuest()) {
-            return this.unauthorized(uri).build();
+            return this.unauthorized(cxt, uri).build();
         }
 
         // parse manifest
@@ -315,11 +317,11 @@ public class CourseApi extends AbstractApi {
 
     @POST
     @Path("publish")
-    public Response publish(@Context final UriInfo uri) {
+    public Response publish(@Context final MessageContext cxt, @Context final UriInfo uri) {
         // validate the session
         final Session session = this.getSession(uri);
         if (session == null || session.isExpired() || session.isGuest()) {
-            return this.unauthorized(uri).build();
+            return this.unauthorized(cxt, uri).build();
         }
 
         // publish the specified course
@@ -344,11 +346,11 @@ public class CourseApi extends AbstractApi {
     @GET
     @Path("admins")
     @Produces(APPLICATION_XML)
-    public Response listAdmins(@Context final UriInfo uri) {
+    public Response listAdmins(@Context final MessageContext cxt, @Context final UriInfo uri) {
         // validate the session
         final Session session = this.getSession(uri);
         if (session == null || session.isExpired() || session.isGuest()) {
-            return this.unauthorized(uri).build();
+            return this.unauthorized(cxt, uri).build();
         }
 
         // retrieve the course
@@ -367,11 +369,12 @@ public class CourseApi extends AbstractApi {
     @POST
     @Path("admins")
     @Produces(APPLICATION_XML)
-    public Response updateAdmins(@Context final UriInfo uri, final MultivaluedMap<String, String> form) {
+    public Response updateAdmins(@Context final MessageContext cxt, @Context final UriInfo uri,
+            final MultivaluedMap<String, String> form) {
         // validate the session
         final Session session = this.getSession(uri);
         if (session == null || session.isExpired() || session.isGuest()) {
-            return this.unauthorized(uri).build();
+            return this.unauthorized(cxt, uri).build();
         }
 
         // generate toAdd and toRemove Sets
@@ -404,11 +407,11 @@ public class CourseApi extends AbstractApi {
     @GET
     @Path("enrolled")
     @Produces(APPLICATION_XML)
-    public Response listEnrolled(@Context final UriInfo uri) {
+    public Response listEnrolled(@Context final MessageContext cxt, @Context final UriInfo uri) {
         // validate the session
         final Session session = this.getSession(uri);
         if (session == null || session.isExpired() || session.isGuest()) {
-            return this.unauthorized(uri).build();
+            return this.unauthorized(cxt, uri).build();
         }
 
         // retrieve the course
@@ -427,11 +430,12 @@ public class CourseApi extends AbstractApi {
     @POST
     @Path("enrolled")
     @Produces(APPLICATION_XML)
-    public Response updateEnrolled(@Context final UriInfo uri, final MultivaluedMap<String, String> form) {
+    public Response updateEnrolled(@Context final MessageContext cxt, @Context final UriInfo uri,
+            final MultivaluedMap<String, String> form) {
         // validate the session
         final Session session = this.getSession(uri);
         if (session == null || session.isExpired() || session.isGuest()) {
-            return this.unauthorized(uri).build();
+            return this.unauthorized(cxt, uri).build();
         }
 
         // generate toAdd and toRemove Sets
@@ -463,11 +467,11 @@ public class CourseApi extends AbstractApi {
     @GET
     @Path("pending")
     @Produces(APPLICATION_XML)
-    public Response listPending(@Context final UriInfo uri) {
+    public Response listPending(@Context final MessageContext cxt, @Context final UriInfo uri) {
         // validate the session
         final Session session = this.getSession(uri);
         if (session == null || session.isExpired() || session.isGuest()) {
-            return this.unauthorized(uri).build();
+            return this.unauthorized(cxt, uri).build();
         }
 
         // retrieve the course
@@ -486,11 +490,12 @@ public class CourseApi extends AbstractApi {
     @POST
     @Path("pending")
     @Produces(APPLICATION_XML)
-    public Response updatePending(@Context final UriInfo uri, final MultivaluedMap<String, String> form) {
+    public Response updatePending(@Context final MessageContext cxt, @Context final UriInfo uri,
+            final MultivaluedMap<String, String> form) {
         // validate the session
         final Session session = this.getSession(uri);
         if (session == null || session.isExpired() || session.isGuest()) {
-            return this.unauthorized(uri).build();
+            return this.unauthorized(cxt, uri).build();
         }
 
         // generate toAdd and toRemove Sets
@@ -521,11 +526,11 @@ public class CourseApi extends AbstractApi {
 
     @GET
     @Path("zip")
-    public Response getCourseZip(@Context final UriInfo uri) {
+    public Response getCourseZip(@Context final MessageContext cxt, @Context final UriInfo uri) {
         // validate the session
         final Session session = this.getSession(uri);
         if (session == null || session.isExpired()) {
-            return this.unauthorized(uri).build();
+            return this.unauthorized(cxt, uri).build();
         }
 
         // find the course
@@ -544,6 +549,6 @@ public class CourseApi extends AbstractApi {
         // redirect to the actual location of the zip
         final Map<String, Object> values = this.getUriValues(uri);
         values.put(PARAM_RESOURCE_SHA1, zipSha1);
-        return Response.temporaryRedirect(this.getResourceUriBuilder(uri).buildFromMap(values)).build();
+        return Response.temporaryRedirect(this.getResourceUriBuilder(cxt, uri).buildFromMap(values)).build();
     }
 }

@@ -15,6 +15,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
 
+import org.apache.cxf.jaxrs.ext.MessageContext;
 import org.ccci.gto.persistence.tx.TransactionService;
 import org.ccci.gto.servicemix.common.model.Session;
 import org.ccci.gto.servicemix.ekko.cloudvideo.AwsController;
@@ -44,11 +45,11 @@ public class VideoResourceApi extends AbstractApi {
 
     @GET
     @Path("download")
-    public Response downloadVideo(@Context final UriInfo uri) {
+    public Response downloadVideo(@Context final MessageContext cxt, @Context final UriInfo uri) {
         // validate the session
         final Session session = this.getSession(uri);
         if (session == null || session.isExpired()) {
-            return this.unauthorized(uri).build();
+            return this.unauthorized(cxt, uri).build();
         }
 
         // generate URL for the requested video
@@ -95,11 +96,11 @@ public class VideoResourceApi extends AbstractApi {
 
     @GET
     @Path("thumbnail")
-    public Response getThumbnail(@Context final UriInfo uri) {
+    public Response getThumbnail(@Context final MessageContext cxt, @Context final UriInfo uri) {
         // validate the session
         final Session session = this.getSession(uri);
         if (session == null || session.isExpired()) {
-            return this.unauthorized(uri).build();
+            return this.unauthorized(cxt, uri).build();
         }
 
         // get the video
