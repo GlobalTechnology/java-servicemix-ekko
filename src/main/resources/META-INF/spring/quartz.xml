@@ -20,9 +20,7 @@
   </bean>
 
   <bean id="trigger.base" abstract="true" class="org.springframework.scheduling.quartz.SimpleTriggerBean">
-    <!-- 30 seconds after bundle starts -->
-    <property name="startDelay" value="5000" />
-    <property name="repeatInterval" value="300000" /><!-- Once every 5 minutes -->
+    <property name="repeatInterval" value="30000" /><!-- Once every 30 seconds -->
   </bean>
 
   <bean id="trigger.processUploads" parent="trigger.base">
@@ -44,6 +42,7 @@
   </bean>
 
   <bean id="trigger.processOldEncodingJobs" parent="trigger.base">
+    <property name="repeatInterval" value="300000" /><!-- Once every 5 minutes -->
     <property name="jobDetail">
       <bean parent="job.base">
         <property name="name" value="processOldEncodingJobs" />
@@ -53,6 +52,7 @@
   </bean>
 
   <bean id="trigger.processDeletions" parent="trigger.base">
+    <property name="repeatInterval" value="1800000" /><!-- Once every 30 minutes -->
     <property name="jobDetail">
       <bean parent="job.base">
         <property name="name" value="processDeletions" />

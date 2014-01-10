@@ -66,10 +66,10 @@ public class AwsController {
     private static final int DELETIONS_FILES_SLICE_SIZE = 1000;
     private static final int UPLOADS_SLICE_SIZE = 100;
     private static final int CHECK_ENCODES_SLICE_SIZE = 100;
-    private static final int START_ENCODE_SLICE_SIZE = 100;
     private static final int OLD_ENCODES_SLICE_SIZE = 100;
 
     private static final long DEFAULT_PRESIGNED_URL_MIN_AGE = 6 * 60 * 60 * 1000;
+    private static final long DEFAULT_STALE_JOB_CHECK_AGE = 6 * 60 * 60 * 1000;
 
     @Autowired(required = false)
     private SchedulerFactoryBean scheduler;
@@ -338,7 +338,7 @@ public class AwsController {
     }
 
     public void processOldEncodingJobs() {
-        final Date oldDate = new Date(System.currentTimeMillis() - (24 * 60 * 60 * 1000));
+        final Date oldDate = new Date(System.currentTimeMillis() - DEFAULT_STALE_JOB_CHECK_AGE);
 
         // fetch a list of old jobs that are still "encoding"
         final List<Video> encoding;
