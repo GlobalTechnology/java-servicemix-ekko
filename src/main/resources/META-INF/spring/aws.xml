@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd">
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:util="http://www.springframework.org/schema/util"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+                      http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-3.0.xsd">
   <bean id="aws.credentials" class="com.amazonaws.auth.BasicAWSCredentials">
     <constructor-arg index="0" value="${aws.accessKey}" />
     <constructor-arg index="1" value="${aws.secretKey}" />
@@ -14,6 +16,10 @@
     <constructor-arg index="0" ref="aws.credentials" />
   </bean>
 
+  <bean id="aws.sns" class="com.amazonaws.services.sns.AmazonSNSClient">
+    <constructor-arg index="0" ref="aws.credentials" />
+  </bean>
+
   <bean id="aws.controller" class="org.ccci.gto.servicemix.ekko.cloudvideo.AwsController">
     <property name="s3" ref="aws.s3" />
     <property name="transcoder" ref="aws.et" />
@@ -22,4 +28,10 @@
     <property name="awsS3BucketMasters" value="${aws.s3.bucket.masters}" />
     <property name="awsS3BucketEncoded" value="${aws.s3.bucket.encoded}" />
   </bean>
+
+  <util:map id="snsNotificationHandlers">
+    <entry key="${aws.sns.topic.et.job.completed:}">
+      <bean class="org.ccci.gto.servicemix.ekko.cloudvideo.AwsEtJobSnsNotificationHandler" />
+    </entry>
+  </util:map>
 </beans>

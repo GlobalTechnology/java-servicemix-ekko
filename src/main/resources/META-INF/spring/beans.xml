@@ -13,6 +13,7 @@
   <osgi:reference id="clientManager" interface="org.ccci.gto.servicemix.common.ClientManager" />
   <osgi:reference id="sessionManager" interface="org.ccci.gto.servicemix.common.SessionManager" />
   <osgi:reference id="ticketValidator" interface="org.jasig.cas.client.validation.TicketValidator" />
+  <osgi:reference id="awsModelManager" interface="org.ccci.gto.servicemix.common.aws.AwsModelManager" />
 
   <!-- various configuration beans -->
   <bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">

@@ -24,6 +24,9 @@
       <!-- Ekko Cloud Videos -->
       <ref local="api.videos" />
       <ref local="api.video" />
+
+      <!-- Amazon Endpoints -->
+      <ref local="api.aws.sns" />
     </jaxrs:serviceBeans>
   </jaxrs:server>
 
@@ -47,6 +50,9 @@
       <!-- Ekko Cloud Videos -->
       <ref local="api.videos" />
       <ref local="api.video" />
+
+      <!-- Amazon Endpoints -->
+      <ref local="api.aws.sns" />
     </jaxrs:serviceBeans>
   </jaxrs:server>
 
@@ -78,4 +84,9 @@
   <!-- Ekko Cloud Videos -->
   <bean id="api.videos" parent="api.base" class="org.ccci.gto.servicemix.ekko.cloudvideo.jaxrs.api.VideosApi" />
   <bean id="api.video" parent="api.base" class="org.ccci.gto.servicemix.ekko.cloudvideo.jaxrs.api.VideoApi" />
+
+  <!-- Amazon SNS endpoint -->
+  <bean id="api.aws.sns" parent="api.base" class="org.ccci.gto.servicemix.common.aws.jaxrs.api.AwsSnsApi">
+    <property name="handlers" ref="snsNotificationHandlers" />
+  </bean>
 </beans>
