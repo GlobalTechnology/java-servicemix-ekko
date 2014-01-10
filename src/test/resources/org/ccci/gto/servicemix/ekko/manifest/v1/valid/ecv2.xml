@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ekko:course xmlns:ekko="https://ekkoproject.org/manifest" schemaVersion="1" id="6578626371624524501">
+  <ekko:meta>
+    <ekko:title>Test Course</ekko:title>
+    <ekko:author>
+      <ekko:name>Brian Zoetewey</ekko:name>
+      <ekko:email>brian.zoetewey@ccci.org</ekko:email>
+      <ekko:url>http://kにchわ</ekko:url>
+    </ekko:author>
+    <ekko:banner resource="bb94a922-43cb-4bb2-b677-86a926b4db87" />
+    <ekko:description></ekko:description>
+    <ekko:copyright></ekko:copyright>
+  </ekko:meta>
+
+  <ekko:content>
+    <ekko:lesson id="052ab7d4-9b1f-47a2-859a-dc6ba025f6a4" title="">
+      <ekko:media id="3c63c02b-4af3-4aad-8126-36502b0c7b71" type="image" resource="bb94a922-43cb-4bb2-b677-86a926b4db87" />
+      <ekko:media id="cf75b572-4683-4f7a-a6ca-fef76ec51e68" type="image" resource="54d49f3c-20b3-4e9f-b637-97cfd3ad20f3" />
+      <ekko:media id="e34c1992-4621-45a6-9822-015393c9af76" type="video" resource="595def27-f85b-49a9-898b-5ff5f583b546"
+        thumbnail="8cdc682e-7a9e-4114-a639-2febcbc1a1c6" />
+      <ekko:media id="ee79e8f9-b78f-4450-92e7-2aa420a0370d" type="video" resource="595def27-f85b-49a9-898b-5ff5f583b546"
+        thumbnail="595def27-f85b-49a9-898b-5ff5f583b546" />
+      <ekko:text id="26cd1330-5967-4597-ab7b-7d2fe974cc25-0"><![CDATA[]]>
+      </ekko:text>
+    </ekko:lesson>
+  </ekko:content>
+
+  <ekko:resources>
+    <ekko:resource id="bb94a922-43cb-4bb2-b677-86a926b4db87" type="file" file="IMG_20131129_150335-1280x720.jpg"
+      size="100616" sha1="f4d2cd274e6077e04dca4e68e80d342d1da7d79a" mimeType="image/jpeg" />
+    <ekko:resource id="54d49f3c-20b3-4e9f-b637-97cfd3ad20f3" type="file" file="IMG_20131215_202633-copy-1280x720.jpg"
+      size="154973" sha1="3d78b8feaafb2f021ebeebf8efc26dda062f6c6a" mimeType="image/jpeg" />
+    <ekko:resource id="595def27-f85b-49a9-898b-5ff5f583b546" type="ecv" videoId="7373902042413302574" />
+    <ekko:resource id="8cdc682e-7a9e-4114-a639-2febcbc1a1c6" type="file"
+      file="IMG_20131214_183056-TWINKLE-611x720.gif" size="111824" sha1="d373e17990afb684f397e9abeb716f0c82e5a76e"
+      mimeType="image/gif" />
+  </ekko:resources>
+</ekko:course>
