@@ -23,7 +23,7 @@
   <dependencies>
     <dependency>
       <groupId>org.ccci.gto.servicemix</groupId>
-      <artifactId>servicemix-gto-common</artifactId>
+      <artifactId>servicemix-gto-common-core</artifactId>
     </dependency>
 
     <!-- DB/JPA dependencies -->
