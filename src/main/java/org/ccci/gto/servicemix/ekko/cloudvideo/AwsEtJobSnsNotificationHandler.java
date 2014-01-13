@@ -12,11 +12,11 @@ public class AwsEtJobSnsNotificationHandler implements SnsNotificationHandler {
     private static final Logger LOG = LoggerFactory.getLogger(AwsEtJobSnsNotificationHandler.class);
 
     @Autowired
-    private AwsVideoController controller;
+    private VideoStateMachine videoStateMachine;
 
     @Override
     public void handle(final SnsNotification notification) {
-        if (this.controller != null) {
+        if (this.videoStateMachine != null) {
             // parse the Notification Message
             final JSONObject job;
             try {
@@ -27,7 +27,7 @@ public class AwsEtJobSnsNotificationHandler implements SnsNotificationHandler {
             }
 
             if (job != null) {
-                this.controller.processJobUpdateNotification(job.optString("jobId", null));
+                this.videoStateMachine.checkEncodingJob(job.optString("jobId", null));
             }
         }
     }

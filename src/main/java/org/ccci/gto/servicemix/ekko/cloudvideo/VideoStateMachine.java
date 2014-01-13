@@ -255,6 +255,53 @@ public class VideoStateMachine {
         }
     }
 
+    public void checkEncodingJob(final String jobId) {
+        // lookup video containing specified job
+        final Video video;
+        try {
+            video = this.txService.inReadOnlyTransaction(new Callable<Video>() {
+                @Override
+                public Video call() throws Exception {
+                    final TypedQuery<Video> query = em.createNamedQuery("Video.findByJobId", Video.class);
+                    query.setParameter("jobId", jobId);
+                    query.setMaxResults(1);
+                    final List<Video> videos = query.getResultList();
+                    return videos != null && videos.size() > 0 ? videos.get(0) : null;
+                }
+            });
+        } catch (final Exception e) {
+            LOG.debug("Error fetching video", e);
+            return;
+        }
+        if (video == null) {
+            LOG.debug("video for specified jobId not found");
+            return;
+        }
+
+        // lock the video for processing
+        if (!this.acquireLockInState(video, State.ENCODING)) {
+            LOG.debug("unable to get lock for video {}", video.getId());
+            return;
+        }
+
+        try {
+            // check the state of the specified job
+            aws.checkEncodingJob(video, jobId);
+
+            // finish encoding
+            this.finishEncoding(video);
+        } catch (final Exception ignored) {
+        } finally {
+            // release the video lock
+            try {
+                this.releaseLock(video);
+            } catch (final Exception e) {
+                // log exception, but don't propagate it
+                LOG.error("error trying to clear video lock", e);
+            }
+        }
+    }
+
     public void checkOldEncodingJobs() {
         final Date oldDate = new Date(System.currentTimeMillis() - DEFAULT_OLD_JOB_CHECK_AGE);
 

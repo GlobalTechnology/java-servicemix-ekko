@@ -3,7 +3,6 @@ package org.ccci.gto.servicemix.ekko.cloudvideo;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -11,16 +10,13 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 
 import javax.persistence.EntityManager;
-import javax.persistence.LockModeType;
 import javax.persistence.PersistenceContext;
-import javax.persistence.PersistenceException;
 import javax.persistence.TypedQuery;
 
 import org.apache.commons.lang.StringUtils;
 import org.ccci.gto.persistence.tx.TransactionService;
 import org.ccci.gto.servicemix.ekko.cloudvideo.model.AwsFile;
 import org.ccci.gto.servicemix.ekko.cloudvideo.model.AwsFileToDelete;
-import org.ccci.gto.servicemix.ekko.cloudvideo.model.AwsFileToUpload;
 import org.ccci.gto.servicemix.ekko.cloudvideo.model.AwsJob;
 import org.ccci.gto.servicemix.ekko.cloudvideo.model.AwsOutput;
 import org.ccci.gto.servicemix.ekko.cloudvideo.model.AwsOutput.Type;
@@ -110,53 +106,6 @@ public class AwsVideoController {
 
     public final void setAwsS3KeyPrefix(final String prefix) {
         this.awsS3KeyPrefix = prefix;
-    }
-
-    public void processJobUpdateNotification(final String jobId) {
-        // lookup video containing specified job
-        final Video video;
-        try {
-            video = this.txService.inReadOnlyTransaction(new Callable<Video>() {
-                @Override
-                public Video call() throws Exception {
-                    final TypedQuery<Video> query = em.createNamedQuery("Video.findByJobId", Video.class);
-                    query.setParameter("jobId", jobId);
-                    query.setMaxResults(1);
-                    final List<Video> videos = query.getResultList();
-                    return videos != null && videos.size() > 0 ? videos.get(0) : null;
-                }
-            });
-        } catch (final Exception e) {
-            LOG.debug("Error fetching video", e);
-            return;
-        }
-        if (video == null) {
-            LOG.debug("video for specified jobId not found");
-            return;
-        }
-
-        // lock the video for processing
-        if (!this.acquireLockInState(video, State.ENCODING)) {
-            LOG.debug("unable to get lock for video {}", video.getId());
-            return;
-        }
-
-        try {
-            // check the state of the specified job
-            this.checkEncodingJob(video, jobId);
-
-            // finish encoding
-            this.finishEncoding(video);
-        } catch (final Exception ignored) {
-        } finally {
-            // release the video lock
-            try {
-                this.releaseLock(video);
-            } catch (final Exception e) {
-                // log exception, but don't propagate it
-                LOG.error("error trying to clear video lock", e);
-            }
-        }
     }
 
     public void processDeletions() {
@@ -597,64 +546,6 @@ public class AwsVideoController {
         return null;
     }
 
-    private void finishEncoding(final Video orig) {
-        try {
-            this.txService.inTransaction(new Runnable() {
-                @Override
-                public void run() {
-                    final Video video = manager.refresh(orig);
-                    if (video.isInState(State.ENCODING) && video.getJobs().size() == 0) {
-                        video.setState(State.CHECK);
-                    }
-                }
-            });
-        } catch (final Exception ignore) {
-        }
-    }
-
-    private boolean acquireLockInState(final Video video, final State state) {
-        // try acquiring the lock 3 times (retry for tx errors)
-        for (int i = 0; i < 3; i++) {
-            try {
-                return this.txService.inTransaction(new Callable<Boolean>() {
-                    @Override
-                    public Boolean call() throws Exception {
-                        final Video fresh = manager.refresh(video, LockModeType.PESSIMISTIC_WRITE);
-
-                        // ensure the video is in the correct state
-                        if (state != null && !fresh.isInState(state)) {
-                            return false;
-                        }
-
-                        // try getting the lock
-                        return fresh.getLock();
-                    }
-                });
-            } catch (final Exception ignored) {
-            }
-        }
-
-        return false;
-    }
-
-    private void releaseLock(final Video video) {
-        // try acquiring the lock 3 times (retry for tx errors)
-        for (int i = 0; i < 3; i++) {
-            try {
-                this.txService.inTransaction(new Runnable() {
-                    @Override
-                    public void run() {
-                        final Video fresh = manager.refresh(video, LockModeType.PESSIMISTIC_WRITE);
-                        fresh.releaseLock();
-                    }
-                });
-
-                break;
-            } catch (final PersistenceException ignored) {
-            }
-        }
-    }
-
     private static String extractName(final String key) {
         assert key != null : "key cannot be null";
 
@@ -726,11 +617,6 @@ public class AwsVideoController {
     }
 
     @Transactional(propagation = Propagation.MANDATORY)
-    private void delete(final AwsOutput output) {
-        delete(output, Collections.<AwsFile> emptySet());
-    }
-
-    @Transactional(propagation = Propagation.MANDATORY)
     private void delete(final AwsOutput output, final Collection<AwsFile> protectedFiles) {
         // get all the files that need to be deleted
         final Set<AwsFile> files = new HashSet<>();
@@ -748,15 +634,6 @@ public class AwsVideoController {
 
         // delete AwsOutput
         this.em.remove(output);
-    }
-
-    @Transactional(propagation = Propagation.MANDATORY)
-    private void delete(final AwsFileToUpload upload, final boolean deleteFile) {
-        if (deleteFile) {
-            delete(upload.getFile());
-        }
-
-        this.em.remove(upload);
     }
 
     @Transactional(propagation = Propagation.MANDATORY)
