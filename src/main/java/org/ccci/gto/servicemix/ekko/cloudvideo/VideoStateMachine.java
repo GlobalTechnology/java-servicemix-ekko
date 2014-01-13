@@ -201,7 +201,7 @@ public class VideoStateMachine {
         // process all found videos
         for (final Video video : videos) {
             // lock the video for processing
-            if (!this.acquireLockInState(video, State.CHECK)) {
+            if (!this.acquireLock(video, State.CHECK)) {
                 LOG.debug("unable to get lock for video {}", video.getId());
                 continue;
             }
@@ -297,7 +297,7 @@ public class VideoStateMachine {
         }
 
         // lock the video for processing
-        if (!this.acquireLockInState(video, State.ENCODING)) {
+        if (!this.acquireLock(video, State.ENCODING)) {
             LOG.debug("unable to get lock for video {}", video.getId());
             return;
         }
@@ -351,7 +351,7 @@ public class VideoStateMachine {
         boolean checkOutputs = false;
         for (final Video video : encoding) {
             // lock the video for processing
-            if (!this.acquireLockInState(video, State.ENCODING)) {
+            if (!this.acquireLock(video, State.ENCODING)) {
                 LOG.debug("unable to get lock for video {}", video.getId());
                 continue;
             }
@@ -396,11 +396,7 @@ public class VideoStateMachine {
         }
     }
 
-    private boolean acquireLock(final Video video) {
-        return this.acquireLockInState(video, null);
-    }
-
-    private boolean acquireLockInState(final Video video, final State state) {
+    private boolean acquireLock(final Video video, final State... states) {
         // try acquiring the lock 3 times (retry for tx errors)
         for (int i = 0; i < 3; i++) {
             try {
@@ -409,8 +405,14 @@ public class VideoStateMachine {
                     public Boolean call() throws Exception {
                         final Video fresh = manager.refresh(video, LockModeType.PESSIMISTIC_WRITE);
 
-                        // ensure the video is in the correct state
-                        if (state != null && !fresh.isInState(state)) {
+                        // ensure the video is in one of the specified states
+                        boolean validState = states.length == 0;
+                        for (final State state : states) {
+                            if (fresh.isInState(state)) {
+                                validState = true;
+                            }
+                        }
+                        if (!validState) {
                             return false;
                         }
 
