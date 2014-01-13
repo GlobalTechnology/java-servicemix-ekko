@@ -21,14 +21,20 @@ import org.ccci.gto.servicemix.ekko.cloudvideo.model.AwsOutput;
 import org.ccci.gto.servicemix.ekko.cloudvideo.model.AwsOutput.Type;
 import org.ccci.gto.servicemix.ekko.cloudvideo.model.Video;
 import org.ccci.gto.servicemix.ekko.cloudvideo.model.Video.State;
+import org.quartz.Scheduler;
+import org.quartz.SchedulerException;
+import org.quartz.SimpleTrigger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.quartz.SchedulerFactoryBean;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 public class VideoStateMachine {
     private static final Logger LOG = LoggerFactory.getLogger(VideoStateMachine.class);
+
+    private static final String TRIGGERS_GROUP = "VideoStateMachine_TRIGGERS";
 
     private static final int UPLOADS_SLICE_SIZE = 100;
     private static final int CHECK_ENCODES_SLICE_SIZE = 100;
@@ -44,6 +50,9 @@ public class VideoStateMachine {
 
     @Autowired
     private VideoManager manager;
+
+    @Autowired(required = false)
+    private SchedulerFactoryBean scheduler;
 
     @Autowired
     private AwsVideoController aws;
@@ -69,6 +78,9 @@ public class VideoStateMachine {
             return false;
         }
 
+        // process pending uploads
+        this.scheduleProcessPendingUploads();
+
         return true;
     }
 
@@ -90,6 +102,7 @@ public class VideoStateMachine {
         }
 
         // process any found pending uploads
+        boolean checkOutputs = false;
         for (final Video video : pending) {
             // lock the video for processing
             if (!this.acquireLock(video)) {
@@ -143,8 +156,8 @@ public class VideoStateMachine {
                         // cancel any stale encoding jobs
                         aws.cleanupStaleEncodingJobs(video);
 
-                        // schedule starting the pending encodes
-                        aws.scheduleProcessStartEncodes();
+                        // check for missing outputs
+                        checkOutputs = true;
                     }
                 }
             } catch (final Exception e) {
@@ -159,6 +172,11 @@ public class VideoStateMachine {
                     LOG.error("error trying to clear video lock", e);
                 }
             }
+        }
+
+        // do we need to start encodes?
+        if (checkOutputs) {
+            this.scheduleCheckForMissingOutputs();
         }
     }
 
@@ -284,12 +302,14 @@ public class VideoStateMachine {
             return;
         }
 
+        boolean checkOutputs = false;
         try {
             // check the state of the specified job
             aws.checkEncodingJob(video, jobId);
 
             // finish encoding
             this.finishEncoding(video);
+            checkOutputs = true;
         } catch (final Exception ignored) {
         } finally {
             // release the video lock
@@ -299,6 +319,11 @@ public class VideoStateMachine {
                 // log exception, but don't propagate it
                 LOG.error("error trying to clear video lock", e);
             }
+        }
+
+        // check for missing outputs
+        if (checkOutputs) {
+            this.scheduleCheckForMissingOutputs();
         }
     }
 
@@ -323,6 +348,7 @@ public class VideoStateMachine {
         }
 
         // process all found videos
+        boolean checkOutputs = false;
         for (final Video video : encoding) {
             // lock the video for processing
             if (!this.acquireLockInState(video, State.ENCODING)) {
@@ -349,6 +375,9 @@ public class VideoStateMachine {
 
                 // finish encoding
                 this.finishEncoding(video);
+
+                // check for missing outputs
+                checkOutputs = true;
             } catch (final Exception ignored) {
             } finally {
                 // release the video lock
@@ -359,6 +388,11 @@ public class VideoStateMachine {
                     LOG.error("error trying to clear video lock", e);
                 }
             }
+        }
+
+        // should we check for any missing outputs
+        if (checkOutputs) {
+            this.scheduleCheckForMissingOutputs();
         }
     }
 
@@ -431,5 +465,30 @@ public class VideoStateMachine {
         }
 
         this.em.remove(upload);
+    }
+
+    private void scheduleProcessPendingUploads() {
+        this.scheduleJob("processPendingUploads", 0);
+    }
+
+    private void scheduleCheckForMissingOutputs() {
+        this.scheduleJob("checkForMissingOutputs", 0);
+    }
+
+    private void scheduleJob(final String name, final long delay) {
+        final Scheduler scheduler;
+        if (this.scheduler != null && (scheduler = this.scheduler.getScheduler()) != null) {
+            try {
+                // schedule a new trigger if one doesn't exist already
+                if (scheduler.getTrigger(name, TRIGGERS_GROUP) == null) {
+                    scheduler.scheduleJob(new SimpleTrigger(name, TRIGGERS_GROUP, name, Scheduler.DEFAULT_GROUP,
+                            new Date(System.currentTimeMillis() + delay), null, 0, 0));
+                }
+            } catch (SchedulerException e) {
+                LOG.debug("error triggering {}", name, e);
+            }
+        } else {
+            LOG.debug("no scheduler present");
+        }
     }
 }

@@ -22,13 +22,9 @@ import org.ccci.gto.servicemix.ekko.cloudvideo.model.AwsOutput;
 import org.ccci.gto.servicemix.ekko.cloudvideo.model.AwsOutput.Type;
 import org.ccci.gto.servicemix.ekko.cloudvideo.model.Video;
 import org.ccci.gto.servicemix.ekko.cloudvideo.model.Video.State;
-import org.quartz.Scheduler;
-import org.quartz.SchedulerException;
-import org.quartz.SimpleTrigger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.quartz.SchedulerFactoryBean;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -55,15 +51,10 @@ import com.amazonaws.services.s3.model.S3ObjectSummary;
 public class AwsVideoController {
     private static final Logger LOG = LoggerFactory.getLogger(AwsVideoController.class);
 
-    private static final String TRIGGERS_GROUP = "AwsJobController_TRIGGERS";
-
     private static final int DELETIONS_BUCKETS_SLICE_SIZE = 10;
     private static final int DELETIONS_FILES_SLICE_SIZE = 1000;
 
     private static final long DEFAULT_PRESIGNED_URL_MIN_AGE = 6 * 60 * 60 * 1000;
-
-    @Autowired(required = false)
-    private SchedulerFactoryBean scheduler;
 
     @PersistenceContext
     private EntityManager em;
@@ -656,30 +647,5 @@ public class AwsVideoController {
         // set new thumbnail and clear stale flag
         video.setThumbnail(thumb);
         video.setStaleThumbnail(false);
-    }
-
-    public void scheduleProcessUploads() {
-        this.scheduleJob("processUploads", 10000);
-    }
-
-    public void scheduleProcessStartEncodes() {
-        this.scheduleJob("processStartEncodes", 5000);
-    }
-
-    private void scheduleJob(final String name, final long delay) {
-        final Scheduler scheduler;
-        if (this.scheduler != null && (scheduler = this.scheduler.getScheduler()) != null) {
-            try {
-                // schedule a new trigger if one doesn't exist already
-                if (scheduler.getTrigger(name, TRIGGERS_GROUP) == null) {
-                    scheduler.scheduleJob(new SimpleTrigger(name, TRIGGERS_GROUP, name, Scheduler.DEFAULT_GROUP,
-                            new Date(System.currentTimeMillis() + delay), null, 0, 0));
-                }
-            } catch (SchedulerException e) {
-                LOG.debug("error triggering {}", name, e);
-            }
-        } else {
-            LOG.debug("no scheduler present");
-        }
     }
 }
