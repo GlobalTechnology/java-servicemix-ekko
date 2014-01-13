@@ -61,12 +61,10 @@ public class AwsVideoController {
 
     private static final String TRIGGERS_GROUP = "AwsJobController_TRIGGERS";
 
-    private static final int DELETIONS_BUCKETS_SLICE_SIZE = 1;
+    private static final int DELETIONS_BUCKETS_SLICE_SIZE = 10;
     private static final int DELETIONS_FILES_SLICE_SIZE = 1000;
-    private static final int OLD_ENCODES_SLICE_SIZE = 100;
 
     private static final long DEFAULT_PRESIGNED_URL_MIN_AGE = 6 * 60 * 60 * 1000;
-    private static final long DEFAULT_STALE_JOB_CHECK_AGE = 6 * 60 * 60 * 1000;
 
     @Autowired(required = false)
     private SchedulerFactoryBean scheduler;
@@ -157,66 +155,6 @@ public class AwsVideoController {
             } catch (final Exception e) {
                 // log exception, but don't propagate it
                 LOG.error("error trying to clear video lock", e);
-            }
-        }
-    }
-
-    public void processOldEncodingJobs() {
-        final Date oldDate = new Date(System.currentTimeMillis() - DEFAULT_STALE_JOB_CHECK_AGE);
-
-        // fetch a list of old jobs that are still "encoding"
-        final List<Video> encoding;
-        try {
-            encoding = this.txService.inReadOnlyTransaction(new Callable<List<Video>>() {
-                @Override
-                public List<Video> call() throws Exception {
-                    final TypedQuery<Video> query = em.createNamedQuery("Video.findByOldJobs", Video.class);
-                    query.setParameter("date", oldDate);
-                    query.setMaxResults(OLD_ENCODES_SLICE_SIZE);
-                    return query.getResultList();
-                }
-            });
-        } catch (final Exception e) {
-            LOG.error("error retrieving videos with old encoding jobs", e);
-            return;
-        }
-
-        // process all found videos
-        for (final Video video : encoding) {
-            // lock the video for processing
-            if (!this.acquireLockInState(video, State.ENCODING)) {
-                LOG.debug("unable to get lock for video {}", video.getId());
-                continue;
-            }
-
-            try {
-                // find jobs for this video
-                final List<AwsJob> jobs = this.txService.inReadOnlyTransaction(new Callable<List<AwsJob>>() {
-                    @Override
-                    public List<AwsJob> call() throws Exception {
-                        final Video fresh = manager.refresh(video);
-                        return fresh != null ? fresh.getJobs() : Collections.<AwsJob> emptyList();
-                    }
-                });
-
-                // check any jobs that haven't been checked recently
-                for (final AwsJob job : jobs) {
-                    if (job.getLastChecked().before(oldDate)) {
-                        this.checkEncodingJob(video, job.getId());
-                    }
-                }
-
-                // finish encoding
-                this.finishEncoding(video);
-            } catch (final Exception ignored) {
-            } finally {
-                // release the video lock
-                try {
-                    this.releaseLock(video);
-                } catch (final Exception e) {
-                    // log exception, but don't propagate it
-                    LOG.error("error trying to clear video lock", e);
-                }
             }
         }
     }
@@ -472,7 +410,7 @@ public class AwsVideoController {
         return result.getJob().getId();
     }
 
-    private boolean checkEncodingJob(final Video orig, final String jobId) {
+    boolean checkEncodingJob(final Video orig, final String jobId) {
         // short-circuit if we don't have a valid video object and job id
         if (orig == null || jobId == null) {
             return false;

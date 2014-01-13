@@ -1,5 +1,7 @@
 package org.ccci.gto.servicemix.ekko.cloudvideo;
 
+import java.util.Collections;
+import java.util.Date;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
@@ -28,8 +30,11 @@ import org.springframework.transaction.annotation.Transactional;
 public class VideoStateMachine {
     private static final Logger LOG = LoggerFactory.getLogger(VideoStateMachine.class);
 
-    private static final int CHECK_ENCODES_SLICE_SIZE = 100;
     private static final int UPLOADS_SLICE_SIZE = 100;
+    private static final int CHECK_ENCODES_SLICE_SIZE = 100;
+    private static final int OLD_ENCODES_SLICE_SIZE = 100;
+
+    private static final long DEFAULT_OLD_JOB_CHECK_AGE = 6 * 60 * 60 * 1000;
 
     @PersistenceContext
     private EntityManager em;
@@ -250,6 +255,66 @@ public class VideoStateMachine {
         }
     }
 
+    public void checkOldEncodingJobs() {
+        final Date oldDate = new Date(System.currentTimeMillis() - DEFAULT_OLD_JOB_CHECK_AGE);
+
+        // fetch a list of old jobs that are still "encoding"
+        final List<Video> encoding;
+        try {
+            encoding = this.txService.inReadOnlyTransaction(new Callable<List<Video>>() {
+                @Override
+                public List<Video> call() throws Exception {
+                    final TypedQuery<Video> query = em.createNamedQuery("Video.findByOldJobs", Video.class);
+                    query.setParameter("date", oldDate);
+                    query.setMaxResults(OLD_ENCODES_SLICE_SIZE);
+                    return query.getResultList();
+                }
+            });
+        } catch (final Exception e) {
+            LOG.error("error retrieving videos with old encoding jobs", e);
+            return;
+        }
+
+        // process all found videos
+        for (final Video video : encoding) {
+            // lock the video for processing
+            if (!this.acquireLockInState(video, State.ENCODING)) {
+                LOG.debug("unable to get lock for video {}", video.getId());
+                continue;
+            }
+
+            try {
+                // find jobs for this video
+                final List<AwsJob> jobs = this.txService.inReadOnlyTransaction(new Callable<List<AwsJob>>() {
+                    @Override
+                    public List<AwsJob> call() throws Exception {
+                        final Video fresh = manager.refresh(video);
+                        return fresh != null ? fresh.getJobs() : Collections.<AwsJob> emptyList();
+                    }
+                });
+
+                // check any jobs that haven't been checked recently
+                for (final AwsJob job : jobs) {
+                    if (job.getLastChecked().before(oldDate)) {
+                        aws.checkEncodingJob(video, job.getId());
+                    }
+                }
+
+                // finish encoding
+                this.finishEncoding(video);
+            } catch (final Exception ignored) {
+            } finally {
+                // release the video lock
+                try {
+                    this.releaseLock(video);
+                } catch (final Exception e) {
+                    // log exception, but don't propagate it
+                    LOG.error("error trying to clear video lock", e);
+                }
+            }
+        }
+    }
+
     private boolean acquireLock(final Video video) {
         return this.acquireLockInState(video, null);
     }
@@ -294,6 +359,21 @@ public class VideoStateMachine {
                 break;
             } catch (final PersistenceException ignored) {
             }
+        }
+    }
+
+    private void finishEncoding(final Video orig) {
+        try {
+            this.txService.inTransaction(new Runnable() {
+                @Override
+                public void run() {
+                    final Video video = manager.refresh(orig);
+                    if (video.isInState(State.ENCODING) && video.getJobs().size() == 0) {
+                        video.setState(State.CHECK);
+                    }
+                }
+            });
+        } catch (final Exception ignore) {
         }
     }
 

@@ -14,20 +14,19 @@
   </bean>
 
   <!-- triggers -->
-  <bean id="job.base" abstract="true" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
-    <property name="targetObject" ref="aws.video.controller" />
-    <property name="concurrent" value="true" />
-  </bean>
-
   <bean id="trigger.base" abstract="true" class="org.springframework.scheduling.quartz.SimpleTriggerBean">
     <property name="repeatInterval" value="30000" /><!-- Once every 30 seconds -->
+  </bean>
+
+  <bean id="job.base" abstract="true" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
+    <property name="targetObject" ref="video.state.machine" />
+    <property name="concurrent" value="true" />
   </bean>
 
   <bean id="trigger.processPendingUploads" parent="trigger.base">
     <property name="jobDetail">
       <bean parent="job.base">
         <property name="name" value="processPendingUploads" />
-        <property name="targetObject" ref="video.state.machine" />
         <property name="targetMethod" value="processPendingUploads" />
       </bean>
     </property>
@@ -37,18 +36,17 @@
     <property name="jobDetail">
       <bean parent="job.base">
         <property name="name" value="checkForMissingOutputs" />
-        <property name="targetObject" ref="video.state.machine" />
         <property name="targetMethod" value="checkForMissingOutputs" />
       </bean>
     </property>
   </bean>
 
-  <bean id="trigger.processOldEncodingJobs" parent="trigger.base">
+  <bean id="trigger.checkOldEncodingJobs" parent="trigger.base">
     <property name="repeatInterval" value="300000" /><!-- Once every 5 minutes -->
     <property name="jobDetail">
       <bean parent="job.base">
-        <property name="name" value="processOldEncodingJobs" />
-        <property name="targetMethod" value="processOldEncodingJobs" />
+        <property name="name" value="checkOldEncodingJobs" />
+        <property name="targetMethod" value="checkOldEncodingJobs" />
       </bean>
     </property>
   </bean>
@@ -58,6 +56,7 @@
     <property name="jobDetail">
       <bean parent="job.base">
         <property name="name" value="processDeletions" />
+        <property name="targetObject" ref="aws.video.controller" />
         <property name="targetMethod" value="processDeletions" />
       </bean>
     </property>
