@@ -33,11 +33,12 @@
     </property>
   </bean>
 
-  <bean id="trigger.processStartEncodes" parent="trigger.base">
+  <bean id="trigger.checkForMissingOutputs" parent="trigger.base">
     <property name="jobDetail">
       <bean parent="job.base">
-        <property name="name" value="processStartEncodes" />
-        <property name="targetMethod" value="processStartEncodes" />
+        <property name="name" value="checkForMissingOutputs" />
+        <property name="targetObject" ref="video.state.machine" />
+        <property name="targetMethod" value="checkForMissingOutputs" />
       </bean>
     </property>
   </bean>

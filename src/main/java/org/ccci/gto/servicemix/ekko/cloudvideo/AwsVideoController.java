@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
-import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -64,7 +63,6 @@ public class AwsVideoController {
 
     private static final int DELETIONS_BUCKETS_SLICE_SIZE = 1;
     private static final int DELETIONS_FILES_SLICE_SIZE = 1000;
-    private static final int CHECK_ENCODES_SLICE_SIZE = 100;
     private static final int OLD_ENCODES_SLICE_SIZE = 100;
 
     private static final long DEFAULT_PRESIGNED_URL_MIN_AGE = 6 * 60 * 60 * 1000;
@@ -114,63 +112,6 @@ public class AwsVideoController {
 
     public final void setAwsS3KeyPrefix(final String prefix) {
         this.awsS3KeyPrefix = prefix;
-    }
-
-    public void processStartEncodes() {
-        // fetch a list of videos in the check state
-        final List<Video> videos;
-        try {
-            videos = this.txService.inReadOnlyTransaction(new Callable<List<Video>>() {
-                @Override
-                public List<Video> call() throws Exception {
-                    final TypedQuery<Video> query = em.createNamedQuery("Video.findByState", Video.class);
-                    query.setParameter("state", State.CHECK);
-                    query.setMaxResults(CHECK_ENCODES_SLICE_SIZE);
-                    return query.getResultList();
-                }
-            });
-        } catch (final Exception e) {
-            LOG.error("error retrieving videos in CHECK state", e);
-            return;
-        }
-
-        // process all found videos
-        for (final Video video : videos) {
-            // lock the video for processing
-            if (!this.acquireLockInState(video, State.CHECK)) {
-                LOG.debug("unable to get lock for video {}", video.getId());
-                continue;
-            }
-
-            try {
-                // get the needed output types
-                final Set<Type> types = this.getNeededOutputTypes(video);
-
-                // we have no needed types, so mark video as encoded
-                if (types.isEmpty()) {
-                    txService.inTransaction(new Runnable() {
-                        @Override
-                        public void run() {
-                            final Video fresh = manager.refresh(video);
-                            fresh.setState(State.ENCODED);
-                        }
-                    });
-                }
-                // there are still outputs to be generated
-                else {
-                    this.createEncodingJob(video, types);
-                }
-            } catch (final Exception ignored) {
-            } finally {
-                // release the video lock
-                try {
-                    this.releaseLock(video);
-                } catch (final Exception e) {
-                    // log exception, but don't propagate it
-                    LOG.error("error trying to clear video lock", e);
-                }
-            }
-        }
     }
 
     public void processJobUpdateNotification(final String jobId) {
@@ -493,84 +434,42 @@ public class AwsVideoController {
         });
     }
 
-    private void createEncodingJob(final Video orig, final Collection<Type> types) {
-        // short-circuit if we don't have a valid video object
-        if (orig == null) {
-            return;
+    String enqueueEncodingJob(final Video orig, final Collection<Type> types) {
+        // short-circuit if we don't have a valid video object or any types
+        if (orig == null || types == null || types.isEmpty()) {
+            return null;
+        }
+
+        // short-circuit if we don't have a master video
+        final AwsFile master = orig.getMaster();
+        if (master == null || !master.exists()) {
+            return null;
+        }
+
+        // create requested job outputs
+        final List<CreateJobOutput> outputs = new ArrayList<>();
+        for (final Type type : types) {
+            final CreateJobOutput output = createJobOutput(type, master);
+            if (output != null) {
+                outputs.add(output);
+            }
+        }
+
+        // short-circuit if we don't have any outputs
+        if (outputs.isEmpty()) {
+            return null;
         }
 
         // create encode job request
-        final CreateJobRequest request;
-        try {
-            request = txService.inTransaction(new Callable<CreateJobRequest>() {
-                @Override
-                public CreateJobRequest call() throws Exception {
-                    final Video video = manager.refresh(orig);
-                    final AwsFile master = video.getMaster();
-                    if (master != null && master.exists()) {
-                        try {
-                            final Set<Type> existingOutputs = new HashSet<>();
-                            for (final AwsOutput output : video.getOutputs()) {
-                                if (output != null && !output.isStale()) {
-                                    existingOutputs.add(output.getType());
-                                }
-                            }
+        final CreateJobRequest request = new CreateJobRequest().withPipelineId(awsETPipelineId)
+                .withInput(new JobInput().withKey(master.getKey())).withOutputKeyPrefix(awsKeyPrefix(orig))
+                .withOutputs(outputs);
 
-                            // create job outputs
-                            final List<CreateJobOutput> outputs = new ArrayList<>();
-                            for (final Type type : types) {
-                                if (!existingOutputs.contains(type)) {
-                                    final CreateJobOutput output = createJobOutput(type, master);
-                                    if (output != null) {
-                                        outputs.add(output);
-                                    }
-                                }
-                            }
-
-                            if (outputs.size() > 0) {
-                                // outputs, so return a CreateJobRequest
-                                return new CreateJobRequest().withPipelineId(awsETPipelineId)
-                                        .withInput(new JobInput().withKey(master.getKey()))
-                                        .withOutputKeyPrefix(awsKeyPrefix(video)).withOutputs(outputs);
-                            } else {
-                                // no outputs, so no request needed
-                                return null;
-                            }
-                        } catch (final Exception e) {
-                            throw e;
-                        }
-                    }
-
-                    return null;
-                }
-            });
-        } catch (final Exception e) {
-            return;
-        }
-
-        // no encode request, return false
-        if (request == null) {
-            return;
-        }
-
-        // TODO: try creating it 3 times (with a delay between attempts)
+        // TODO: try creating the job 3 times (with a delay between attempts)
         final CreateJobResult result = this.transcoder.createJob(request);
 
-        // update video object with enqueue job pointer
-        txService.inTransaction(new Runnable() {
-            @Override
-            public void run() {
-                final Video video = manager.refresh(orig);
-
-                // record encoding job(s)
-                video.addJob(new AwsJob(result.getJob().getId()));
-
-                // update video state
-                video.setState(State.ENCODING);
-            }
-        });
-
-        return;
+        // return the id of the enqueued job
+        return result.getJob().getId();
     }
 
     private boolean checkEncodingJob(final Video orig, final String jobId) {
@@ -758,30 +657,6 @@ public class AwsVideoController {
         }
 
         return null;
-    }
-
-    private Set<Type> getNeededOutputTypes(final Video orig) {
-        try {
-            return this.txService.inReadOnlyTransaction(new Callable<Set<Type>>() {
-                @Override
-                public Set<Type> call() throws Exception {
-                    final Video video = manager.refresh(orig);
-
-                    // determine the required types that are still needed
-                    final EnumSet<Type> types = EnumSet.noneOf(Type.class);
-                    for (final Type type : AwsOutput.REQUIRED_TYPES) {
-                        final AwsOutput output = video.getOutput(type);
-                        if (output == null || output.isStale()) {
-                            types.add(type);
-                        }
-                    }
-
-                    return types;
-                }
-            });
-        } catch (final Exception e) {
-            return null;
-        }
     }
 
     private void finishEncoding(final Video orig) {
