@@ -15,7 +15,7 @@
 
   <!-- triggers -->
   <bean id="job.base" abstract="true" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
-    <property name="targetObject" ref="aws.controller" />
+    <property name="targetObject" ref="aws.video.controller" />
     <property name="concurrent" value="true" />
   </bean>
 
@@ -23,11 +23,12 @@
     <property name="repeatInterval" value="30000" /><!-- Once every 30 seconds -->
   </bean>
 
-  <bean id="trigger.processUploads" parent="trigger.base">
+  <bean id="trigger.processPendingUploads" parent="trigger.base">
     <property name="jobDetail">
       <bean parent="job.base">
-        <property name="name" value="processUploads" />
-        <property name="targetMethod" value="processUploads" />
+        <property name="name" value="processPendingUploads" />
+        <property name="targetObject" ref="video.state.machine" />
+        <property name="targetMethod" value="processPendingUploads" />
       </bean>
     </property>
   </bean>

@@ -7,8 +7,9 @@ import javax.ws.rs.core.UriInfo;
 
 import org.ccci.gto.servicemix.common.jaxrs.api.ClientAwareApi;
 import org.ccci.gto.servicemix.common.model.Client;
-import org.ccci.gto.servicemix.ekko.cloudvideo.AwsController;
+import org.ccci.gto.servicemix.ekko.cloudvideo.AwsVideoController;
 import org.ccci.gto.servicemix.ekko.cloudvideo.VideoManager;
+import org.ccci.gto.servicemix.ekko.cloudvideo.VideoStateMachine;
 import org.ccci.gto.servicemix.ekko.cloudvideo.model.Video.VideoQuery;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -17,7 +18,10 @@ public abstract class AbstractApi extends ClientAwareApi {
     protected VideoManager manager;
 
     @Autowired
-    protected AwsController awsController;
+    protected AwsVideoController awsController;
+
+    @Autowired
+    protected VideoStateMachine videoStateMachine;
 
     protected VideoQuery getVideoQuery(final Client client) {
         return new VideoQuery().client(client);

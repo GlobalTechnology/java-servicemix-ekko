@@ -5,7 +5,7 @@ import java.net.URL;
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlRootElement;
 
-import org.ccci.gto.servicemix.ekko.cloudvideo.AwsController;
+import org.ccci.gto.servicemix.ekko.cloudvideo.AwsVideoController;
 import org.ccci.gto.servicemix.ekko.cloudvideo.model.Video;
 import org.ccci.gto.servicemix.ekko.cloudvideo.model.Video.State;
 
@@ -27,7 +27,7 @@ public class JaxbVideo {
         this(video, (URL) null);
     }
 
-    public JaxbVideo(final Video video, final AwsController aws) {
+    public JaxbVideo(final Video video, final AwsVideoController aws) {
         this(video, aws != null && video != null ? aws.getSignedUrl(video.getThumbnail()) : (URL) null);
     }
 

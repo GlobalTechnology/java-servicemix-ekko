@@ -40,6 +40,8 @@
 
   <bean id="videoManager" class="org.ccci.gto.servicemix.ekko.cloudvideo.VideoManagerImpl" />
 
+  <bean id="video.state.machine" class="org.ccci.gto.servicemix.ekko.cloudvideo.VideoStateMachine" />
+
   <!-- JPA/DB configuration -->
   <bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource" destroy-method="close">
     <property name="driverClassName" value="${database.driver:com.mysql.jdbc.Driver}" />

@@ -57,14 +57,13 @@ import com.amazonaws.services.s3.model.MultiObjectDeleteException;
 import com.amazonaws.services.s3.model.ObjectListing;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
 
-public class AwsController {
-    private static final Logger LOG = LoggerFactory.getLogger(AwsController.class);
+public class AwsVideoController {
+    private static final Logger LOG = LoggerFactory.getLogger(AwsVideoController.class);
 
     private static final String TRIGGERS_GROUP = "AwsJobController_TRIGGERS";
 
     private static final int DELETIONS_BUCKETS_SLICE_SIZE = 1;
     private static final int DELETIONS_FILES_SLICE_SIZE = 1000;
-    private static final int UPLOADS_SLICE_SIZE = 100;
     private static final int CHECK_ENCODES_SLICE_SIZE = 100;
     private static final int OLD_ENCODES_SLICE_SIZE = 100;
 
@@ -75,7 +74,7 @@ public class AwsController {
     private SchedulerFactoryBean scheduler;
 
     @PersistenceContext
-    protected EntityManager em;
+    private EntityManager em;
 
     @Autowired
     private TransactionService txService;
@@ -115,122 +114,6 @@ public class AwsController {
 
     public final void setAwsS3KeyPrefix(final String prefix) {
         this.awsS3KeyPrefix = prefix;
-    }
-
-    public boolean enqueueUpload(final Video video, final AwsFile file, final boolean deleteAfterUpload) {
-        // short-circuit if we don't have a video object
-        if (video == null) {
-            return false;
-        }
-
-        // enqueue the upload
-        try {
-            txService.inTransaction(new Runnable() {
-                @Override
-                public void run() {
-                    final AwsFileToUpload upload = new AwsFileToUpload(manager.refresh(video), file);
-                    upload.setDeleteSource(deleteAfterUpload);
-                    em.persist(upload);
-                }
-            });
-        } catch (final Exception e) {
-            LOG.error("error enqueuing upload", e);
-            return false;
-        }
-
-        return true;
-    }
-
-    public void processUploads() {
-        // fetch a list of videos with pending uploads
-        final List<Video> pending;
-        try {
-            pending = this.txService.inReadOnlyTransaction(new Callable<List<Video>>() {
-                @Override
-                public List<Video> call() throws Exception {
-                    final TypedQuery<Video> query = em.createNamedQuery("AwsFileToUpload.pendingVideos", Video.class);
-                    query.setMaxResults(UPLOADS_SLICE_SIZE);
-                    return query.getResultList();
-                }
-            });
-        } catch (final Exception e) {
-            LOG.error("error retrieving pending uploads for processUploads", e);
-            return;
-        }
-
-        // process any found pending uploads
-        for (final Video video : pending) {
-            // lock the video for processing
-            if (!this.acquireLock(video)) {
-                continue;
-            }
-
-            try {
-                // retrieve the most recent upload request, deleting all stale
-                // ones in the process
-                final AwsFileToUpload upload = this.txService.inTransaction(new Callable<AwsFileToUpload>() {
-                    @Override
-                    public AwsFileToUpload call() throws Exception {
-                        final TypedQuery<AwsFileToUpload> query = em.createNamedQuery("AwsFileToUpload.pendingUploads",
-                                AwsFileToUpload.class);
-                        query.setParameter("video", manager.refresh(video));
-                        final List<AwsFileToUpload> files = query.getResultList();
-
-                        // get the latest upload for this video
-                        final AwsFileToUpload upload = files.size() > 0 ? files.get(files.size() - 1) : null;
-
-                        // don't process any requests other than the most recent
-                        // one
-                        if (files.size() > 1) {
-                            final AwsFile file = upload.getFile();
-                            for (final AwsFileToUpload staleUpload : files.subList(0, files.size() - 1)) {
-                                // we only honor deleteSource if the file is not the same as the most recent upload
-                                // request
-                                final boolean deleteFile = staleUpload.isDeleteSource()
-                                        && !(file != null && file.equals(staleUpload.getFile()));
-                                delete(staleUpload, deleteFile);
-                            }
-                        }
-
-                        // return the upload being processed
-                        return upload;
-                    }
-                });
-
-                // is there an upload to process?
-                if (upload != null) {
-                    final boolean success = updateMaster(video, upload.getFile());
-
-                    // we successfully moved the upload, so cleanup the item in
-                    // the queue
-                    if (success) {
-                        txService.inTransaction(new Runnable() {
-                            @Override
-                            public void run() {
-                                delete(em.merge(upload), upload.isDeleteSource());
-                            }
-                        });
-
-                        // cancel any stale encoding jobs
-                        cleanupStaleEncodingJobs(video);
-
-                        // schedule starting the pending encodes
-                        this.scheduleProcessStartEncodes();
-                    }
-                }
-            } catch (final Exception e) {
-                // log the error, but don't break processing of the next video
-                LOG.debug("processUploads() error", e);
-            } finally {
-                // release the video lock
-                try {
-                    this.releaseLock(video);
-                } catch (final Exception e) {
-                    // log exception, but don't propagate it
-                    LOG.error("error trying to clear video lock", e);
-                }
-            }
-        }
     }
 
     public void processStartEncodes() {
@@ -477,7 +360,7 @@ public class AwsController {
         }
     }
 
-    private boolean updateMaster(final Video orig, final AwsFile source) {
+    boolean updateMaster(final Video orig, final AwsFile source) {
         // short-circuit if we don't have a video object or source video
         if (orig == null || source == null || !source.exists()) {
             return false;
@@ -553,7 +436,7 @@ public class AwsController {
         return true;
     }
 
-    private void cleanupStaleEncodingJobs(final Video orig) {
+    void cleanupStaleEncodingJobs(final Video orig) {
         if (orig == null) {
             return;
         }
@@ -916,10 +799,6 @@ public class AwsController {
         }
     }
 
-    private boolean acquireLock(final Video video) {
-        return this.acquireLockInState(video, null);
-    }
-
     private boolean acquireLockInState(final Video video, final State state) {
         // try acquiring the lock 3 times (retry for tx errors)
         for (int i = 0; i < 3; i++) {
@@ -1027,7 +906,7 @@ public class AwsController {
     }
 
     @Transactional(propagation = Propagation.MANDATORY)
-    private void delete(final AwsFile file) {
+    void delete(final AwsFile file) {
         if (file != null && file.exists()) {
             em.persist(new AwsFileToDelete(file));
         }

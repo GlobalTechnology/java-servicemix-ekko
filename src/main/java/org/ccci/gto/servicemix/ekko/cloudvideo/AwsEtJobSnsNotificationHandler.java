@@ -12,7 +12,7 @@ public class AwsEtJobSnsNotificationHandler implements SnsNotificationHandler {
     private static final Logger LOG = LoggerFactory.getLogger(AwsEtJobSnsNotificationHandler.class);
 
     @Autowired
-    private AwsController controller;
+    private AwsVideoController controller;
 
     @Override
     public void handle(final SnsNotification notification) {

@@ -20,7 +20,7 @@
     <constructor-arg index="0" ref="aws.credentials" />
   </bean>
 
-  <bean id="aws.controller" class="org.ccci.gto.servicemix.ekko.cloudvideo.AwsController">
+  <bean id="aws.video.controller" class="org.ccci.gto.servicemix.ekko.cloudvideo.AwsVideoController">
     <property name="s3" ref="aws.s3" />
     <property name="transcoder" ref="aws.et" />
     <property name="awsETPipelineId" value="${aws.et.pipeline}" />

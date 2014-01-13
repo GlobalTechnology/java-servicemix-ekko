@@ -47,7 +47,7 @@ public class VideoApi extends AbstractApi {
             return Response.status(Status.NOT_FOUND).build();
         }
 
-        this.awsController.enqueueUpload(video, new AwsFile(srcBucket, srcKey), false);
+        this.videoStateMachine.enqueueUpload(video, new AwsFile(srcBucket, srcKey), false);
         this.awsController.scheduleProcessUploads();
 
         return Response.ok(new JaxbVideo(video, this.awsController)).build();

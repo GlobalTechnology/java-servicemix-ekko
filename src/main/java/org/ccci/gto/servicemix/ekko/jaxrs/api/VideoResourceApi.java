@@ -18,7 +18,7 @@ import javax.ws.rs.core.UriInfo;
 import org.apache.cxf.jaxrs.ext.MessageContext;
 import org.ccci.gto.persistence.tx.TransactionService;
 import org.ccci.gto.servicemix.common.model.Session;
-import org.ccci.gto.servicemix.ekko.cloudvideo.AwsController;
+import org.ccci.gto.servicemix.ekko.cloudvideo.AwsVideoController;
 import org.ccci.gto.servicemix.ekko.cloudvideo.VideoManager;
 import org.ccci.gto.servicemix.ekko.cloudvideo.model.AwsFile;
 import org.ccci.gto.servicemix.ekko.cloudvideo.model.AwsOutput;
@@ -35,7 +35,7 @@ public class VideoResourceApi extends AbstractApi {
     private static final Logger LOG = LoggerFactory.getLogger(VideoResourceApi.class);
 
     @Autowired
-    private AwsController awsController;
+    private AwsVideoController awsController;
 
     @Autowired
     private VideoManager videoManager;
