@@ -5,9 +5,9 @@
   <bean class="org.springframework.scheduling.quartz.SchedulerFactoryBean">
     <property name="triggers">
       <list>
-        <ref local="trigger.processUploads" />
-        <ref local="trigger.processStartEncodes" />
-        <ref local="trigger.processOldEncodingJobs" />
+        <ref local="trigger.processPendingUploads" />
+        <ref local="trigger.checkForMissingOutputs" />
+        <ref local="trigger.checkOldEncodingJobs" />
         <ref local="trigger.processDeletions" />
       </list>
     </property>
