@@ -105,7 +105,7 @@ public class VideoStateMachine {
         boolean checkOutputs = false;
         for (final Video video : pending) {
             // lock the video for processing
-            if (!this.acquireLock(video)) {
+            if (!this.acquireLock(video, State.NEW, State.CHECK, State.ENCODING, State.ENCODED)) {
                 continue;
             }
 
@@ -410,6 +410,7 @@ public class VideoStateMachine {
                         for (final State state : states) {
                             if (fresh.isInState(state)) {
                                 validState = true;
+                                break;
                             }
                         }
                         if (!validState) {
