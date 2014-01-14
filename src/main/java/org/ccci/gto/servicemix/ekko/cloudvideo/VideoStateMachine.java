@@ -1,5 +1,6 @@
 package org.ccci.gto.servicemix.ekko.cloudvideo;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.EnumSet;
@@ -122,15 +123,12 @@ public class VideoStateMachine {
                         // get the latest upload for this video
                         final AwsFileToUpload upload = files.size() > 0 ? files.get(files.size() - 1) : null;
 
-                        // don't process any requests other than the most recent one
-                        if (files.size() > 1) {
-                            final AwsFile file = upload.getFile();
+                        // don't process any uploads other than the most recent one
+                        if (files.size() > 0) {
+                            final Collection<AwsFile> protectedFile = Collections.singleton(upload != null ? upload
+                                    .getFile() : null);
                             for (final AwsFileToUpload staleUpload : files.subList(0, files.size() - 1)) {
-                                // we only honor deleteSource if the file is not the same as the most recent upload
-                                // request
-                                final boolean deleteFile = staleUpload.isDeleteSource()
-                                        && !(file != null && file.equals(staleUpload.getFile()));
-                                delete(staleUpload, deleteFile);
+                                delete(staleUpload, protectedFile);
                             }
                         }
 
@@ -149,7 +147,7 @@ public class VideoStateMachine {
                         txService.inTransaction(new Runnable() {
                             @Override
                             public void run() {
-                                delete(em.merge(upload), upload.isDeleteSource());
+                                delete(em.merge(upload), null);
                             }
                         });
 
@@ -462,8 +460,8 @@ public class VideoStateMachine {
     }
 
     @Transactional(propagation = Propagation.MANDATORY)
-    private void delete(final AwsFileToUpload upload, final boolean deleteFile) {
-        if (deleteFile) {
+    private void delete(final AwsFileToUpload upload, final Collection<AwsFile> protectedFiles) {
+        if (upload.isDeleteSource() && (protectedFiles == null || !protectedFiles.contains(upload.getFile()))) {
             aws.delete(upload.getFile());
         }
 
