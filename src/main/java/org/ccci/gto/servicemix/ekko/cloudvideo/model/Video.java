@@ -1,6 +1,9 @@
 package org.ccci.gto.servicemix.ekko.cloudvideo.model;
 
+import static org.ccci.gto.servicemix.common.Constants.INVALID_CLIENT;
+
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -48,7 +51,7 @@ import org.ccci.gto.servicemix.ekko.model.VideoResource;
         @NamedQuery(name = "Video.findByOldJobs", query = "SELECT DISTINCT v FROM Video v JOIN v.jobs j WHERE j.lastChecked < :date"), })
 public class Video {
     public enum State {
-        NEW, CHECK, ENCODING, ENCODED
+        NEW, CHECK, ENCODING, ENCODED, DELETED
     }
 
     @Id
@@ -61,7 +64,7 @@ public class Video {
 
     @Index
     @Column(name = "client_id", nullable = false)
-    private long clientId = -1;
+    private long clientId = INVALID_CLIENT;
 
     @Column
     private String grouping;
@@ -71,6 +74,9 @@ public class Video {
 
     @Column(nullable = false)
     private long lockTimestamp = 0L;
+
+    @Column(nullable = false)
+    private boolean deleted = false;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -102,7 +108,7 @@ public class Video {
 
     @OneToMany(mappedBy = "video", fetch = FetchType.LAZY, cascade = { CascadeType.REFRESH })
     @MapKeyColumn(name = "courseId")
-    private Map<Long, VideoResource> courses = new HashMap<>();
+    private Map<Long, VideoResource> videoResources = new HashMap<>();
 
     public Video() {
     }
@@ -139,6 +145,14 @@ public class Video {
         return this.state == state;
     }
 
+    public final boolean isDeleted() {
+        return this.deleted;
+    }
+
+    public final void setDeleted(final boolean deleted) {
+        this.deleted = deleted;
+    }
+
     public final String getTitle() {
         return this.title;
     }
@@ -153,6 +167,14 @@ public class Video {
 
     public final void setGrouping(final String grouping) {
         this.grouping = grouping;
+    }
+
+    public VideoResource getVideoResource(final long courseId) {
+        return this.videoResources != null ? this.videoResources.get(courseId) : null;
+    }
+
+    public Collection<VideoResource> getVideoResources() {
+        return Collections.unmodifiableCollection(this.videoResources.values());
     }
 
     public void addJob(final String jobId) {
@@ -224,7 +246,7 @@ public class Video {
     }
 
     public final AwsOutput getOutput(final Type type) {
-        if (this.outputs != null) {
+        if (this.outputs != null && type != null) {
             for (final AwsOutput output : this.outputs) {
                 if (output.getType() == type) {
                     return output;
@@ -236,11 +258,7 @@ public class Video {
     }
 
     public final List<AwsOutput> getOutputs() {
-        if (this.outputs == null) {
-            this.outputs = new ArrayList<>();
-        }
-
-        return this.outputs;
+        return this.outputs != null ? Collections.unmodifiableList(this.outputs) : Collections.<AwsOutput> emptyList();
     }
 
     public boolean getLock() {
@@ -266,6 +284,7 @@ public class Video {
         private Long id = null;
         private Long clientId = null;
         private String grouping = null;
+        private Boolean deleted = null;
 
         // flags
         private boolean calcFoundRows = false;
@@ -295,6 +314,11 @@ public class Video {
             return this;
         }
 
+        public VideoQuery deleted(final Boolean deleted) {
+            this.deleted = deleted;
+            return this;
+        }
+
         public VideoQuery calcFoundRows(final boolean enabled) {
             this.calcFoundRows = enabled;
             return this;
@@ -317,6 +341,10 @@ public class Video {
             if (this.grouping != null) {
                 where.add(cb.equal(v.get("grouping"), cb.parameter(String.class, "grouping")));
                 params.put("grouping", this.grouping);
+            }
+            if (this.deleted != null) {
+                where.add(cb.equal(v.get("deleted"), cb.parameter(Boolean.class, "deleted")));
+                params.put("deleted", this.deleted);
             }
 
             // attach where clause
@@ -404,6 +432,7 @@ public class Video {
             newObj.id = this.id;
             newObj.clientId = this.clientId;
             newObj.grouping = this.grouping;
+            newObj.deleted = this.deleted;
 
             newObj.calcFoundRows = this.calcFoundRows;
 

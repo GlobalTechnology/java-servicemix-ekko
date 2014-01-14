@@ -2,16 +2,24 @@ package org.ccci.gto.servicemix.ekko.cloudvideo;
 
 import java.security.SecureRandom;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import javax.persistence.EntityExistsException;
 import javax.persistence.EntityManager;
 import javax.persistence.LockModeType;
 import javax.persistence.PersistenceContext;
 
+import org.ccci.gto.servicemix.ekko.cloudvideo.model.AwsFile;
+import org.ccci.gto.servicemix.ekko.cloudvideo.model.AwsFileToDelete;
+import org.ccci.gto.servicemix.ekko.cloudvideo.model.AwsFileToUpload;
+import org.ccci.gto.servicemix.ekko.cloudvideo.model.AwsJob;
+import org.ccci.gto.servicemix.ekko.cloudvideo.model.AwsOutput;
 import org.ccci.gto.servicemix.ekko.cloudvideo.model.Video;
 import org.ccci.gto.servicemix.ekko.cloudvideo.model.Video.VideoQuery;
 import org.ccci.gto.servicemix.ekko.model.VideoResource;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 public class VideoManagerImpl implements VideoManager {
@@ -67,14 +75,21 @@ public class VideoManagerImpl implements VideoManager {
 
     @Override
     @Transactional
-    public Video refresh(final Video video) {
-        return refresh(video, LockModeType.NONE);
+    public Video getManaged(final Video video) {
+        return getManaged(video, LockModeType.NONE);
     }
 
     @Override
     @Transactional
-    public Video refresh(final Video video, final LockModeType lock) {
-        return video != null ? this.em.find(Video.class, video.getId(), lock) : null;
+    public Video getManaged(final Video video, final LockModeType lock) {
+        if (video == null) {
+            return null;
+        } else if (this.em.contains(video)) {
+            this.em.lock(video, lock);
+            return video;
+        } else {
+            return this.em.find(Video.class, video.getId(), lock);
+        }
     }
 
     @Override
@@ -109,5 +124,121 @@ public class VideoManagerImpl implements VideoManager {
                 }
             }
         }
+    }
+
+    @Override
+    @Transactional
+    public boolean preDelete(final Video orig) {
+        final Video video = getManaged(orig, LockModeType.PESSIMISTIC_WRITE);
+        if (video == null) {
+            return false;
+        }
+
+        // make sure there are no Courses actively using this video
+        for (final VideoResource resource : video.getVideoResources()) {
+            if (resource.isPublished()) {
+                return false;
+            }
+        }
+
+        // revoke all course usage
+        for (final VideoResource resource : video.getVideoResources()) {
+            this.em.remove(resource);
+        }
+
+        // mark course for deletion
+        video.setDeleted(true);
+
+        // mark any pending encoding jobs as stale
+        for (final AwsJob job : video.getJobs()) {
+            job.setStale(true);
+        }
+
+        // return success
+        return true;
+    }
+
+    @Override
+    @Transactional
+    public boolean delete(final Video orig) {
+        final Video video = getManaged(orig, LockModeType.PESSIMISTIC_WRITE);
+
+        // preDelete to ensure linked objects are ready for deletion
+        if (!this.preDelete(video)) {
+            // short-circuit if preDelete fails
+            return false;
+        }
+
+        // delete all outputs
+        for (final AwsOutput output : video.getOutputs()) {
+            this.delete(output, null);
+        }
+
+        // short-circuit if we still have active jobs
+        if (!video.getJobs().isEmpty()) {
+            return false;
+        }
+
+        // delete any remaining files
+        this.delete(video.getThumbnail());
+        this.delete(video.getMaster());
+
+        // flush all changes before removing the actual video
+        this.em.flush();
+
+        // delete video
+        this.em.remove(video);
+
+        // return success
+        return true;
+    }
+
+    @Override
+    @Transactional
+    public void delete(final AwsFile file) {
+        if (file != null && file.exists()) {
+            this.em.persist(new AwsFileToDelete(file));
+        }
+    }
+
+    @Override
+    @Transactional
+    public void deleteFiles(final Collection<AwsFile> files) {
+        if (files != null) {
+            for (final AwsFile file : files) {
+                delete(file);
+            }
+        }
+    }
+
+    @Override
+    @Transactional(propagation = Propagation.MANDATORY)
+    public void delete(final AwsFileToUpload upload, final Collection<AwsFile> protectedFiles) {
+        if (upload.isDeleteSource() && (protectedFiles == null || !protectedFiles.contains(upload.getFile()))) {
+            delete(upload.getFile());
+        }
+
+        this.em.remove(upload);
+    }
+
+    @Override
+    @Transactional(propagation = Propagation.MANDATORY)
+    public void delete(final AwsOutput output, final Collection<AwsFile> protectedFiles) {
+        // get all the files that need to be deleted
+        final Set<AwsFile> files = new HashSet<>();
+        files.add(output.getFile());
+        files.addAll(output.getFiles());
+        files.addAll(output.getThumbnails());
+
+        // protected the specified files
+        if (protectedFiles != null) {
+            files.removeAll(protectedFiles);
+        }
+
+        // delete all AwsFiles
+        deleteFiles(files);
+
+        // delete AwsOutput
+        this.em.remove(output);
     }
 }

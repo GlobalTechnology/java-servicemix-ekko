@@ -88,8 +88,8 @@ public class VideosApi extends AbstractApi {
         }
 
         // fetch the videos being requested
-        final VideoQuery query = this.getVideoQuery(client).grouping(this.getGroup(uri)).start(start).limit(limit)
-                .calcFoundRows(true);
+        final VideoQuery query = this.getVideoQuery(client).grouping(this.getGroup(uri)).deleted(false).start(start)
+                .limit(limit).calcFoundRows(true);
         final List<Video> videos = this.manager.getVideos(query);
 
         // generate response data

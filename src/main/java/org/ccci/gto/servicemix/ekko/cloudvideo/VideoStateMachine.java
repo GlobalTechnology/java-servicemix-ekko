@@ -22,6 +22,7 @@ import org.ccci.gto.servicemix.ekko.cloudvideo.model.AwsOutput;
 import org.ccci.gto.servicemix.ekko.cloudvideo.model.AwsOutput.Type;
 import org.ccci.gto.servicemix.ekko.cloudvideo.model.Video;
 import org.ccci.gto.servicemix.ekko.cloudvideo.model.Video.State;
+import org.ccci.gto.servicemix.ekko.cloudvideo.model.Video.VideoQuery;
 import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
 import org.quartz.SimpleTrigger;
@@ -29,8 +30,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.quartz.SchedulerFactoryBean;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 
 public class VideoStateMachine {
     private static final Logger LOG = LoggerFactory.getLogger(VideoStateMachine.class);
@@ -69,7 +68,7 @@ public class VideoStateMachine {
             txService.inTransaction(new Runnable() {
                 @Override
                 public void run() {
-                    final AwsFileToUpload upload = new AwsFileToUpload(manager.refresh(video), file);
+                    final AwsFileToUpload upload = new AwsFileToUpload(manager.getManaged(video), file);
                     upload.setDeleteSource(deleteAfterUpload);
                     em.persist(upload);
                 }
@@ -117,7 +116,7 @@ public class VideoStateMachine {
                     public AwsFileToUpload call() throws Exception {
                         final TypedQuery<AwsFileToUpload> query = em.createNamedQuery("AwsFileToUpload.pendingUploads",
                                 AwsFileToUpload.class);
-                        query.setParameter("video", manager.refresh(video));
+                        query.setParameter("video", manager.getManaged(video));
                         final List<AwsFileToUpload> files = query.getResultList();
 
                         // get the latest upload for this video
@@ -128,7 +127,7 @@ public class VideoStateMachine {
                             final Collection<AwsFile> protectedFile = Collections.singleton(upload != null ? upload
                                     .getFile() : null);
                             for (final AwsFileToUpload staleUpload : files.subList(0, files.size() - 1)) {
-                                delete(staleUpload, protectedFile);
+                                manager.delete(staleUpload, protectedFile);
                             }
                         }
 
@@ -147,7 +146,7 @@ public class VideoStateMachine {
                         txService.inTransaction(new Runnable() {
                             @Override
                             public void run() {
-                                delete(em.merge(upload), null);
+                                manager.delete(em.merge(upload), null);
                             }
                         });
 
@@ -213,7 +212,7 @@ public class VideoStateMachine {
                     txService.inTransaction(new Runnable() {
                         @Override
                         public void run() {
-                            final Video fresh = manager.refresh(video);
+                            final Video fresh = manager.getManaged(video);
                             fresh.setState(State.ENCODED);
                         }
                     });
@@ -225,7 +224,7 @@ public class VideoStateMachine {
                         txService.inTransaction(new Runnable() {
                             @Override
                             public void run() {
-                                final Video fresh = manager.refresh(video);
+                                final Video fresh = manager.getManaged(video);
 
                                 // add enqueued encoding job
                                 fresh.setState(State.ENCODING);
@@ -252,7 +251,7 @@ public class VideoStateMachine {
             return this.txService.inReadOnlyTransaction(new Callable<Set<Type>>() {
                 @Override
                 public Set<Type> call() throws Exception {
-                    final Video video = manager.refresh(orig);
+                    final Video video = manager.getManaged(orig);
 
                     // determine the required types that are still needed
                     final EnumSet<Type> types = EnumSet.noneOf(Type.class);
@@ -295,7 +294,7 @@ public class VideoStateMachine {
         }
 
         // lock the video for processing
-        if (!this.acquireLock(video, State.ENCODING)) {
+        if (!this.acquireLock(video, State.ENCODING, State.DELETED)) {
             LOG.debug("unable to get lock for video {}", video.getId());
             return;
         }
@@ -349,7 +348,7 @@ public class VideoStateMachine {
         boolean checkOutputs = false;
         for (final Video video : encoding) {
             // lock the video for processing
-            if (!this.acquireLock(video, State.ENCODING)) {
+            if (!this.acquireLock(video, State.ENCODING, State.DELETED)) {
                 LOG.debug("unable to get lock for video {}", video.getId());
                 continue;
             }
@@ -359,7 +358,7 @@ public class VideoStateMachine {
                 final List<AwsJob> jobs = this.txService.inReadOnlyTransaction(new Callable<List<AwsJob>>() {
                     @Override
                     public List<AwsJob> call() throws Exception {
-                        final Video fresh = manager.refresh(video);
+                        final Video fresh = manager.getManaged(video);
                         return fresh != null ? fresh.getJobs() : Collections.<AwsJob> emptyList();
                     }
                 });
@@ -394,6 +393,73 @@ public class VideoStateMachine {
         }
     }
 
+    public boolean deleteVideo(final Video video) {
+        // short-circuit if we don't have a video object
+        if (video == null) {
+            return false;
+        }
+
+        // start deleting the video
+        final boolean deleted = this.manager.preDelete(video);
+
+        // trigger cleanup of videos being deleted
+        if (deleted) {
+            this.scheduleCleanupDeletedVideos();
+        }
+
+        return deleted;
+    }
+
+    public void cleanupDeletedVideos() {
+        // fetch a list of videos being deleted
+        final List<Video> deleted = this.manager.getVideos(new VideoQuery().deleted(true));
+
+        for (final Video video : deleted) {
+            // lock the video for processing
+            if (!this.acquireLock(video)) {
+                continue;
+            }
+
+            try {
+                // cleanup stale encoding jobs
+                aws.cleanupStaleEncodingJobs(video);
+
+                // update video object
+                this.txService.inTransaction(new Runnable() {
+                    @Override
+                    public void run() {
+                        final Video fresh = manager.getManaged(video, LockModeType.PESSIMISTIC_WRITE);
+
+                        // move video to DELETED state
+                        fresh.setState(State.DELETED);
+
+                        // cancel any pending uploads
+                        final TypedQuery<AwsFileToUpload> query = em.createNamedQuery("AwsFileToUpload.pendingUploads",
+                                AwsFileToUpload.class);
+                        query.setParameter("video", fresh);
+                        for (final AwsFileToUpload upload : query.getResultList()) {
+                            manager.delete(upload, null);
+                        }
+                    }
+                });
+
+                // delete the video
+                this.manager.delete(video);
+            } catch (final Exception e) {
+                // log the error, but don't break processing of the next video
+                LOG.debug("cleanupDeletedVideos() error", e);
+            } finally {
+                // release the video lock
+                try {
+                    this.releaseLock(video);
+                } catch (final Exception e) {
+                    // unexpected exception while releasing lock, log but don't propagate
+                    LOG.error("exception thrown while releasing video lock", e);
+                }
+            }
+        }
+    }
+
     private boolean acquireLock(final Video video, final State... states) {
         // try acquiring the lock 3 times (retry for tx errors)
         for (int i = 0; i < 3; i++) {
@@ -401,7 +467,7 @@ public class VideoStateMachine {
                 return this.txService.inTransaction(new Callable<Boolean>() {
                     @Override
                     public Boolean call() throws Exception {
-                        final Video fresh = manager.refresh(video, LockModeType.PESSIMISTIC_WRITE);
+                        final Video fresh = manager.getManaged(video, LockModeType.PESSIMISTIC_WRITE);
 
                         // ensure the video is in one of the specified states
                         boolean validState = states.length == 0;
@@ -433,8 +499,10 @@ public class VideoStateMachine {
                 this.txService.inTransaction(new Runnable() {
                     @Override
                     public void run() {
-                        final Video fresh = manager.refresh(video, LockModeType.PESSIMISTIC_WRITE);
-                        fresh.releaseLock();
+                        final Video fresh = manager.getManaged(video, LockModeType.PESSIMISTIC_WRITE);
+                        if (fresh != null) {
+                            fresh.releaseLock();
+                        }
                     }
                 });
 
@@ -449,7 +517,7 @@ public class VideoStateMachine {
             this.txService.inTransaction(new Runnable() {
                 @Override
                 public void run() {
-                    final Video video = manager.refresh(orig);
+                    final Video video = manager.getManaged(orig);
                     if (video.isInState(State.ENCODING) && video.getJobs().size() == 0) {
                         video.setState(State.CHECK);
                     }
@@ -459,21 +527,16 @@ public class VideoStateMachine {
         }
     }
 
-    @Transactional(propagation = Propagation.MANDATORY)
-    private void delete(final AwsFileToUpload upload, final Collection<AwsFile> protectedFiles) {
-        if (upload.isDeleteSource() && (protectedFiles == null || !protectedFiles.contains(upload.getFile()))) {
-            aws.delete(upload.getFile());
-        }
-
-        this.em.remove(upload);
-    }
-
     private void scheduleProcessPendingUploads() {
         this.scheduleJob("processPendingUploads", 0);
     }
 
     private void scheduleCheckForMissingOutputs() {
         this.scheduleJob("checkForMissingOutputs", 0);
+    }
+
+    private void scheduleCleanupDeletedVideos() {
+        this.scheduleJob("cleanupDeletedVideos", 0);
     }
 
     private void scheduleJob(final String name, final long delay) {

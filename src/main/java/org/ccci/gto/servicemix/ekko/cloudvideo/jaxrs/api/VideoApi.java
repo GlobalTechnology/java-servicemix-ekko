@@ -13,6 +13,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -42,7 +43,7 @@ public class VideoApi extends AbstractApi {
         }
 
         // short-circuit if this is an invalid video
-        final Video video = this.manager.getVideo(this.getVideoQuery(client, uri));
+        final Video video = this.manager.getVideo(this.getVideoQuery(client, uri).deleted(false));
         if (video == null) {
             return Response.status(Status.NOT_FOUND).build();
         }
@@ -66,6 +67,30 @@ public class VideoApi extends AbstractApi {
         }
 
         return Response.ok(new JaxbVideo(video, this.awsController)).build();
+    }
+
+    @DELETE
+    public Response deleteVideo(@Context final UriInfo uri) {
+        final Client client = this.getClient(uri);
+        if (client == null) {
+            return unauthorized().build();
+        }
+
+        final Video video = this.manager.getVideo(this.getVideoQuery(client, uri));
+        if (video == null) {
+            return Response.status(Status.NOT_FOUND).build();
+        }
+
+        // try deleting this video
+        final boolean deleted = this.videoStateMachine.deleteVideo(video);
+
+        // throw a conflict error if we were unable to delete the video
+        if (!deleted) {
+            return Response.status(Status.CONFLICT).build();
+        }
+
+        // return success
+        return Response.ok().build();
     }
 
     @POST
@@ -101,7 +126,7 @@ public class VideoApi extends AbstractApi {
         }
 
         // get the video that we are updating
-        final Video video = manager.getVideo(getVideoQuery(client, uri));
+        final Video video = manager.getVideo(getVideoQuery(client, uri).deleted(false));
         if (video == null) {
             return Response.status(Status.NOT_FOUND).build();
         }

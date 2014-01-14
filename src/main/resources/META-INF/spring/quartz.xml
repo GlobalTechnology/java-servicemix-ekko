@@ -8,6 +8,7 @@
         <ref local="trigger.processPendingUploads" />
         <ref local="trigger.checkForMissingOutputs" />
         <ref local="trigger.checkOldEncodingJobs" />
+        <ref local="trigger.cleanupDeletedVideos" />
         <ref local="trigger.processDeletions" />
       </list>
     </property>
@@ -47,6 +48,16 @@
       <bean parent="job.base">
         <property name="name" value="checkOldEncodingJobs" />
         <property name="targetMethod" value="checkOldEncodingJobs" />
+      </bean>
+    </property>
+  </bean>
+
+  <bean id="trigger.cleanupDeletedVideos" parent="trigger.base">
+    <property name="repeatInterval" value="21600000" /><!-- Once every 6 hours -->
+    <property name="jobDetail">
+      <bean parent="job.base">
+        <property name="name" value="cleanupDeletedVideos" />
+        <property name="targetMethod" value="cleanupDeletedVideos" />
       </bean>
     </property>
   </bean>

@@ -18,9 +18,9 @@ import org.ccci.gto.servicemix.common.model.Client;
 import org.ccci.gto.servicemix.ekko.cloudvideo.model.AwsFile;
 import org.ccci.gto.servicemix.ekko.cloudvideo.model.Video;
 import org.ccci.gto.servicemix.ekko.cloudvideo.model.Video.State;
-import org.ccci.gto.servicemix.ekko.model.Resource;
 import org.ccci.gto.servicemix.ekko.model.Course;
 import org.ccci.gto.servicemix.ekko.model.FileResource;
+import org.ccci.gto.servicemix.ekko.model.Resource;
 import org.ccci.gto.servicemix.ekko.model.VideoResource;
 
 import com.jayway.restassured.path.xml.XmlPath;
@@ -158,16 +158,19 @@ public class TestUtils {
 
         for (final Client client : clients) {
             for (final String title : new String[] { null, "title", }) {
-                for (final State state : EnumSet.of(State.NEW, State.ENCODING, State.CHECK,
-                        State.ENCODED)) {
-                    for (final AwsFile thumb : new AwsFile[] { null, new AwsFile(null, null),
-                            new AwsFile("bucket", null), new AwsFile(null, "key"), new AwsFile("bucket", "key") }) {
-                        final Video video = new Video(client);
-                        video.setId(++id);
-                        video.setTitle(title != null ? title + "-" + Long.valueOf(id).toString() : title);
-                        video.setState(state);
-                        video.setThumbnail(thumb);
-                        videos.add(video);
+                for (final boolean deleted : new boolean[] { false, true }) {
+                    for (final State state : EnumSet.of(State.NEW, State.ENCODING, State.CHECK, State.ENCODED,
+                            State.DELETED)) {
+                        for (final AwsFile thumb : new AwsFile[] { null, new AwsFile(null, null),
+                                new AwsFile("bucket", null), new AwsFile(null, "key"), new AwsFile("bucket", "key") }) {
+                            final Video video = new Video(client);
+                            video.setId(++id);
+                            video.setTitle(title != null ? title + "-" + Long.valueOf(id).toString() : title);
+                            video.setState(state);
+                            video.setThumbnail(thumb);
+                            video.setDeleted(deleted || state == State.DELETED);
+                            videos.add(video);
+                        }
                     }
                 }
             }

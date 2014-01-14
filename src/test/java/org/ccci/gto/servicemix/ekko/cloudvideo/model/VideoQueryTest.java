@@ -111,6 +111,27 @@ public class VideoQueryTest {
     }
 
     @Test
+    public void testDeleted() {
+        final EntityManager em = getEntityManager();
+
+        // test a wide array of possible videos
+        testCondition(em, new VideoQuery().deleted(true), new Condition() {
+            @Override
+            public boolean test(final Video video) {
+                return video.isDeleted();
+            }
+        });
+        testCondition(em, new VideoQuery().deleted(false), new Condition() {
+            @Override
+            public boolean test(final Video video) {
+                return !video.isDeleted();
+            }
+        });
+
+        closeEntityManager(em);
+    }
+
+    @Test
     public void testFoundRows() {
         final EntityManager em = getEntityManager();
 

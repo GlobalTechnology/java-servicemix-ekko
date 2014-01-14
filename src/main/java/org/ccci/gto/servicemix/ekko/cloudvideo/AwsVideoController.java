@@ -209,10 +209,10 @@ public class AwsVideoController {
             txService.inTransaction(new Runnable() {
                 @Override
                 public void run() {
-                    final Video video = manager.refresh(orig);
+                    final Video video = manager.getManaged(orig);
 
                     // delete previous master
-                    delete(video.getMaster());
+                    manager.delete(video.getMaster());
 
                     // store new master
                     video.setMaster(master);
@@ -242,7 +242,7 @@ public class AwsVideoController {
                     @Override
                     public void run() {
                         LOG.debug("trying to clean up orphaned AwsFile {}", master);
-                        delete(master);
+                        manager.delete(master);
                     }
                 });
             } catch (final Exception e2) {
@@ -266,7 +266,7 @@ public class AwsVideoController {
             jobs = txService.inReadOnlyTransaction(new Callable<List<AwsJob>>() {
                 @Override
                 public List<AwsJob> call() throws Exception {
-                    final Video video = manager.refresh(orig);
+                    final Video video = manager.getManaged(orig);
                     final List<AwsJob> jobs = new ArrayList<>();
                     for (final AwsJob job : video.getJobs()) {
                         if (job.isStale()) {
@@ -304,7 +304,7 @@ public class AwsVideoController {
         this.txService.inTransaction(new Runnable() {
             @Override
             public void run() {
-                final Video video = manager.refresh(orig);
+                final Video video = manager.getManaged(orig);
                 for (final AwsJob job : canceledJobs) {
                     video.removeJob(job.getId());
                 }
@@ -401,7 +401,7 @@ public class AwsVideoController {
                 @Override
                 public Boolean call() {
                     // find the job in the DB
-                    final Video video = manager.refresh(orig);
+                    final Video video = manager.getManaged(orig);
                     final AwsJob job = video.getJob(jobId);
                     if (job != null) {
                         // update last checked time
@@ -450,7 +450,7 @@ public class AwsVideoController {
                                             protectedFiles.addAll(output.getFiles());
                                             protectedFiles.addAll(output.getThumbnails());
 
-                                            delete(oldOutput, protectedFiles);
+                                            manager.delete(oldOutput, protectedFiles);
                                             em.flush();
                                         }
 
@@ -490,9 +490,7 @@ public class AwsVideoController {
                                     }
 
                                     // delete any remaining files
-                                    for (final AwsFile file : files) {
-                                        delete(file);
-                                    }
+                                    manager.deleteFiles(files);
                                 }
 
                                 // remove job if it isn't in an error state or is stale
@@ -592,42 +590,6 @@ public class AwsVideoController {
     }
 
     @Transactional(propagation = Propagation.MANDATORY)
-    private void delete(final Collection<AwsFile> files) {
-        if (files != null) {
-            for (final AwsFile file : files) {
-                delete(file);
-            }
-        }
-    }
-
-    @Transactional(propagation = Propagation.MANDATORY)
-    void delete(final AwsFile file) {
-        if (file != null && file.exists()) {
-            em.persist(new AwsFileToDelete(file));
-        }
-    }
-
-    @Transactional(propagation = Propagation.MANDATORY)
-    private void delete(final AwsOutput output, final Collection<AwsFile> protectedFiles) {
-        // get all the files that need to be deleted
-        final Set<AwsFile> files = new HashSet<>();
-        files.add(output.getFile());
-        files.addAll(output.getFiles());
-        files.addAll(output.getThumbnails());
-
-        // protected the specified files
-        if (protectedFiles != null) {
-            files.removeAll(protectedFiles);
-        }
-
-        // delete all AwsFiles
-        delete(files);
-
-        // delete AwsOutput
-        this.em.remove(output);
-    }
-
-    @Transactional(propagation = Propagation.MANDATORY)
     private void replaceThumbnail(final Video video, final AwsFile thumb) {
         // remove old thumbnail first
         final AwsFile old = video.getThumbnail();
@@ -640,7 +602,7 @@ public class AwsVideoController {
 
             // make sure the thumbnail isn't referenced elsewhere
             if (!thumbs.contains(old)) {
-                delete(old);
+                manager.delete(old);
             }
         }
 
