@@ -5,6 +5,7 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import static org.ccci.gto.servicemix.common.jaxrs.api.Constants.PATH_API_KEY;
 import static org.ccci.gto.servicemix.ekko.cloudvideo.jaxrs.api.Constants.PARAM_S3_BUCKET;
+import static org.ccci.gto.servicemix.ekko.cloudvideo.jaxrs.api.Constants.PARAM_S3_DELETE_SOURCE;
 import static org.ccci.gto.servicemix.ekko.cloudvideo.jaxrs.api.Constants.PARAM_S3_KEY;
 import static org.ccci.gto.servicemix.ekko.cloudvideo.jaxrs.api.Constants.PATH_VIDEO;
 
@@ -36,7 +37,7 @@ public class VideoApi extends AbstractApi {
     @Path("storeS3")
     @Produces({ APPLICATION_XML, APPLICATION_JSON })
     public Response uploadVideo(@Context final UriInfo uri, @FormParam(PARAM_S3_BUCKET) final String srcBucket,
-            @FormParam(PARAM_S3_KEY) final String srcKey) {
+            @FormParam(PARAM_S3_KEY) final String srcKey, @FormParam(PARAM_S3_DELETE_SOURCE) final boolean deleteSource) {
         final Client client = this.getClient(uri);
         if (client == null) {
             return unauthorized().build();
@@ -48,7 +49,7 @@ public class VideoApi extends AbstractApi {
             return Response.status(Status.NOT_FOUND).build();
         }
 
-        this.videoStateMachine.enqueueUpload(video, new AwsFile(srcBucket, srcKey), false);
+        this.videoStateMachine.enqueueUpload(video, new AwsFile(srcBucket, srcKey), deleteSource);
 
         return Response.ok(new JaxbVideo(video, this.awsController)).build();
     }
