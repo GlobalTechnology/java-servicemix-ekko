@@ -2,9 +2,11 @@ package org.ccci.gto.servicemix.ekko.cloudvideo.jaxb.model;
 
 import static org.ccci.gto.servicemix.ekko.TestUtils.generateVideos;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.io.ByteArrayOutputStream;
 import java.lang.annotation.Annotation;
+import java.util.Collections;
 import java.util.List;
 
 import javax.ws.rs.core.MediaType;
@@ -44,8 +46,16 @@ public class JaxbVideosTest {
 
     @Test
     public void testJsonMarshalling() throws Exception {
-        // generate json for multiple videos
         final List<Video> videos = generateVideos();
+
+        // test marshalling for a single video
+        testJsonMarshalling(Collections.singletonList(videos.get(0)));
+
+        // generate json for multiple videos
+        testJsonMarshalling(videos);
+    }
+
+    private void testJsonMarshalling(final List<Video> videos) throws Exception {
         final JsonPath json = toJson(populateJaxbVideos(new JaxbVideosJson(), videos));
 
         // test generated json
@@ -54,6 +64,7 @@ public class JaxbVideosTest {
         assertEquals(videos.size() * 2, json.getInt("total"));
 
         // test for videos in the generated json
+        assertTrue("videos is not an array", json.get("videos") instanceof List);
         assertEquals(videos.size(), json.getInt("videos.size()"));
         for (int i = 0; i < videos.size(); i++) {
             final String base = "videos[" + Integer.valueOf(i).toString() + "]";
