@@ -14,4 +14,6 @@ public final class Constants {
     public static final String PARAM_S3_DELETE_SOURCE = "s3_delete_source";
 
     public static final String PARAM_OUTPUT_TYPE = "type";
+
+    public static final String HEADER_STREAM_URI = "X-Ekko-Stream-Uri";
 }

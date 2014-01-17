@@ -1,6 +1,7 @@
 package org.ccci.gto.servicemix.ekko.jaxrs.api;
 
 import static org.ccci.gto.servicemix.common.jaxrs.api.Constants.PATH_SESSION;
+import static org.ccci.gto.servicemix.ekko.cloudvideo.jaxrs.api.Constants.HEADER_STREAM_URI;
 import static org.ccci.gto.servicemix.ekko.cloudvideo.jaxrs.api.Constants.PARAM_OUTPUT_TYPE;
 import static org.ccci.gto.servicemix.ekko.cloudvideo.jaxrs.api.Constants.PARAM_VIDEO;
 import static org.ccci.gto.servicemix.ekko.cloudvideo.jaxrs.api.Constants.PATH_VIDEO;
@@ -85,6 +86,46 @@ public class VideoResourceApi extends AbstractApi {
     }
 
     @GET
+    @Path("stream")
+    public Response getStream(@Context final MessageContext cxt, @Context final UriInfo uri) {
+        // validate the session
+        final Session session = this.getSession(uri);
+        if (session == null || session.isExpired()) {
+            return this.unauthorized(cxt, uri).build();
+        }
+
+        // ensure we have a video
+        final Video video = this.getVideo(uri, session.getGuid());
+        if (video == null) {
+            return Response.status(Status.NOT_FOUND).build();
+        }
+
+        // switch based on type requested
+        final Type type = this.getType(uri);
+        switch (type) {
+        case MP4:
+        case MP4_720P:
+        case MP4_480P_16_9:
+            final AwsOutput output = findOutput(video, type);
+            try {
+                final URL url = this.awsController.getSignedUrl(output.getFile());
+                return Response.temporaryRedirect(url.toURI()).header(HEADER_STREAM_URI, url.toString()).build();
+            } catch (final Exception ignored) {
+            }
+            break;
+        case HLS:
+            // TODO
+        case HLS_1M:
+            // TODO
+        case UNKNOWN:
+        default:
+            return Response.status(Status.BAD_REQUEST).build();
+        }
+
+        return Response.status(Status.NOT_FOUND).build();
+    }
+
+    @GET
     @Path("thumbnail")
     public Response getThumbnail(@Context final MessageContext cxt, @Context final UriInfo uri) {
         // validate the session
@@ -110,7 +151,7 @@ public class VideoResourceApi extends AbstractApi {
 
     private Video getVideo(final UriInfo uri, final String guid) {
         try {
-            return this.txService.inTransaction(new Callable<Video>() {
+            return this.txService.inReadOnlyTransaction(new Callable<Video>() {
                 @Override
                 public Video call() throws Exception {
                     // first find the Course & VideoResource
