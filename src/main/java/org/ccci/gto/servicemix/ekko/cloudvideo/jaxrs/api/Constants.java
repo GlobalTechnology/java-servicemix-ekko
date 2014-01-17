@@ -12,4 +12,6 @@ public final class Constants {
     public static final String PARAM_S3_BUCKET = "s3_bucket";
     public static final String PARAM_S3_KEY = "s3_key";
     public static final String PARAM_S3_DELETE_SOURCE = "s3_delete_source";
+
+    public static final String PARAM_OUTPUT_TYPE = "type";
 }

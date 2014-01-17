@@ -34,7 +34,8 @@ public class AwsOutput {
     private static final String PRESET_MP4_480P_16_9 = "1351620000001-000020";
     private static final String PRESET_MP4_720P = "1351620000001-000010";
     public enum Type {
-        UNKNOWN(null), MP4_480P_16_9(PRESET_MP4_480P_16_9), MP4_720P(PRESET_MP4_720P), HLS_1M(PRESET_HLS_1M);
+        UNKNOWN(null), MP4(null), MP4_480P_16_9(PRESET_MP4_480P_16_9), MP4_720P(PRESET_MP4_720P), HLS(null), HLS_1M(
+                PRESET_HLS_1M);
 
         public final String preset;
 
@@ -149,6 +150,16 @@ public class AwsOutput {
     public final void removeThumbnail(final AwsFile file) {
         if (this.thumbnails != null) {
             this.thumbnails.remove(file);
+        }
+    }
+
+    public boolean isDownloadable() {
+        switch (this.key.type) {
+        case MP4_720P:
+        case MP4_480P_16_9:
+            return true;
+        default:
+            return false;
         }
     }
 

@@ -1,6 +1,7 @@
 package org.ccci.gto.servicemix.ekko.jaxrs.api;
 
 import static org.ccci.gto.servicemix.common.jaxrs.api.Constants.PATH_SESSION;
+import static org.ccci.gto.servicemix.ekko.cloudvideo.jaxrs.api.Constants.PARAM_OUTPUT_TYPE;
 import static org.ccci.gto.servicemix.ekko.cloudvideo.jaxrs.api.Constants.PARAM_VIDEO;
 import static org.ccci.gto.servicemix.ekko.cloudvideo.jaxrs.api.Constants.PATH_VIDEO;
 import static org.ccci.gto.servicemix.ekko.jaxrs.api.Constants.PATH_COURSE;
@@ -64,23 +65,12 @@ public class VideoResourceApi extends AbstractApi {
                         return null;
                     }
 
-                    // find the highest quality video available to download (ignoring stale videos)
-                    for (final Type type : new Type[] { Type.MP4_720P, Type.MP4_480P_16_9 }) {
-                        final AwsOutput output = video.getOutput(type);
-                        if (output != null && !output.isStale()) {
-                            final AwsFile file = output.getFile();
-                            if (file != null && file.exists()) {
-                                return output;
-                            }
-                        }
-                    }
-
-                    // default to no output
-                    return null;
+                    // find the highest quality video available to download
+                    return findOutput(video, getType(uri, Type.MP4));
                 }
             });
 
-            if (output != null) {
+            if (output != null && output.isDownloadable()) {
                 final URL url = this.awsController.getSignedUrl(output.getFile());
                 if (url != null) {
                     return Response.temporaryRedirect(url.toURI()).build();
@@ -140,5 +130,46 @@ public class VideoResourceApi extends AbstractApi {
         }
 
         return null;
+    }
+
+    private Type getType(final UriInfo uri) {
+        return this.getType(uri, Type.UNKNOWN);
+    }
+
+    private Type getType(final UriInfo uri, final Type defaultType) {
+        try {
+            return Type.valueOf(uri.getQueryParameters().getFirst(PARAM_OUTPUT_TYPE));
+        } catch (final Exception e) {
+            return defaultType;
+        }
+    }
+
+    private AwsOutput findOutput(final Video video, final Type type) {
+        try {
+            return this.txService.inReadOnlyTransaction(new Callable<AwsOutput>() {
+                @Override
+                public AwsOutput call() throws Exception {
+                    final Video managed = videoManager.getManaged(video);
+                    if (type == Type.MP4) {
+                        // find the highest quality video available to download (preferring non-stale videos)
+                        for (final boolean stale : new boolean[] { false, true }) {
+                            for (final Type type : new Type[] { Type.MP4_720P, Type.MP4_480P_16_9 }) {
+                                final AwsOutput output = managed.getOutput(type);
+                                final AwsFile file = output != null ? output.getFile() : null;
+                                if (file != null && file.exists() && (stale || !output.isStale())) {
+                                    return output;
+                                }
+                            }
+                        }
+                    } else {
+                        return managed.getOutput(type);
+                    }
+
+                    return null;
+                }
+            });
+        } catch (final Exception e) {
+            return null;
+        }
     }
 }
