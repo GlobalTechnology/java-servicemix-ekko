@@ -76,7 +76,7 @@ public class VideoManagerImpl implements VideoManager {
     @Override
     @Transactional
     public Video getManaged(final Video video) {
-        return getManaged(video, LockModeType.NONE);
+        return getManaged(video, null);
     }
 
     @Override
@@ -85,7 +85,9 @@ public class VideoManagerImpl implements VideoManager {
         if (video == null) {
             return null;
         } else if (this.em.contains(video)) {
-            this.em.lock(video, lock);
+            if (lock != null) {
+                this.em.lock(video, lock);
+            }
             return video;
         } else {
             return this.em.find(Video.class, video.getId(), lock);
