@@ -22,7 +22,7 @@
 
   <properties>
     <gto.extension.persistence.version>0.3.0-SNAPSHOT</gto.extension.persistence.version>
-    <servicemix-gto-common.version>0.4.0-SNAPSHOT</servicemix-gto-common.version>
+    <servicemix-gto-common.version>0.4.0</servicemix-gto-common.version>
   </properties>
 
   <dependencies>
