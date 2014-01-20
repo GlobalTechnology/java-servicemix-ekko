@@ -22,6 +22,7 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.MapsId;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
 
 import org.apache.openjpa.persistence.jdbc.ForeignKey;
@@ -76,11 +77,7 @@ public class AwsOutput {
     @Embedded
     private AwsFile file;
 
-    @ElementCollection(fetch = FetchType.LAZY)
-    @CollectionTable(name = "EncodedVideos_files", joinColumns = {
-            @JoinColumn(name = "videoId", referencedColumnName = "videoId"),
-            @JoinColumn(name = "type", referencedColumnName = "type") }, uniqueConstraints = @UniqueConstraint(columnNames = {
-            "videoId", "type", "awsBucket", "awsKey" }))
+    @Transient
     private List<AwsFile> files = new ArrayList<>();
 
     @ElementCollection(fetch = FetchType.LAZY)
