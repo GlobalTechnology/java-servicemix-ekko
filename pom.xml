@@ -9,7 +9,7 @@
   </parent>
 
   <artifactId>servicemix-gto-ekko</artifactId>
-  <version>0.3.0-SNAPSHOT</version>
+  <version>0.3.0</version>
 
   <name>Ekko Course Management Hub</name>
   <description>A hub that manages courses for Ekko.</description>
@@ -17,7 +17,7 @@
   <scm>
     <connection>scm:git:git@git.gcx.org:java/servicemix/ekko.git</connection>
     <developerConnection>scm:git:git@git.gcx.org:java/servicemix/ekko.git</developerConnection>
-    <tag>HEAD</tag>
+    <tag>v0.3.0</tag>
   </scm>
 
   <properties>
