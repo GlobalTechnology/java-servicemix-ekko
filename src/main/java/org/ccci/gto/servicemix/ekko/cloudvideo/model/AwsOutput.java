@@ -21,6 +21,7 @@ import javax.persistence.FetchType;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.MapsId;
+import javax.persistence.OrderColumn;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
@@ -31,12 +32,15 @@ import org.apache.openjpa.persistence.jdbc.ForeignKeyAction;
 @Entity
 @Table(name = "EncodedVideos")
 public class AwsOutput {
+    private static final String PRESET_HLS_400K = "1351620000001-200050";
     private static final String PRESET_HLS_1M = "1351620000001-200030";
+    private static final String PRESET_HLS_2M = "1351620000001-200010";
     private static final String PRESET_MP4_480P_16_9 = "1351620000001-000020";
     private static final String PRESET_MP4_720P = "1351620000001-000010";
+
     public enum Type {
-        UNKNOWN(null), MP4(null), MP4_480P_16_9(PRESET_MP4_480P_16_9), MP4_720P(PRESET_MP4_720P), HLS(null), HLS_1M(
-                PRESET_HLS_1M);
+        UNKNOWN(null), MP4(null), MP4_480P_16_9(PRESET_MP4_480P_16_9), MP4_720P(PRESET_MP4_720P), HLS(null), HLS_400K(
+                PRESET_HLS_400K), HLS_1M(PRESET_HLS_1M), HLS_2M(PRESET_HLS_2M);
 
         public final String preset;
 
@@ -47,8 +51,12 @@ public class AwsOutput {
         public static Type fromPreset(final String preset) {
             if (preset != null) {
                 switch (preset) {
+                case PRESET_HLS_400K:
+                    return HLS_400K;
                 case PRESET_HLS_1M:
                     return HLS_1M;
+                case PRESET_HLS_2M:
+                    return HLS_2M;
                 case PRESET_MP4_480P_16_9:
                     return MP4_480P_16_9;
                 case PRESET_MP4_720P:
@@ -74,11 +82,20 @@ public class AwsOutput {
     @Column(nullable = false)
     private boolean stale = false;
 
+    private Integer width = null;
+    private Integer height = null;
+
     @Embedded
     private AwsFile file;
 
-    @Transient
-    private List<AwsFile> files = new ArrayList<>();
+    @ElementCollection(fetch = FetchType.LAZY)
+    @OrderColumn(name = "segment")
+    @CollectionTable(name = "EncodedVideos_segments", joinColumns = {
+            @JoinColumn(name = "videoId", referencedColumnName = "videoId"),
+            @JoinColumn(name = "type", referencedColumnName = "type") }, uniqueConstraints = {
+            @UniqueConstraint(name = "segment", columnNames = { "videoId", "type", "segment" }),
+            @UniqueConstraint(name = "awsFile", columnNames = { "videoId", "type", "awsBucket", "awsKey" }) })
+    private List<HlsSegment> segments = new ArrayList<>();
 
     @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "EncodedVideos_thumbnails", joinColumns = {
@@ -127,8 +144,33 @@ public class AwsOutput {
         this.file = file;
     }
 
+    public final List<HlsSegment> getSegments() {
+        return this.segments != null ? Collections.unmodifiableList(this.segments) : Collections
+                .<HlsSegment> emptyList();
+    }
+
+    public final void addSegment(final HlsSegment segment) {
+        if (segment != null) {
+            if (this.segments == null) {
+                this.segments = new ArrayList<>();
+            }
+
+            this.segments.add(segment);
+        }
+    }
+
     public final List<AwsFile> getFiles() {
-        return this.files != null ? Collections.unmodifiableList(this.files) : Collections.<AwsFile> emptyList();
+        if (this.segments != null && this.segments.size() > 0) {
+            final List<AwsFile> files = new ArrayList<>();
+
+            for (final HlsSegment segment : this.segments) {
+                files.add(segment.getFile());
+            }
+
+            return Collections.unmodifiableList(files);
+        }
+
+        return Collections.emptyList();
     }
 
     public void addThumbnail(final AwsFile file) {
@@ -150,6 +192,22 @@ public class AwsOutput {
         }
     }
 
+    public final Integer getWidth() {
+        return this.width;
+    }
+
+    public final Integer getHeight() {
+        return this.height;
+    }
+
+    public final void setWidth(final Integer width) {
+        this.width = width;
+    }
+
+    public final void setHeight(final Integer height) {
+        this.height = height;
+    }
+
     public boolean isDownloadable() {
         switch (this.key.type) {
         case MP4_720P:
@@ -162,7 +220,9 @@ public class AwsOutput {
 
     public boolean isHls() {
         switch (this.key.type) {
+        case HLS_400K:
         case HLS_1M:
+        case HLS_2M:
             return true;
         default:
             return false;

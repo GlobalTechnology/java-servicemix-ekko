@@ -15,6 +15,7 @@
     <class>org.ccci.gto.servicemix.ekko.cloudvideo.model.AwsJob</class>
     <class>org.ccci.gto.servicemix.ekko.cloudvideo.model.AwsOutput</class>
     <class>org.ccci.gto.servicemix.ekko.cloudvideo.model.AwsOutput$PrimaryKey</class>
+    <class>org.ccci.gto.servicemix.ekko.cloudvideo.model.HlsSegment</class>
     <exclude-unlisted-classes>true</exclude-unlisted-classes>
   </persistence-unit>
 </persistence>
