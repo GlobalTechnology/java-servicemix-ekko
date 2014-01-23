@@ -17,6 +17,9 @@
     <bundle>mvn:org.springframework/spring-context-support/${spring.version}</bundle>
     <bundle>mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.quartz/1.8.6_1</bundle>
 
+    <!-- HLS support -->
+    <bundle>mvn:org.ccci.gto/hls-m3u-parser/${hls-m3u-parser.version}</bundle>
+
     <bundle>mvn:${project.groupId}/${project.artifactId}/${project.version}</bundle>
   </feature>
 </features>

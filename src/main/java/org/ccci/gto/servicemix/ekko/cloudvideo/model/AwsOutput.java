@@ -23,7 +23,6 @@ import javax.persistence.ManyToOne;
 import javax.persistence.MapsId;
 import javax.persistence.OrderColumn;
 import javax.persistence.Table;
-import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
 
 import org.apache.openjpa.persistence.jdbc.ForeignKey;
@@ -66,6 +65,50 @@ public class AwsOutput {
 
             return UNKNOWN;
         }
+
+        public boolean isHls() {
+            switch (this) {
+            case HLS_400K:
+            case HLS_1M:
+            case HLS_2M:
+                return true;
+            default:
+                return false;
+            }
+        }
+
+        /* methods that return required HLS meta-data about this type */
+
+        /**
+         * @see https://developer.apple.com/library/ios/documentation/networkinginternet/conceptual/streamingmediaguide/
+         *      FrequentlyAskedQuestions/FrequentlyAskedQuestions.html
+         * @return
+         */
+        public String codecs() {
+            switch (this) {
+            case HLS_400K:
+                return "avc1.42001e";
+            case HLS_1M:
+            case HLS_2M:
+                return "avc1.4d001f,mp4a.40.2";
+            default:
+                return null;
+            }
+        }
+
+        public int bandwidth() {
+            switch (this) {
+            case HLS_400K:
+                // TODO: get the actual value, for now we ballpark a higher value
+                return 500000;
+            case HLS_1M:
+                return 1108000;
+            case HLS_2M:
+                return 2193000;
+            default:
+                return 0;
+            }
+        }
     }
 
     public static final Set<Type> REQUIRED_TYPES = Collections.unmodifiableSet(EnumSet.of(Type.MP4_720P));
@@ -105,7 +148,7 @@ public class AwsOutput {
     private Set<AwsFile> thumbnails;
 
     public AwsOutput() {
-        this(new PrimaryKey());
+        this(null);
     }
 
     public AwsOutput(final Video video, final Type type) {
@@ -117,7 +160,7 @@ public class AwsOutput {
     }
 
     public AwsOutput(final PrimaryKey key) {
-        this.key = key;
+        this.key = key != null ? key : new PrimaryKey();
     }
 
     public final Video getVideo() {
@@ -219,14 +262,7 @@ public class AwsOutput {
     }
 
     public boolean isHls() {
-        switch (this.key.type) {
-        case HLS_400K:
-        case HLS_1M:
-        case HLS_2M:
-            return true;
-        default:
-            return false;
-        }
+        return this.key.type != null ? this.key.type.isHls() : false;
     }
 
     @Embeddable

@@ -22,6 +22,7 @@
 
   <properties>
     <gto.extension.persistence.version>0.3.0</gto.extension.persistence.version>
+    <hls-m3u-parser.version>0.1.0-SNAPSHOT</hls-m3u-parser.version>
     <servicemix-gto-common.version>0.4.0</servicemix-gto-common.version>
   </properties>
 
@@ -91,6 +92,13 @@
     <dependency>
       <groupId>com.amazonaws</groupId>
       <artifactId>aws-java-sdk</artifactId>
+    </dependency>
+
+    <!-- HLS dependencies -->
+    <dependency>
+      <groupId>org.ccci.gto</groupId>
+      <artifactId>hls-m3u-parser</artifactId>
+      <version>${hls-m3u-parser.version}</version>
     </dependency>
 
     <!-- Quartz dependency -->
