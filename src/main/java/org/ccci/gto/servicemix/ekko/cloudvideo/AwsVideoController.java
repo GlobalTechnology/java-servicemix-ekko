@@ -4,8 +4,10 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
@@ -14,12 +16,17 @@ import javax.persistence.PersistenceContext;
 import javax.persistence.TypedQuery;
 
 import org.apache.commons.lang.StringUtils;
+import org.ccci.gto.hls.m3u.model.Element;
+import org.ccci.gto.hls.m3u.model.Media;
+import org.ccci.gto.hls.m3u.model.Playlist;
+import org.ccci.gto.hls.m3u.parser.PlaylistParser;
 import org.ccci.gto.persistence.tx.TransactionService;
 import org.ccci.gto.servicemix.ekko.cloudvideo.model.AwsFile;
 import org.ccci.gto.servicemix.ekko.cloudvideo.model.AwsFileToDelete;
 import org.ccci.gto.servicemix.ekko.cloudvideo.model.AwsJob;
 import org.ccci.gto.servicemix.ekko.cloudvideo.model.AwsOutput;
 import org.ccci.gto.servicemix.ekko.cloudvideo.model.AwsOutput.Type;
+import org.ccci.gto.servicemix.ekko.cloudvideo.model.HlsSegment;
 import org.ccci.gto.servicemix.ekko.cloudvideo.model.Video;
 import org.ccci.gto.servicemix.ekko.cloudvideo.model.Video.State;
 import org.slf4j.Logger;
@@ -46,6 +53,7 @@ import com.amazonaws.services.s3.model.DeleteObjectsResult;
 import com.amazonaws.services.s3.model.DeleteObjectsResult.DeletedObject;
 import com.amazonaws.services.s3.model.MultiObjectDeleteException;
 import com.amazonaws.services.s3.model.ObjectListing;
+import com.amazonaws.services.s3.model.S3Object;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
 
 public class AwsVideoController {
@@ -372,15 +380,15 @@ public class AwsVideoController {
         final String status = etJob.getStatus();
         final String keyPrefix = etJob.getOutputKeyPrefix();
 
-        // get a list of all thumbnails for the current job
-        final List<AwsFile> thumbnails = new ArrayList<>();
+        // get a list of all output files
+        final Set<AwsFile> files = new HashSet<>();
         if ("Complete".equals(status) || "Canceled".equals(status) || "Error".equals(status)) {
-            // fetch any thumbnails that will be needed for processing
+            // fetch all output files that will be needed for processing
             try {
-                ObjectListing result = this.s3.listObjects(awsS3BucketEncoded, keyPrefix + "thumbnails/");
+                ObjectListing result = this.s3.listObjects(awsS3BucketEncoded, keyPrefix);
                 while (true) {
                     for (final S3ObjectSummary obj : result.getObjectSummaries()) {
-                        thumbnails.add(new AwsFile(obj.getBucketName(), obj.getKey()));
+                        files.add(new AwsFile(obj.getBucketName(), obj.getKey()));
                     }
 
                     if (!result.isTruncated()) {
@@ -390,8 +398,29 @@ public class AwsVideoController {
                     result = this.s3.listNextBatchOfObjects(result);
                 }
             } catch (final Exception e) {
-                LOG.debug("error retrieving thumbnails from S3", e);
+                LOG.debug("error retrieving output files from S3", e);
                 return false;
+            }
+        }
+
+        // parse all output HLS playlists
+        final Map<Type, Playlist> playlists = new HashMap<>();
+        if ("Complete".equals(status)) {
+            // parse playlist for any HLS output
+            for(final JobOutput output : etJob.getOutputs()) {
+                final Type type = Type.fromPreset(output.getPresetId());
+                if (type.isHls()) {
+                    try (final S3Object in = this.s3.getObject(this.awsS3BucketEncoded, keyPrefix + output.getKey()
+                            + ".m3u8");) {
+                        try (final PlaylistParser parser = new PlaylistParser(in.getObjectContent())) {
+                            final Playlist playlist = parser.parse();
+                            playlists.put(type, playlist);
+                        }
+                    } catch (final Exception e) {
+                        LOG.debug("error parsing HLS playlist from S3", e);
+                        return false;
+                    }
+                }
             }
         }
 
@@ -417,41 +446,90 @@ public class AwsVideoController {
                                     AwsFile thumbnail = null;
 
                                     for (final JobOutput jobOutput : etJob.getOutputs()) {
-                                        // generate AwsOutput object
                                         final Type type = Type.fromPreset(jobOutput.getPresetId());
-                                        final AwsOutput output = new AwsOutput(video, type);
-                                        output.setFile(new AwsFile(awsS3BucketEncoded, keyPrefix + jobOutput.getKey()));
-
-                                        // attach any thumbnails for this output
-                                        if (StringUtils.isNotBlank(jobOutput.getThumbnailPattern())) {
-                                            final String thumbPrefix = keyPrefix + "thumbnails/" + type + "/";
-                                            for (final AwsFile thumb : thumbnails) {
-                                                if (thumb != null && thumb.exists()
-                                                        && thumb.getKey().startsWith(thumbPrefix)) {
-                                                    output.addThumbnail(thumb);
-
-                                                    if (thumbnail == null) {
-                                                        thumbnail = thumb;
-                                                    }
-                                                }
-                                            }
-
-                                            // remove any thumbnails we are storing in this output
-                                            thumbnails.removeAll(output.getThumbnails());
-                                        }
+                                        final String outputKey = keyPrefix + jobOutput.getKey();
 
                                         // remove old output (protecting files that are in the new output)
                                         final AwsOutput oldOutput = video.getOutput(type);
                                         if (oldOutput != null) {
                                             final Set<AwsFile> protectedFiles = new HashSet<>();
-                                            protectedFiles.addAll(thumbnails);
                                             protectedFiles.add(video.getThumbnail());
-                                            protectedFiles.add(output.getFile());
-                                            protectedFiles.addAll(output.getFiles());
-                                            protectedFiles.addAll(output.getThumbnails());
+                                            protectedFiles.addAll(files);
 
                                             manager.delete(oldOutput, protectedFiles);
                                             em.flush();
+                                        }
+
+                                        // generate new AwsOutput object
+                                        final AwsOutput output = new AwsOutput(video, type);
+
+                                        // set output playlist/video
+                                        output.setFile(new AwsFile(awsS3BucketEncoded, outputKey
+                                                + (output.isHls() ? ".m3u8" : "")));
+                                        files.remove(output.getFile());
+
+                                        // TODO: set output resolution
+
+                                        // attach any thumbnails for this output
+                                        String thumbPattern = jobOutput.getThumbnailPattern();
+                                        if (StringUtils.isNotBlank(thumbPattern)) {
+                                            final int endIndex = thumbPattern.indexOf("{");
+                                            if (endIndex > 0) {
+                                                thumbPattern = keyPrefix + thumbPattern.substring(0, endIndex);
+                                                for (final AwsFile file : files) {
+                                                    if (file != null && file.exists()
+                                                            && file.getKey().startsWith(thumbPattern)) {
+                                                        output.addThumbnail(file);
+
+                                                        if (thumbnail == null) {
+                                                            thumbnail = file;
+                                                        }
+                                                    }
+                                                }
+                                            }
+
+                                            // remove any thumbnails we are storing in this output
+                                            files.removeAll(output.getThumbnails());
+                                        }
+
+                                        // attach any HLS segments
+                                        if (output.isHls()) {
+                                            // find all the segments that exist
+                                            final Set<AwsFile> segments = new HashSet<>();
+                                            for (final AwsFile file : files) {
+                                                if (file.getKey().startsWith(outputKey)) {
+                                                    segments.add(file);
+                                                }
+                                            }
+
+                                            // process playlist
+                                            final Playlist playlist = playlists.get(type);
+                                            for (final Element element : playlist) {
+                                                if (element instanceof Media) {
+                                                    // create the segment
+                                                    final HlsSegment segment = new HlsSegment();
+                                                    segment.setDuration(((Media) element).getDuration());
+
+                                                    // find the file for this segment
+                                                    for (final AwsFile file : segments) {
+                                                        if (file.getKey().endsWith(element.getUri())) {
+                                                            segment.setFile(file);
+                                                            files.remove(file);
+                                                            segments.remove(file);
+                                                            break;
+                                                        }
+                                                    }
+
+                                                    // throw an exception if we couldn't find the requested segment
+                                                    if (segment.getFile() == null) {
+                                                        throw new RuntimeException("file for HLS segment not found: "
+                                                                + element.getUri());
+                                                    }
+
+                                                    // add the segment to the output
+                                                    output.addSegment(segment);
+                                                }
+                                            }
                                         }
 
                                         // save the new output
@@ -459,8 +537,6 @@ public class AwsVideoController {
                                         em.flush();
                                         em.refresh(video);
                                     }
-
-                                    // XXX: thumbnails should now be empty, should we check this?
 
                                     // should we replace the thumbnail?
                                     final AwsFile oldThumb;
@@ -474,13 +550,6 @@ public class AwsVideoController {
                             case "Error":
                                 // delete all potential output files if the job is stale or was canceled
                                 if (job.isStale() || "Canceled".equals(status)) {
-                                    // generate the set of files to delete
-                                    final Set<AwsFile> files = new HashSet<>();
-                                    for (final JobOutput jobOutput : etJob.getOutputs()) {
-                                        files.add(new AwsFile(awsS3BucketEncoded, keyPrefix + jobOutput.getKey()));
-                                    }
-                                    files.addAll(thumbnails);
-
                                     // prevent deletion of any files currently being used
                                     files.remove(video.getThumbnail());
                                     for (final AwsOutput output : video.getOutputs()) {
