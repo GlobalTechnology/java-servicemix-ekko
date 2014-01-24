@@ -68,6 +68,7 @@ public class AwsOutput {
 
         public boolean isHls() {
             switch (this) {
+            case HLS:
             case HLS_400K:
             case HLS_1M:
             case HLS_2M:
@@ -80,14 +81,15 @@ public class AwsOutput {
         /* methods that return required HLS meta-data about this type */
 
         /**
-         * @see https://developer.apple.com/library/ios/documentation/networkinginternet/conceptual/streamingmediaguide/
-         *      FrequentlyAskedQuestions/FrequentlyAskedQuestions.html
+         * @see <a
+         *      href="https://developer.apple.com/library/ios/documentation/networkinginternet/conceptual/streamingmediaguide/FrequentlyAskedQuestions/FrequentlyAskedQuestions.html">Apple
+         *      HLS FAQ</a>
          * @return
          */
         public String codecs() {
             switch (this) {
             case HLS_400K:
-                return "avc1.42001e";
+                return "avc1.42001e,mp4a.40.2";
             case HLS_1M:
             case HLS_2M:
                 return "avc1.4d001f,mp4a.40.2";
@@ -99,8 +101,7 @@ public class AwsOutput {
         public int bandwidth() {
             switch (this) {
             case HLS_400K:
-                // TODO: get the actual value, for now we ballpark a higher value
-                return 500000;
+                return 463000;
             case HLS_1M:
                 return 1108000;
             case HLS_2M:
@@ -111,7 +112,8 @@ public class AwsOutput {
         }
     }
 
-    public static final Set<Type> REQUIRED_TYPES = Collections.unmodifiableSet(EnumSet.of(Type.MP4_720P));
+    public static final Set<Type> REQUIRED_TYPES = Collections.unmodifiableSet(EnumSet.of(Type.HLS_400K, Type.HLS_1M,
+            Type.HLS_2M, Type.MP4_720P));
 
     @EmbeddedId
     private PrimaryKey key;

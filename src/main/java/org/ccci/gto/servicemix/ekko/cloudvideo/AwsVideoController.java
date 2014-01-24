@@ -407,7 +407,7 @@ public class AwsVideoController {
         final Map<Type, Playlist> playlists = new HashMap<>();
         if ("Complete".equals(status)) {
             // parse playlist for any HLS output
-            for(final JobOutput output : etJob.getOutputs()) {
+            for (final JobOutput output : etJob.getOutputs()) {
                 final Type type = Type.fromPreset(output.getPresetId());
                 if (type.isHls()) {
                     try (final S3Object in = this.s3.getObject(this.awsS3BucketEncoded, keyPrefix + output.getKey()
@@ -619,35 +619,34 @@ public class AwsVideoController {
     private static CreateJobOutput createJobOutput(final Type type, final AwsFile master) {
         final CreateJobOutput output = new CreateJobOutput().withPresetId(type.preset);
 
-        // find the extension for the output
-        boolean thumbnails = false;
-        final String ext;
-        switch (type) {
-        case MP4_720P:
-            thumbnails = true;
-        case MP4_480P_16_9:
-            ext = "mp4";
-            break;
-        case HLS_1M:
-            ext = "ts";
-            break;
-        case UNKNOWN:
-        default:
-            return null;
-        }
-
-        // generate the key for this output
+        // generate the base filename for this output
         String name = extractName(master.getKey());
         final int i = name.lastIndexOf(".");
         if (i >= 0 && i < name.length() - 1) {
             name = name.substring(0, i);
         }
-        output.setKey("output/" + type + "/" + name + "." + ext);
 
-        // generate thumbnails if needed
-        if (thumbnails) {
-            output.setThumbnailPattern("thumbnails/" + type + "/thumbnail-{count}");
+        // find the extension for the output
+        switch (type) {
+        case MP4_720P:
+            // we only output thumbnails for the highest quality MP4 stream
+            output.setThumbnailPattern(type + "/thumbnails/thumbnail-{count}");
+        case MP4_480P_16_9:
+            // all MP4 outputs should have an .mp4 extension
+            name = name + ".mp4";
+            break;
+        case HLS_400K:
+        case HLS_1M:
+        case HLS_2M:
+            // create HLS segments that are 10 seconds long
+            output.withSegmentDuration("10");
+            break;
+        default:
+            return null;
         }
+
+        // set output key
+        output.setKey(type + "/output/" + name);
 
         // return the generated output
         return output;

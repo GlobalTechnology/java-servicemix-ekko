@@ -15,6 +15,7 @@ import java.util.concurrent.Callable;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
@@ -91,6 +92,20 @@ public class VideoResourceApi extends AbstractApi {
         }
 
         return Response.status(Status.NOT_FOUND).build();
+    }
+
+    @GET
+    @Path("stream.m3u8")
+    @Produces("application/vnd.apple.mpegurl")
+    public Response getHlsStream(@Context final MessageContext cxt, @Context final UriInfo uri) {
+        // throw an error if this is not an HLS stream request
+        final Type type = this.getType(uri);
+        if (!type.isHls()) {
+            return Response.status(Status.BAD_REQUEST).build();
+        }
+
+        // return the stream
+        return this.getStream(cxt, uri);
     }
 
     @GET
@@ -313,7 +328,7 @@ public class VideoResourceApi extends AbstractApi {
                                 }
                             }
 
-                            return playlist.targetDuration(targetDuration).build();
+                            return playlist.targetDuration(targetDuration).complete(true).build();
                         }
 
                         return null;
