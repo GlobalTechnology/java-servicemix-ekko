@@ -96,6 +96,7 @@
           <xs:enumeration value="ecv" />
           <xs:enumeration value="file" />
           <xs:enumeration value="uri" />
+          <xs:enumeration value="arclight" />
           <!-- <xs:enumeration value="dynamic" /> -->
         </xs:restriction>
       </xs:simpleType>
@@ -105,6 +106,7 @@
     <xs:attribute name="size" type="xs:int" use="optional" />
     <xs:attribute name="file" type="xs:string" use="optional" />
     <xs:attribute name="videoId" type="xs:long" use="optional" />
+    <xs:attribute name="refId" type="xs:string" use="optional" />
     <xs:attribute name="uri" type="xs:anyURI" use="optional" />
     <xs:attribute name="provider" use="optional">
       <xs:simpleType>

@@ -13,6 +13,7 @@ import javax.persistence.EntityExistsException;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
+import org.apache.commons.lang.StringUtils;
 import org.ccci.gto.servicemix.ekko.model.Course;
 import org.ccci.gto.servicemix.ekko.model.Course.CourseQuery;
 import org.ccci.gto.servicemix.ekko.model.FileResource;
@@ -434,6 +435,13 @@ public class CourseManagerImpl implements CourseManager {
 
                     if (course.getVideoResource(videoId) == null) {
                         exceptions.add(new MissingVideoResourceManifestException(videoId));
+                    }
+                    break;
+                case "arclight":
+                    // ensure we have a valid refId
+                    final String refId = resource.getAttribute("refId");
+                    if (StringUtils.isBlank(refId)) {
+                        exceptions.add(new ManifestException("Invalid refId: " + refId));
                     }
                     break;
                 case "uri":
