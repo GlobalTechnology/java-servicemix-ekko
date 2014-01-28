@@ -28,6 +28,7 @@ import org.ccci.gto.hls.m3u.model.Playlist;
 import org.ccci.gto.hls.m3u.model.Stream;
 import org.ccci.gto.persistence.tx.TransactionService;
 import org.ccci.gto.servicemix.common.model.Session;
+import org.ccci.gto.servicemix.common.util.ResponseUtils;
 import org.ccci.gto.servicemix.ekko.cloudvideo.AwsVideoController;
 import org.ccci.gto.servicemix.ekko.cloudvideo.VideoManager;
 import org.ccci.gto.servicemix.ekko.cloudvideo.model.AwsFile;
@@ -83,7 +84,7 @@ public class VideoResourceApi extends AbstractApi {
             if (output != null && output.isDownloadable()) {
                 final URL url = this.awsController.getSignedUrl(output.getFile());
                 if (url != null) {
-                    return Response.temporaryRedirect(url.toURI()).build();
+                    return ResponseUtils.temporaryRedirect(url.toURI()).build();
                 }
             }
         } catch (final Exception e) {
@@ -133,7 +134,7 @@ public class VideoResourceApi extends AbstractApi {
             if (output != null) {
                 try {
                     final URL url = this.awsController.getSignedUrl(output.getFile());
-                    return Response.temporaryRedirect(url.toURI()).header(HEADER_STREAM_URI, url).build();
+                    return ResponseUtils.temporaryRedirect(url.toURI()).header(HEADER_STREAM_URI, url).build();
                 } catch (final Exception ignored) {
                 }
             }
@@ -182,7 +183,7 @@ public class VideoResourceApi extends AbstractApi {
             final URL thumbUrl = this.awsController.getSignedUrl(video.getThumbnail());
             if (thumbUrl != null) {
                 try {
-                    return Response.temporaryRedirect(thumbUrl.toURI()).build();
+                    return ResponseUtils.temporaryRedirect(thumbUrl.toURI()).build();
                 } catch (final Exception ignored) {
                 }
             }

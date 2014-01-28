@@ -549,6 +549,6 @@ public class CourseApi extends AbstractApi {
         // redirect to the actual location of the zip
         final Map<String, Object> values = this.getUriValues(uri);
         values.put(PARAM_RESOURCE_SHA1, zipSha1);
-        return Response.temporaryRedirect(this.getResourceUriBuilder(cxt, uri).buildFromMap(values)).build();
+        return ResponseUtils.temporaryRedirect(this.getResourceUriBuilder(cxt, uri).buildFromMap(values)).build();
     }
 }
