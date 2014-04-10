@@ -3,3 +3,7 @@
 .settings/
 .wtpmodules
 target/
+
+# IntelliJ files
+*.iml
+.idea
