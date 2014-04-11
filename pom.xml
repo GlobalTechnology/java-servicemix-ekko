@@ -22,8 +22,8 @@
 
   <properties>
     <gto.extension.persistence.version>0.3.0</gto.extension.persistence.version>
-    <hls-m3u-parser.version>0.1.0-SNAPSHOT</hls-m3u-parser.version>
-    <servicemix-gto-common.version>0.5.0-SNAPSHOT</servicemix-gto-common.version>
+    <hls-m3u-parser.version>0.1.0</hls-m3u-parser.version>
+    <servicemix-gto-common.version>0.4.1</servicemix-gto-common.version>
   </properties>
 
   <dependencies>
