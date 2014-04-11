@@ -1,9 +1,9 @@
 package org.ccci.gto.servicemix.ekko.cloudvideo.model;
 
+import java.util.Objects;
+
 import javax.persistence.Column;
 import javax.persistence.Embeddable;
-
-import org.apache.commons.lang.StringUtils;
 
 @Embeddable
 public class AwsFile implements Comparable<AwsFile> {
@@ -47,7 +47,7 @@ public class AwsFile implements Comparable<AwsFile> {
         }
         if (obj instanceof AwsFile) {
             final AwsFile file2 = (AwsFile) obj;
-            return StringUtils.equals(this.bucket, file2.bucket) && StringUtils.equals(this.key, file2.key);
+            return Objects.equals(this.bucket, file2.bucket) && Objects.equals(this.key, file2.key);
         }
 
         return false;
