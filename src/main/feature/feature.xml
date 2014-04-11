@@ -14,7 +14,6 @@
     <bundle>wrap:mvn:fm.last/moji/${moji.version}</bundle>
 
     <!-- Quartz support -->
-    <bundle>mvn:org.springframework/spring-context-support/${spring.version}</bundle>
     <bundle>mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.quartz/1.8.6_1</bundle>
 
     <!-- HLS support -->
