@@ -2,23 +2,13 @@ package org.ccci.gto.servicemix.ekko.cloudvideo.jaxrs.api;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
-import static org.ccci.gto.servicemix.common.jaxrs.api.Constants.PATH_API_KEY;
+import static org.ccci.gto.servicemix.common.jaxrs.api.Constants.PATH_OPTIONAL_API_KEY;
 import static org.ccci.gto.servicemix.ekko.cloudvideo.jaxrs.api.Constants.PARAM_GROUP;
 import static org.ccci.gto.servicemix.ekko.cloudvideo.jaxrs.api.Constants.PARAM_LIMIT;
 import static org.ccci.gto.servicemix.ekko.cloudvideo.jaxrs.api.Constants.PARAM_START;
 import static org.ccci.gto.servicemix.ekko.cloudvideo.jaxrs.api.Constants.PARAM_TITLE;
 
-import java.util.List;
-
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
-
+import org.apache.cxf.jaxrs.ext.MessageContext;
 import org.ccci.gto.persistence.FoundRowsList;
 import org.ccci.gto.servicemix.common.model.Client;
 import org.ccci.gto.servicemix.ekko.cloudvideo.jaxb.model.JaxbVideo;
@@ -28,12 +18,23 @@ import org.ccci.gto.servicemix.ekko.cloudvideo.jaxb.model.JaxbVideosXml;
 import org.ccci.gto.servicemix.ekko.cloudvideo.model.Video;
 import org.ccci.gto.servicemix.ekko.cloudvideo.model.Video.VideoQuery;
 
-@Path(PATH_API_KEY + "/videos")
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
+import java.util.List;
+
+@Path(PATH_OPTIONAL_API_KEY + "videos")
 public class VideosApi extends AbstractApi {
     @POST
     @Produces({ APPLICATION_XML, APPLICATION_JSON })
-    public Response createVideo(@Context final UriInfo uri, final MultivaluedMap<String, String> form) {
-        final Client client = this.getClient(uri);
+    public Response createVideo(@Context final MessageContext cxt, @Context final UriInfo uri,
+                                final MultivaluedMap<String, String> form) {
+        final Client client = this.getClient(cxt, uri);
         if (client == null) {
             return unauthorized().build();
         }
@@ -50,18 +51,18 @@ public class VideosApi extends AbstractApi {
 
     @GET
     @Produces({ APPLICATION_JSON })
-    public Response getVideosJson(@Context UriInfo uri) {
-        return this.getVideos(uri, true);
+    public Response getVideosJson(@Context final MessageContext cxt, @Context UriInfo uri) {
+        return this.getVideos(cxt, uri, true);
     }
 
     @GET
     @Produces({ APPLICATION_XML })
-    public Response getVideosXml(@Context UriInfo uri) {
-        return this.getVideos(uri, false);
+    public Response getVideosXml(@Context final MessageContext cxt, @Context UriInfo uri) {
+        return this.getVideos(cxt, uri, false);
     }
 
-    private Response getVideos(@Context final UriInfo uri, final boolean json) {
-        final Client client = this.getClient(uri);
+    private Response getVideos(final MessageContext cxt, final UriInfo uri, final boolean json) {
+        final Client client = this.getClient(cxt, uri);
         if (client == null) {
             return unauthorized().build();
         }

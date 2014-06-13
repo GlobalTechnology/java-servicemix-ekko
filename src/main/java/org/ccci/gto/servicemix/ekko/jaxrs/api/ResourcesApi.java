@@ -1,27 +1,10 @@
 package org.ccci.gto.servicemix.ekko.jaxrs.api;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
-import static org.ccci.gto.servicemix.common.jaxrs.api.Constants.PATH_SESSION;
+import static org.ccci.gto.servicemix.common.jaxrs.api.Constants.PATH_OPTIONAL_SESSION;
 import static org.ccci.gto.servicemix.ekko.jaxrs.api.Constants.PARAM_RESOURCE_SHA1;
 import static org.ccci.gto.servicemix.ekko.jaxrs.api.Constants.PATH_COURSE;
 import static org.ccci.gto.servicemix.ekko.jaxrs.api.Constants.PATH_RESOURCE_SHA1;
-
-import java.io.InputStream;
-import java.util.Map;
-import java.util.concurrent.Callable;
-
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.HeaderParam;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.ResponseBuilder;
-import javax.ws.rs.core.Response.Status;
-import javax.ws.rs.core.UriBuilder;
-import javax.ws.rs.core.UriInfo;
 
 import org.apache.cxf.jaxrs.ext.MessageContext;
 import org.ccci.gto.persistence.tx.TransactionService;
@@ -39,7 +22,23 @@ import org.ccci.gto.servicemix.ekko.model.FileResource;
 import org.ccci.gto.servicemix.ekko.model.VideoResource;
 import org.springframework.beans.factory.annotation.Autowired;
 
-@Path(PATH_SESSION + "/courses/" + PATH_COURSE + "/resources")
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.HeaderParam;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.ResponseBuilder;
+import javax.ws.rs.core.Response.Status;
+import javax.ws.rs.core.UriBuilder;
+import javax.ws.rs.core.UriInfo;
+import java.io.InputStream;
+import java.util.Map;
+import java.util.concurrent.Callable;
+
+@Path(PATH_OPTIONAL_SESSION + "courses/" + PATH_COURSE + "/resources")
 public class ResourcesApi extends AbstractApi {
     @Autowired
     private ResourceManager resourceManager;
@@ -59,7 +58,7 @@ public class ResourcesApi extends AbstractApi {
     public Response storeResource(@Context final MessageContext cxt, @Context final UriInfo uri,
             @HeaderParam("Content-Type") final String mimeType, final InputStream in) {
         // validate the session
-        final Session session = this.getSession(uri);
+        final Session session = this.getSession(cxt, uri);
         if (session == null || session.isExpired() || session.isGuest()) {
             return this.unauthorized(cxt, uri).build();
         }
@@ -103,7 +102,7 @@ public class ResourcesApi extends AbstractApi {
     @Produces(APPLICATION_XML)
     public Response getResources(@Context final MessageContext cxt, @Context final UriInfo uri) {
         // validate the session
-        final Session session = this.getSession(uri);
+        final Session session = this.getSession(cxt, uri);
         if (session == null || session.isExpired() || session.isGuest()) {
             return this.unauthorized(cxt, uri).build();
         }
@@ -151,7 +150,7 @@ public class ResourcesApi extends AbstractApi {
     @Path(PATH_RESOURCE_SHA1)
     public Response getResourceBySha1(@Context final MessageContext cxt, @Context final UriInfo uri) {
         // validate the session
-        final Session session = this.getSession(uri);
+        final Session session = this.getSession(cxt, uri);
         if (session == null || session.isExpired()) {
             return this.unauthorized(cxt, uri).build();
         }
@@ -211,7 +210,7 @@ public class ResourcesApi extends AbstractApi {
     @Path(PATH_RESOURCE_SHA1)
     public Response deleteResourceBySha1(@Context final MessageContext cxt, @Context final UriInfo uri) {
         // validate the session
-        final Session session = this.getSession(uri);
+        final Session session = this.getSession(cxt, uri);
         if (session == null || session.isExpired() || session.isGuest()) {
             return this.unauthorized(cxt, uri).build();
         }

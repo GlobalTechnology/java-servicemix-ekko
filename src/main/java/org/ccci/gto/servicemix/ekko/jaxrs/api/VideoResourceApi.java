@@ -1,26 +1,11 @@
 package org.ccci.gto.servicemix.ekko.jaxrs.api;
 
-import static org.ccci.gto.servicemix.common.jaxrs.api.Constants.PATH_SESSION;
+import static org.ccci.gto.servicemix.common.jaxrs.api.Constants.PATH_OPTIONAL_SESSION;
 import static org.ccci.gto.servicemix.ekko.cloudvideo.jaxrs.api.Constants.HEADER_STREAM_URI;
 import static org.ccci.gto.servicemix.ekko.cloudvideo.jaxrs.api.Constants.PARAM_OUTPUT_TYPE;
 import static org.ccci.gto.servicemix.ekko.cloudvideo.jaxrs.api.Constants.PARAM_VIDEO;
 import static org.ccci.gto.servicemix.ekko.cloudvideo.jaxrs.api.Constants.PATH_VIDEO;
 import static org.ccci.gto.servicemix.ekko.jaxrs.api.Constants.PATH_COURSE;
-
-import java.math.RoundingMode;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.Callable;
-
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.Status;
-import javax.ws.rs.core.UriBuilder;
-import javax.ws.rs.core.UriInfo;
 
 import org.apache.cxf.jaxrs.ext.MessageContext;
 import org.ccci.gto.hls.m3u.model.Media;
@@ -42,7 +27,21 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
-@Path(PATH_SESSION + "/courses/" + PATH_COURSE + "/resources/" + PATH_VIDEO)
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
+import javax.ws.rs.core.UriBuilder;
+import javax.ws.rs.core.UriInfo;
+import java.math.RoundingMode;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.Callable;
+
+@Path(PATH_OPTIONAL_SESSION + "courses/" + PATH_COURSE + "/resources/" + PATH_VIDEO)
 public class VideoResourceApi extends AbstractApi {
     private static final Logger LOG = LoggerFactory.getLogger(VideoResourceApi.class);
 
@@ -59,7 +58,7 @@ public class VideoResourceApi extends AbstractApi {
     @Path("download")
     public Response downloadVideo(@Context final MessageContext cxt, @Context final UriInfo uri) {
         // validate the session
-        final Session session = this.getSession(uri);
+        final Session session = this.getSession(cxt, uri);
         if (session == null || session.isExpired()) {
             return this.unauthorized(cxt, uri).build();
         }
@@ -113,7 +112,7 @@ public class VideoResourceApi extends AbstractApi {
     @Path("stream")
     public Response getStream(@Context final MessageContext cxt, @Context final UriInfo uri) {
         // validate the session
-        final Session session = this.getSession(uri);
+        final Session session = this.getSession(cxt, uri);
         if (session == null || session.isExpired()) {
             return this.unauthorized(cxt, uri).build();
         }
@@ -172,7 +171,7 @@ public class VideoResourceApi extends AbstractApi {
     @Path("thumbnail")
     public Response getThumbnail(@Context final MessageContext cxt, @Context final UriInfo uri) {
         // validate the session
-        final Session session = this.getSession(uri);
+        final Session session = this.getSession(cxt, uri);
         if (session == null || session.isExpired()) {
             return this.unauthorized(cxt, uri).build();
         }

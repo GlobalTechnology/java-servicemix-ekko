@@ -1,16 +1,19 @@
 package org.ccci.gto.servicemix.ekko.jaxrs.api;
 
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
-import static org.ccci.gto.servicemix.common.jaxrs.api.Constants.PATH_SESSION;
+import static org.ccci.gto.servicemix.common.jaxrs.api.Constants.PATH_OPTIONAL_SESSION;
 import static org.ccci.gto.servicemix.ekko.jaxrs.api.Constants.PARAM_COURSE;
 import static org.ccci.gto.servicemix.ekko.jaxrs.api.Constants.PARAM_LIMIT;
 import static org.ccci.gto.servicemix.ekko.jaxrs.api.Constants.PARAM_START;
 
-import java.io.InputStream;
-import java.net.URI;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import org.apache.cxf.jaxrs.ext.MessageContext;
+import org.ccci.gto.servicemix.common.model.Session;
+import org.ccci.gto.servicemix.ekko.DomUtils;
+import org.ccci.gto.servicemix.ekko.jaxb.model.JaxbCourse;
+import org.ccci.gto.servicemix.ekko.jaxb.model.JaxbCourses;
+import org.ccci.gto.servicemix.ekko.model.Course;
+import org.ccci.gto.servicemix.ekko.model.Course.CourseQuery;
+import org.w3c.dom.Document;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DefaultValue;
@@ -24,24 +27,20 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
+import java.io.InputStream;
+import java.net.URI;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-import org.apache.cxf.jaxrs.ext.MessageContext;
-import org.ccci.gto.servicemix.common.model.Session;
-import org.ccci.gto.servicemix.ekko.DomUtils;
-import org.ccci.gto.servicemix.ekko.jaxb.model.JaxbCourse;
-import org.ccci.gto.servicemix.ekko.jaxb.model.JaxbCourses;
-import org.ccci.gto.servicemix.ekko.model.Course;
-import org.ccci.gto.servicemix.ekko.model.Course.CourseQuery;
-import org.w3c.dom.Document;
-
-@Path(PATH_SESSION + "/courses")
+@Path(PATH_OPTIONAL_SESSION + "courses")
 public class CoursesApi extends AbstractApi {
     @POST
     @Consumes(APPLICATION_XML)
     @Produces(APPLICATION_XML)
     public Response createCourse(@Context final MessageContext cxt, @Context final UriInfo uri, final InputStream in) {
         // validate the session
-        final Session session = this.getSession(uri);
+        final Session session = this.getSession(cxt, uri);
         if (session == null || session.isExpired() || session.isGuest()) {
             return this.unauthorized(cxt, uri).build();
         }
@@ -79,7 +78,7 @@ public class CoursesApi extends AbstractApi {
             @QueryParam(PARAM_START) @DefaultValue("0") int start,
             @QueryParam(PARAM_LIMIT) @DefaultValue("10") int limit) {
         // validate the session
-        final Session session = this.getSession(uri);
+        final Session session = this.getSession(cxt, uri);
         if (session == null || session.isExpired()) {
             return this.unauthorized(cxt, uri).build();
         }

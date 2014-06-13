@@ -73,7 +73,7 @@ public class Course {
 
     @OneToMany(mappedBy = "course", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
     @MapKeyColumn(name = "sha1")
-    private Map<String, FileResource> resources = new HashMap<String, FileResource>();
+    private Map<String, FileResource> resources = new HashMap<>();
 
     @OneToMany(mappedBy = "course", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
     @MapKeyColumn(name = "videoId")

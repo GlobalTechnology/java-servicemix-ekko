@@ -3,15 +3,17 @@ package org.ccci.gto.servicemix.ekko.cloudvideo.jaxrs.api;
 import static javax.ws.rs.core.MediaType.APPLICATION_FORM_URLENCODED;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.MediaType.APPLICATION_XML;
-import static org.ccci.gto.servicemix.common.jaxrs.api.Constants.PATH_API_KEY;
+import static org.ccci.gto.servicemix.common.jaxrs.api.Constants.PATH_OPTIONAL_API_KEY;
 import static org.ccci.gto.servicemix.ekko.cloudvideo.jaxrs.api.Constants.PARAM_S3_BUCKET;
 import static org.ccci.gto.servicemix.ekko.cloudvideo.jaxrs.api.Constants.PARAM_S3_DELETE_SOURCE;
 import static org.ccci.gto.servicemix.ekko.cloudvideo.jaxrs.api.Constants.PARAM_S3_KEY;
 import static org.ccci.gto.servicemix.ekko.cloudvideo.jaxrs.api.Constants.PATH_VIDEO;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
+import org.apache.cxf.jaxrs.ext.MessageContext;
+import org.ccci.gto.servicemix.common.model.Client;
+import org.ccci.gto.servicemix.ekko.cloudvideo.jaxb.model.JaxbVideo;
+import org.ccci.gto.servicemix.ekko.cloudvideo.model.AwsFile;
+import org.ccci.gto.servicemix.ekko.cloudvideo.model.Video;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -25,20 +27,20 @@ import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
-import org.ccci.gto.servicemix.common.model.Client;
-import org.ccci.gto.servicemix.ekko.cloudvideo.jaxb.model.JaxbVideo;
-import org.ccci.gto.servicemix.ekko.cloudvideo.model.AwsFile;
-import org.ccci.gto.servicemix.ekko.cloudvideo.model.Video;
-
-@Path(PATH_API_KEY + "/videos/" + PATH_VIDEO)
+@Path(PATH_OPTIONAL_API_KEY + "videos/" + PATH_VIDEO)
 public class VideoApi extends AbstractApi {
     @POST
     @Path("storeS3")
     @Produces({ APPLICATION_XML, APPLICATION_JSON })
-    public Response uploadVideo(@Context final UriInfo uri, @FormParam(PARAM_S3_BUCKET) final String srcBucket,
-            @FormParam(PARAM_S3_KEY) final String srcKey, @FormParam(PARAM_S3_DELETE_SOURCE) final boolean deleteSource) {
-        final Client client = this.getClient(uri);
+    public Response uploadVideo(@Context final MessageContext cxt, @Context final UriInfo uri,
+                                @FormParam(PARAM_S3_BUCKET) final String srcBucket,
+                                @FormParam(PARAM_S3_KEY) final String srcKey, @FormParam(PARAM_S3_DELETE_SOURCE)
+    final boolean deleteSource) {
+        final Client client = this.getClient(cxt, uri);
         if (client == null) {
             return unauthorized().build();
         }
@@ -56,8 +58,8 @@ public class VideoApi extends AbstractApi {
 
     @GET
     @Produces({APPLICATION_XML, APPLICATION_JSON})
-    public Response getVideo(@Context final UriInfo uri) {
-        final Client client = this.getClient(uri);
+    public Response getVideo(@Context final MessageContext cxt, @Context final UriInfo uri) {
+        final Client client = this.getClient(cxt, uri);
         if (client == null) {
             return unauthorized().build();
         }
@@ -71,8 +73,8 @@ public class VideoApi extends AbstractApi {
     }
 
     @DELETE
-    public Response deleteVideo(@Context final UriInfo uri) {
-        final Client client = this.getClient(uri);
+    public Response deleteVideo(@Context final MessageContext cxt, @Context final UriInfo uri) {
+        final Client client = this.getClient(cxt, uri);
         if (client == null) {
             return unauthorized().build();
         }
@@ -97,8 +99,9 @@ public class VideoApi extends AbstractApi {
     @POST
     @Path("courses")
     @Consumes(APPLICATION_FORM_URLENCODED)
-    public Response updateCourses(@Context final UriInfo uri, final MultivaluedMap<String, String> form) {
-        final Client client = this.getClient(uri);
+    public Response updateCourses(@Context final MessageContext cxt, @Context final UriInfo uri,
+                                  final MultivaluedMap<String, String> form) {
+        final Client client = this.getClient(cxt, uri);
         if (client == null) {
             return unauthorized().build();
         }
