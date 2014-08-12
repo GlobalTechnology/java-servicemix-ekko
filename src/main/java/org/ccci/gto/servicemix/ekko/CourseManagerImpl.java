@@ -4,15 +4,6 @@ import static org.ccci.gto.servicemix.ekko.Constants.XMLNS_EKKO;
 import static org.ccci.gto.servicemix.ekko.model.Course.ENROLLMENT_APPROVAL;
 import static org.ccci.gto.servicemix.ekko.model.Course.ENROLLMENT_OPEN;
 
-import java.security.SecureRandom;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-
-import javax.persistence.EntityExistsException;
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
-
 import org.apache.commons.lang.StringUtils;
 import org.ccci.gto.servicemix.ekko.model.Course;
 import org.ccci.gto.servicemix.ekko.model.Course.CourseQuery;
@@ -22,6 +13,16 @@ import org.springframework.transaction.annotation.Transactional;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.xml.sax.SAXException;
+
+import javax.persistence.EntityExistsException;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathExpressionException;
+import java.security.SecureRandom;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 public class CourseManagerImpl implements CourseManager {
     private static final SecureRandom RAND = new SecureRandom();
@@ -176,6 +177,14 @@ public class CourseManagerImpl implements CourseManager {
         // replace the manifest with the pending manifest
         course.setManifest(pendingManifest);
         course.setPendingManifest(null);
+
+        // update course meta-data
+        try {
+            course.setTitle((String) DomUtils.compileXPath("/ekko:course/ekko:meta/ekko:title").evaluate(manifest,
+                    XPathConstants.STRING));
+        } catch (final XPathExpressionException ignored) {
+            course.setTitle(null);
+        }
 
         // remove any previously generated zip file
         course.setZip(null);
