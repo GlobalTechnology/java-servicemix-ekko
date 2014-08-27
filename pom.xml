@@ -22,7 +22,7 @@
 
   <properties>
     <hls-m3u-parser.version>0.1.0</hls-m3u-parser.version>
-    <servicemix-gto-common.version>0.4.3-SNAPSHOT</servicemix-gto-common.version>
+    <servicemix-gto-common.version>0.4.3</servicemix-gto-common.version>
   </properties>
 
   <dependencies>
