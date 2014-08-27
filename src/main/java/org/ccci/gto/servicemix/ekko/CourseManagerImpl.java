@@ -186,9 +186,6 @@ public class CourseManagerImpl implements CourseManager {
             course.setTitle(null);
         }
 
-        // remove any previously generated zip file
-        course.setZip(null);
-
         // increment the version of the course
         course.incVersion();
 
@@ -225,9 +222,6 @@ public class CourseManagerImpl implements CourseManager {
             resource.setPublished(false);
             resource.setMetaResource(false);
         }
-
-        // remove any previously generated zip file
-        course.setZip(null);
 
         // increment the version of the course
         course.incVersion();
@@ -366,24 +360,10 @@ public class CourseManagerImpl implements CourseManager {
         return course;
     }
 
-    @Transactional
     @Override
+    @Transactional(readOnly = true)
     public FileResource getResource(final FileResource.PrimaryKey key) {
         return this.em.find(FileResource.class, key);
-    }
-
-    @Transactional
-    @Override
-    public FileResource storeCourseZip(final Course course, final FileResource resource) {
-        final Course dbCourse = this.em.find(Course.class, course.getId());
-
-        if (dbCourse.getZipSha1() == null) {
-            this.em.persist(resource);
-            dbCourse.setZip(resource);
-            return resource;
-        }
-
-        return null;
     }
 
     @Transactional

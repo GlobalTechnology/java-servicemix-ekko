@@ -1,11 +1,11 @@
 package org.ccci.gto.servicemix.ekko;
 
-import java.util.Collection;
-import java.util.List;
-
 import org.ccci.gto.servicemix.ekko.model.Course;
 import org.ccci.gto.servicemix.ekko.model.Course.CourseQuery;
 import org.ccci.gto.servicemix.ekko.model.FileResource;
+
+import java.util.Collection;
+import java.util.List;
 
 public interface CourseManager {
     Course createCourse(Course course);
@@ -40,6 +40,4 @@ public interface CourseManager {
     FileResource storeResource(Course course, FileResource resource);
 
     void removeResource(FileResource resource);
-
-    FileResource storeCourseZip(Course course, FileResource resource);
 }

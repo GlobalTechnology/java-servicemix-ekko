@@ -2,16 +2,9 @@ package org.ccci.gto.servicemix.ekko.model;
 
 import static org.ccci.gto.servicemix.ekko.Constants.GUID_GUEST;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.regex.Pattern;
+import org.apache.openjpa.persistence.jdbc.ContainerTable;
+import org.apache.openjpa.persistence.jdbc.ForeignKey;
+import org.apache.openjpa.persistence.jdbc.ForeignKeyAction;
 
 import javax.persistence.Basic;
 import javax.persistence.CascadeType;
@@ -33,10 +26,16 @@ import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.JoinType;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
-
-import org.apache.openjpa.persistence.jdbc.ContainerTable;
-import org.apache.openjpa.persistence.jdbc.ForeignKey;
-import org.apache.openjpa.persistence.jdbc.ForeignKeyAction;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.regex.Pattern;
 
 @Entity
 public class Course {
@@ -99,9 +98,6 @@ public class Course {
             "courseId", "guid" }) })
     @ContainerTable(joinForeignKey = @ForeignKey(updateAction = ForeignKeyAction.CASCADE, deleteAction = ForeignKeyAction.CASCADE))
     private Set<String> pending = new HashSet<String>();
-
-    @Column(length = 40)
-    private String zipSha1;
 
     public long getId() {
         return this.id;
@@ -190,22 +186,6 @@ public class Course {
 
     public Collection<VideoResource> getVideoResources() {
         return Collections.unmodifiableCollection(this.videoResources.values());
-    }
-
-    public String getZipSha1() {
-        return this.zipSha1;
-    }
-
-    public FileResource getZip() {
-        return this.getResource(this.zipSha1);
-    }
-
-    public void setZip(final FileResource zip) {
-        if (zip == null) {
-            this.zipSha1 = null;
-        } else if (this.id == zip.getKey().getCourseId()) {
-            this.zipSha1 = zip.getSha1();
-        }
     }
 
     public void addAdmin(String guid) {

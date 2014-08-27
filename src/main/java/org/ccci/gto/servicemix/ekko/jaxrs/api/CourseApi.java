@@ -5,7 +5,6 @@ import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 import static org.ccci.gto.servicemix.common.jaxrs.api.Constants.PATH_OPTIONAL_SESSION;
 import static org.ccci.gto.servicemix.ekko.jaxrs.api.Constants.PARAM_ENROLLMENT_TYPE;
 import static org.ccci.gto.servicemix.ekko.jaxrs.api.Constants.PARAM_PUBLIC;
-import static org.ccci.gto.servicemix.ekko.jaxrs.api.Constants.PARAM_RESOURCE_SHA1;
 import static org.ccci.gto.servicemix.ekko.jaxrs.api.Constants.PATH_COURSE;
 
 import org.apache.cxf.jaxrs.ext.MessageContext;
@@ -42,7 +41,6 @@ import javax.ws.rs.core.UriInfo;
 import java.io.InputStream;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
@@ -521,33 +519,5 @@ public class CourseApi extends AbstractApi {
         final JaxbUsers users = new JaxbUsers();
         users.setUsers(course.getPending());
         return Response.ok(users).build();
-    }
-
-    @GET
-    @Path("zip")
-    public Response getCourseZip(@Context final MessageContext cxt, @Context final UriInfo uri) {
-        // validate the session
-        final Session session = this.getSession(cxt, uri);
-        if (session == null || session.isExpired()) {
-            return this.unauthorized(cxt, uri).build();
-        }
-
-        // find the course
-        final String guid = session.getGuid();
-        final Course course = this.courseManager.getCourse(this.getCourseQuery(uri).contentVisibleTo(guid));
-        if (course == null) {
-            return ResponseUtils.unauthorized().build();
-        }
-
-        // return not found if the zip doesn't exist
-        final String zipSha1 = course.getZipSha1();
-        if (zipSha1 == null) {
-            return Response.status(Status.NOT_FOUND).build();
-        }
-
-        // redirect to the actual location of the zip
-        final Map<String, Object> values = this.getUriValues(uri);
-        values.put(PARAM_RESOURCE_SHA1, zipSha1);
-        return ResponseUtils.temporaryRedirect(this.getResourceUriBuilder(cxt, uri).buildFromMap(values)).build();
     }
 }
