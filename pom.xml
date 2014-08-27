@@ -157,7 +157,6 @@
               <DynamicImport-Package>com.mysql.jdbc</DynamicImport-Package>
               <Import-Package>
                 *,
-                javax.persistence.criteria,
                 javax.persistence.metamodel,
                 javax.persistence.spi,
                 javax.sql,
