@@ -76,7 +76,7 @@ public class CourseApi extends AbstractApi {
 
     /**
      * Retrieves the course meta-data for a specified course
-     * 
+     *
      * @param uri
      * @return
      */
@@ -103,7 +103,7 @@ public class CourseApi extends AbstractApi {
 
     @GET
     @Path("settings")
-    @Produces({ APPLICATION_XML, APPLICATION_JSON })
+    @Produces({APPLICATION_XML, APPLICATION_JSON})
     public Response getSettings(@Context final MessageContext cxt, @Context final UriInfo uri) {
         // validate the session
         final Session session = this.getSession(cxt, uri);
@@ -121,9 +121,9 @@ public class CourseApi extends AbstractApi {
 
     @POST
     @Path("settings")
-    @Produces({ APPLICATION_XML, APPLICATION_JSON })
+    @Produces({APPLICATION_XML, APPLICATION_JSON})
     public Response updateSettings(@Context final MessageContext cxt, @Context final UriInfo uri,
-            final MultivaluedMap<String, String> form) {
+                                   final MultivaluedMap<String, String> form) {
         // validate the session
         final Session session = this.getSession(cxt, uri);
         if (session == null || session.isExpired() || session.isGuest()) {
@@ -288,7 +288,8 @@ public class CourseApi extends AbstractApi {
     @PUT
     @Path("manifest")
     @Consumes(APPLICATION_XML)
-    public Response updateManifest(@Context final MessageContext cxt, @Context final UriInfo uri, final InputStream in) {
+    public Response updateManifest(@Context final MessageContext cxt, @Context final UriInfo uri,
+                                   final InputStream in) {
         // validate the session
         final Session session = this.getSession(cxt, uri);
         if (session == null || session.isExpired() || session.isGuest()) {
@@ -367,7 +368,7 @@ public class CourseApi extends AbstractApi {
     @Path("admins")
     @Produces(APPLICATION_XML)
     public Response updateAdmins(@Context final MessageContext cxt, @Context final UriInfo uri,
-            final MultivaluedMap<String, String> form) {
+                                 final MultivaluedMap<String, String> form) {
         // validate the session
         final Session session = this.getSession(cxt, uri);
         if (session == null || session.isExpired() || session.isGuest()) {
@@ -428,7 +429,7 @@ public class CourseApi extends AbstractApi {
     @Path("enrolled")
     @Produces(APPLICATION_XML)
     public Response updateEnrolled(@Context final MessageContext cxt, @Context final UriInfo uri,
-            final MultivaluedMap<String, String> form) {
+                                   final MultivaluedMap<String, String> form) {
         // validate the session
         final Session session = this.getSession(cxt, uri);
         if (session == null || session.isExpired() || session.isGuest()) {
@@ -449,8 +450,8 @@ public class CourseApi extends AbstractApi {
         // update the enrolled users
         final Course course;
         try {
-            course = this.courseManager.updateCourseEnrolled(this.getCourseQuery(uri).admin(session.getGuid()), toAdd,
-                    toRemove);
+            course = this.courseManager.updateCourseEnrolled(this.getCourseQuery(uri).admin(session.getGuid()),
+                    toAdd, toRemove);
         } catch (final CourseNotFoundException e) {
             return ResponseUtils.unauthorized().build();
         }
@@ -488,7 +489,7 @@ public class CourseApi extends AbstractApi {
     @Path("pending")
     @Produces(APPLICATION_XML)
     public Response updatePending(@Context final MessageContext cxt, @Context final UriInfo uri,
-            final MultivaluedMap<String, String> form) {
+                                  final MultivaluedMap<String, String> form) {
         // validate the session
         final Session session = this.getSession(cxt, uri);
         if (session == null || session.isExpired() || session.isGuest()) {

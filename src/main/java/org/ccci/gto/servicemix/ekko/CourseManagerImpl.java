@@ -30,8 +30,8 @@ public class CourseManagerImpl implements CourseManager {
     @PersistenceContext
     private EntityManager em;
 
-    @Transactional
     @Override
+    @Transactional
     public Course createCourse(final Course course) {
         while (true) {
             try {
@@ -83,10 +83,9 @@ public class CourseManagerImpl implements CourseManager {
         return true;
     }
 
-    @Transactional
     @Override
-    public Course publishCourse(final CourseQuery courseQuery) throws CourseNotFoundException, ManifestException,
-            MultipleManifestExceptions {
+    @Transactional
+    public Course publishCourse(final CourseQuery courseQuery) throws CourseNotFoundException, ManifestException {
         // short-circuit if a valid course couldn't be found
         final Course course = this.getCourse(courseQuery.clone().loadManifest().loadPendingManifest());
         if (course == null) {
@@ -106,7 +105,7 @@ public class CourseManagerImpl implements CourseManager {
         }
 
         // validate pending manifest
-        final List<ManifestException> exceptions = new ArrayList<ManifestException>();
+        final List<ManifestException> exceptions = new ArrayList<>();
         try {
             this.validateManifest(course, manifest);
         } catch (final MultipleManifestExceptions e) {
@@ -229,14 +228,14 @@ public class CourseManagerImpl implements CourseManager {
         return course;
     }
 
-    @Transactional
     @Override
+    @Transactional(readOnly = true)
     public Course getCourse(final Long id) {
         return this.em.find(Course.class, id);
     }
 
-    @Transactional
     @Override
+    @Transactional(readOnly = true)
     public Course getCourse(final CourseQuery query) {
         final List<Course> courses = this.getCourses(query);
         if (courses.size() > 0) {
@@ -246,14 +245,14 @@ public class CourseManagerImpl implements CourseManager {
         return null;
     }
 
-    @Transactional
     @Override
+    @Transactional(readOnly = true)
     public List<Course> getCourses(final CourseQuery query) {
         return query.execute(this.em);
     }
 
-    @Transactional
     @Override
+    @Transactional
     public Course updateCourseAdmins(final CourseQuery query, final Collection<String> toAdd,
             final Collection<String> toRemove) throws CourseNotFoundException {
         // short-circuit if a valid course couldn't be found
@@ -270,8 +269,8 @@ public class CourseManagerImpl implements CourseManager {
         return course;
     }
 
-    @Transactional
     @Override
+    @Transactional
     public Course updateCourseEnrolled(final CourseQuery query, final Collection<String> toAdd,
             final Collection<String> toRemove) throws CourseNotFoundException {
         // short-circuit if a valid course couldn't be found
@@ -379,10 +378,9 @@ public class CourseManagerImpl implements CourseManager {
         this.em.remove(this.em.merge(resource));
     }
 
-    private void validateManifest(final Course course, final Document manifest) throws ManifestException,
-            MultipleManifestExceptions {
+    private void validateManifest(final Course course, final Document manifest) throws ManifestException {
         // capture multiple ManifestExceptions
-        final List<ManifestException> exceptions = new ArrayList<ManifestException>();
+        final List<ManifestException> exceptions = new ArrayList<>();
 
         // validate the actual manifest xml
         try {

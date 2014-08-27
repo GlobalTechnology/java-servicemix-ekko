@@ -83,21 +83,21 @@ public class Course {
     @CollectionTable(name = "Course_Admins", joinColumns = @JoinColumn(name = "courseId", nullable = false), uniqueConstraints = { @UniqueConstraint(columnNames = {
             "courseId", "guid" }) })
     @ContainerTable(joinForeignKey = @ForeignKey(updateAction = ForeignKeyAction.CASCADE, deleteAction = ForeignKeyAction.CASCADE))
-    private Set<String> admins = new HashSet<String>();
+    private Set<String> admins = new HashSet<>();
 
     @ElementCollection(fetch = FetchType.LAZY)
     @Column(name = "guid", nullable = false, length = 36)
     @CollectionTable(name = "Course_Enrolled", joinColumns = @JoinColumn(name = "courseId", nullable = false), uniqueConstraints = { @UniqueConstraint(columnNames = {
             "courseId", "guid" }) })
     @ContainerTable(joinForeignKey = @ForeignKey(updateAction = ForeignKeyAction.CASCADE, deleteAction = ForeignKeyAction.CASCADE))
-    private Set<String> enrolled = new HashSet<String>();
+    private Set<String> enrolled = new HashSet<>();
 
     @ElementCollection(fetch = FetchType.LAZY)
     @Column(name = "guid", nullable = false, length = 36)
     @CollectionTable(name = "Course_Pending", joinColumns = @JoinColumn(name = "courseId", nullable = false), uniqueConstraints = { @UniqueConstraint(columnNames = {
             "courseId", "guid" }) })
     @ContainerTable(joinForeignKey = @ForeignKey(updateAction = ForeignKeyAction.CASCADE, deleteAction = ForeignKeyAction.CASCADE))
-    private Set<String> pending = new HashSet<String>();
+    private Set<String> pending = new HashSet<>();
 
     public long getId() {
         return this.id;
