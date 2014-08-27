@@ -24,7 +24,7 @@ public class FileResource extends Resource {
     @MapsId("courseId")
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "courseId", referencedColumnName = "id")
-    @ForeignKey(updateAction = ForeignKeyAction.CASCADE, deleteAction = ForeignKeyAction.CASCADE)
+    @ForeignKey(updateAction = ForeignKeyAction.CASCADE, deleteAction = ForeignKeyAction.RESTRICT)
     private Course course;
 
     private String mogileFsKey;
