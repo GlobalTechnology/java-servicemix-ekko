@@ -5,7 +5,7 @@
   <parent>
     <groupId>org.ccci.gto.servicemix</groupId>
     <artifactId>servicemix-parent</artifactId>
-    <version>19</version>
+    <version>25-SNAPSHOT</version>
   </parent>
 
   <artifactId>servicemix-gto-ekko</artifactId>
@@ -22,7 +22,7 @@
 
   <properties>
     <hls-m3u-parser.version>0.1.0</hls-m3u-parser.version>
-    <servicemix-gto-common.version>0.4.3</servicemix-gto-common.version>
+    <servicemix-gto-common.version>0.4.4-SNAPSHOT</servicemix-gto-common.version>
   </properties>
 
   <dependencies>
@@ -87,10 +87,14 @@
       <artifactId>moji</artifactId>
     </dependency>
 
-    <!-- Amazon AWS dependency -->
+    <!-- Amazon AWS dependencies -->
     <dependency>
       <groupId>com.amazonaws</groupId>
-      <artifactId>aws-java-sdk</artifactId>
+      <artifactId>aws-java-sdk-elastictranscoder</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.amazonaws</groupId>
+      <artifactId>aws-java-sdk-s3</artifactId>
     </dependency>
 
     <!-- HLS dependencies -->
