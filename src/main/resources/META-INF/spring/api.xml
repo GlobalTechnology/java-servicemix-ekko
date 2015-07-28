@@ -4,32 +4,6 @@
   xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
                       http://cxf.apache.org/jaxrs http://cxf.apache.org/schemas/jaxrs.xsd">
 
-  <!-- Current Endpoints -->
-  <jaxrs:server address="${url.servicemix:}/ekko" publishedEndpointUrl="${ekko.base.uri}">
-    <jaxrs:providers>
-      <ref bean="jaxbProvider" />
-      <ref bean="jsonProvider" />
-    </jaxrs:providers>
-    <jaxrs:extensionMappings>
-      <entry key="json" value="application/json" />
-      <entry key="xml" value="application/xml" />
-    </jaxrs:extensionMappings>
-    <jaxrs:serviceBeans>
-      <ref local="api.auth" />
-      <ref local="api.courses" />
-      <ref local="api.course" />
-      <ref local="api.resources" />
-      <ref local="api.resources.video" />
-
-      <!-- Ekko Cloud Videos -->
-      <ref local="api.videos" />
-      <ref local="api.video" />
-
-      <!-- Amazon Endpoints -->
-      <ref local="api.aws.sns" />
-    </jaxrs:serviceBeans>
-  </jaxrs:server>
-
   <!-- Versioned Endpoints -->
   <jaxrs:server address="${url.servicemix:}/ekko/v1" publishedEndpointUrl="${ekko.base.uri}v1/">
     <jaxrs:providers>
